@@ -172,8 +172,9 @@ const transactionsSlice = createSlice({
         });
       })
       .addCase(addTransaction.fulfilled, (state, action) => {
-        const tx = action.payload as Transaction;
-        state.byId[tx.id] = tx;
+        const tx = action.payload;
+        // Store the transaction data we have - full data will be fetched on next load
+        state.byId[tx.id] = tx as unknown as Transaction;
         state.allIds.unshift(tx.id);
 
         if (!state.idsByPeriod[tx.budgetPeriodId]) {

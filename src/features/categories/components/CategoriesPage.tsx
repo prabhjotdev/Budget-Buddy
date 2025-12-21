@@ -14,8 +14,8 @@ export const CategoriesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
-  const [icon, setIcon] = useState(CATEGORY_ICONS[0]);
-  const [color, setColor] = useState(CATEGORY_COLORS[0]);
+  const [icon, setIcon] = useState<string>(CATEGORY_ICONS[0]);
+  const [color, setColor] = useState<string>(CATEGORY_COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleOpenModal = (categoryId?: string) => {
