@@ -1,5 +1,31 @@
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
+// Helper to convert Firestore Timestamp or serialized timestamp to Date
+export const toDate = (value: unknown): Date => {
+  if (!value) return new Date();
+
+  // Already a Date object
+  if (value instanceof Date) return value;
+
+  // Firestore Timestamp with toDate method
+  if (typeof value === 'object' && 'toDate' in value && typeof (value as { toDate: () => Date }).toDate === 'function') {
+    return (value as { toDate: () => Date }).toDate();
+  }
+
+  // Serialized Firestore Timestamp (has seconds and nanoseconds)
+  if (typeof value === 'object' && 'seconds' in value) {
+    const ts = value as { seconds: number; nanoseconds?: number };
+    return new Date(ts.seconds * 1000 + (ts.nanoseconds || 0) / 1000000);
+  }
+
+  // String or number
+  if (typeof value === 'string' || typeof value === 'number') {
+    return new Date(value);
+  }
+
+  return new Date();
+};
+
 export interface PeriodBoundaries {
   startDate: Date;
   endDate: Date;

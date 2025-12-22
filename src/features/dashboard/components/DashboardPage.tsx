@@ -7,7 +7,7 @@ import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, ProgressBar, Badge, EmptyState } from '../../../components/shared';
 import { EditAllocationModal } from '../../../components/modals';
 import { formatCurrency } from '../../../utils/currency';
-import { formatPeriodRange, formatShortDate } from '../../../utils/date';
+import { formatPeriodRange, formatShortDate, toDate } from '../../../utils/date';
 import { calculateBudgetSummary, calculateAllocationProgress } from '../../../utils/rollover';
 import { BudgetAllocation } from '../../../types';
 
@@ -137,8 +137,8 @@ export const DashboardPage = () => {
               <p className="text-sm text-gray-500">Period</p>
               <p className="text-lg font-semibold text-gray-900">
                 {formatPeriodRange(
-                  activePeriod.startDate.toDate(),
-                  activePeriod.endDate.toDate()
+                  toDate(activePeriod.startDate),
+                  toDate(activePeriod.endDate)
                 )}
               </p>
               <Badge variant={activePeriod.status === 'active' ? 'success' : 'default'}>
@@ -299,7 +299,7 @@ export const DashboardPage = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-900">{tx.description}</p>
                         <p className="text-xs text-gray-500">
-                          {tx.categoryName} • {formatShortDate(tx.date.toDate())}
+                          {tx.categoryName} • {formatShortDate(toDate(tx.date))}
                         </p>
                       </div>
                     </div>
