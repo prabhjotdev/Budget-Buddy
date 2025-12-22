@@ -1,13 +1,15 @@
-import { useEffect } from 'react';
-import { Calendar, TrendingUp, TrendingDown, ArrowRight, Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Calendar, TrendingUp, TrendingDown, ArrowRight, Plus, Pencil } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchRecentTransactions } from '../../transactions/transactionsSlice';
 import { openModal } from '../../auth/uiSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, ProgressBar, Badge, EmptyState } from '../../../components/shared';
+import { EditAllocationModal } from '../../../components/modals';
 import { formatCurrency } from '../../../utils/currency';
 import { formatPeriodRange, formatShortDate } from '../../../utils/date';
 import { calculateBudgetSummary, calculateAllocationProgress } from '../../../utils/rollover';
+import { BudgetAllocation } from '../../../types';
 
 export const DashboardPage = () => {
   const dispatch = useAppDispatch();
@@ -20,6 +22,9 @@ export const DashboardPage = () => {
   );
   const categories = useAppSelector((state) => state.categories.byId);
 
+  const [editingAllocation, setEditingAllocation] = useState<BudgetAllocation | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const activePeriod = activePeriodId ? byId[activePeriodId] : null;
   const allocations = activePeriodId ? allocationsByPeriodId[activePeriodId] : null;
   const recentTransactionIds = activePeriodId ? recentByPeriod[activePeriodId] || [] : [];
@@ -29,6 +34,16 @@ export const DashboardPage = () => {
       dispatch(fetchRecentTransactions({ userId: user.uid, periodId: activePeriodId }));
     }
   }, [dispatch, user, activePeriodId]);
+
+  const handleEditAllocation = (allocation: BudgetAllocation) => {
+    setEditingAllocation(allocation);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingAllocation(null);
+  };
 
   if (!activePeriod) {
     return (
@@ -157,6 +172,7 @@ export const DashboardPage = () => {
           <Card>
             <CardHeader
               title="Category Budgets"
+              subtitle="Click to edit budget"
               action={
                 <Button
                   variant="ghost"
@@ -167,8 +183,8 @@ export const DashboardPage = () => {
                 </Button>
               }
             />
-            <div className="space-y-4">
-              {allocations?.allIds.slice(0, 6).map((allocId) => {
+            <div className="space-y-3">
+              {allocations?.allIds.map((allocId) => {
                 const alloc = allocations.byId[allocId];
                 const progress = calculateAllocationProgress(
                   alloc.budgetedAmount,
@@ -176,7 +192,11 @@ export const DashboardPage = () => {
                 );
 
                 return (
-                  <div key={allocId}>
+                  <div
+                    key={allocId}
+                    onClick={() => handleEditAllocation(alloc)}
+                    className="p-3 -mx-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors group"
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <div
@@ -186,6 +206,7 @@ export const DashboardPage = () => {
                         <span className="text-sm font-medium text-gray-700">
                           {alloc.categoryName}
                         </span>
+                        <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                       <span className="text-sm text-gray-500">
                         {formatCurrency(alloc.spentAmount)} / {formatCurrency(alloc.budgetedAmount)}
@@ -266,6 +287,14 @@ export const DashboardPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* Edit Allocation Modal */}
+      <EditAllocationModal
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        allocation={editingAllocation}
+        periodId={activePeriodId}
+      />
     </AppLayout>
   );
 };
