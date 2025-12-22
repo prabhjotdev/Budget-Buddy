@@ -5,7 +5,7 @@ import { fetchTransactions, deleteTransaction } from '../transactionsSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, Button, Badge, Select, EmptyState, IconButton } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { formatFullDate } from '../../../utils/date';
+import { formatFullDate, toDate } from '../../../utils/date';
 
 export const TransactionsPage = () => {
   const dispatch = useAppDispatch();
@@ -54,7 +54,7 @@ export const TransactionsPage = () => {
                 { value: '', label: 'All Periods' },
                 ...periodIds.map((id) => ({
                   value: id,
-                  label: `${periodsById[id].startDate.toDate().toLocaleDateString()} - ${periodsById[id].endDate.toDate().toLocaleDateString()}`,
+                  label: `${toDate(periodsById[id].startDate).toLocaleDateString()} - ${toDate(periodsById[id].endDate).toLocaleDateString()}`,
                 })),
               ]}
             />
@@ -112,7 +112,7 @@ export const TransactionsPage = () => {
                       <div>
                         <p className="font-medium text-gray-900">{tx.description}</p>
                         <p className="text-sm text-gray-500">
-                          {tx.categoryName} • {formatFullDate(tx.date.toDate())}
+                          {tx.categoryName} • {formatFullDate(toDate(tx.date))}
                         </p>
                       </div>
                     </div>

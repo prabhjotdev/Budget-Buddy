@@ -7,7 +7,7 @@ import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, ProgressBar, Badge, EmptyState } from '../../../components/shared';
 import { EditAllocationModal } from '../../../components/modals';
 import { formatCurrency } from '../../../utils/currency';
-import { formatPeriodRange, formatShortDate } from '../../../utils/date';
+import { formatPeriodRange, formatShortDate, toDate } from '../../../utils/date';
 import { calculateBudgetSummary, calculateAllocationProgress } from '../../../utils/rollover';
 import { BudgetAllocation } from '../../../types';
 
@@ -137,8 +137,8 @@ export const DashboardPage = () => {
               <p className="text-sm text-gray-500">Period</p>
               <p className="text-lg font-semibold text-gray-900">
                 {formatPeriodRange(
-                  activePeriod.startDate.toDate(),
-                  activePeriod.endDate.toDate()
+                  toDate(activePeriod.startDate),
+                  toDate(activePeriod.endDate)
                 )}
               </p>
               <Badge variant={activePeriod.status === 'active' ? 'success' : 'default'}>
@@ -227,6 +227,40 @@ export const DashboardPage = () => {
                 </p>
               )}
             </div>
+            {/* Category Totals */}
+            {allocations && allocations.allIds.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                {(() => {
+                  const totalBudgeted = allocations.allIds.reduce(
+                    (sum, id) => sum + allocations.byId[id].budgetedAmount,
+                    0
+                  );
+                  const totalSpent = allocations.allIds.reduce(
+                    (sum, id) => sum + allocations.byId[id].spentAmount,
+                    0
+                  );
+                  const totalRemaining = totalBudgeted - totalSpent;
+                  return (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Total Budgeted</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(totalBudgeted)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Total Spent</span>
+                        <span className="font-medium text-red-600">{formatCurrency(totalSpent)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-gray-700">Remaining</span>
+                        <span className={totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {formatCurrency(totalRemaining)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </Card>
 
           {/* Recent Transactions */}
@@ -265,7 +299,7 @@ export const DashboardPage = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-900">{tx.description}</p>
                         <p className="text-xs text-gray-500">
-                          {tx.categoryName} • {formatShortDate(tx.date.toDate())}
+                          {tx.categoryName} • {formatShortDate(toDate(tx.date))}
                         </p>
                       </div>
                     </div>
