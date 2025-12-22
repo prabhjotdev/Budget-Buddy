@@ -4,6 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 export interface UserSettings {
   payDays: [number, number];
   currency: string;
+  timezone: string;
   defaultTemplateId: string | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;

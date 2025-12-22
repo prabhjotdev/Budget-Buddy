@@ -21,6 +21,8 @@ export const DashboardPage = () => {
     (state) => state.transactions
   );
   const categories = useAppSelector((state) => state.categories.byId);
+  const { data: settings } = useAppSelector((state) => state.settings);
+  const timezone = settings?.timezone;
 
   const [editingAllocation, setEditingAllocation] = useState<BudgetAllocation | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -138,7 +140,8 @@ export const DashboardPage = () => {
               <p className="text-lg font-semibold text-gray-900">
                 {formatPeriodRange(
                   toDate(activePeriod.startDate),
-                  toDate(activePeriod.endDate)
+                  toDate(activePeriod.endDate),
+                  timezone
                 )}
               </p>
               <Badge variant={activePeriod.status === 'active' ? 'success' : 'default'}>
@@ -299,7 +302,7 @@ export const DashboardPage = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-900">{tx.description}</p>
                         <p className="text-xs text-gray-500">
-                          {tx.categoryName} • {formatShortDate(toDate(tx.date))}
+                          {tx.categoryName} • {formatShortDate(toDate(tx.date), timezone)}
                         </p>
                       </div>
                     </div>

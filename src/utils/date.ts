@@ -86,22 +86,41 @@ export const getNextPeriodBoundaries = (
   return getPeriodBoundaries(nextDay, payDays);
 };
 
-export const formatPeriodRange = (startDate: Date, endDate: Date): string => {
-  const startMonth = format(startDate, 'MMM');
-  const endMonth = format(endDate, 'MMM');
+// Timezone-aware formatting using Intl API
+export const formatPeriodRange = (startDate: Date, endDate: Date, timezone?: string): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    timeZone: timezone,
+  };
+  const yearOptions: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: timezone,
+  };
 
-  if (startMonth === endMonth) {
-    return `${format(startDate, 'MMM d')} - ${format(endDate, 'd, yyyy')}`;
-  }
-  return `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d, yyyy')}`;
+  const startFormatted = new Intl.DateTimeFormat('en-US', options).format(startDate);
+  const endFormatted = new Intl.DateTimeFormat('en-US', yearOptions).format(endDate);
+
+  return `${startFormatted} - ${endFormatted}`;
 };
 
-export const formatShortDate = (date: Date): string => {
-  return format(date, 'MMM d');
+export const formatShortDate = (date: Date, timezone?: string): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: timezone,
+  }).format(date);
 };
 
-export const formatFullDate = (date: Date): string => {
-  return format(date, 'MMMM d, yyyy');
+export const formatFullDate = (date: Date, timezone?: string): string => {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: timezone,
+  }).format(date);
 };
 
 export const isDateInCurrentMonth = (date: Date): boolean => {
