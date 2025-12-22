@@ -4,6 +4,7 @@ import { closeModal } from '../../features/auth/uiSlice';
 import { addTransaction } from '../../features/transactions/transactionsSlice';
 import { updateAllocationSpent } from '../../features/budget-periods/budgetPeriodsSlice';
 import { Modal, Button, Input, CurrencyInput, Select } from '../shared';
+import { parseLocalDate } from '../../utils/date';
 
 export const AddTransactionModal = () => {
   const dispatch = useAppDispatch();
@@ -37,7 +38,7 @@ export const AddTransactionModal = () => {
             type,
             amount,
             description,
-            date: new Date(date),
+            date: parseLocalDate(date),
           },
         })
       );

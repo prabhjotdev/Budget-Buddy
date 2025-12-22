@@ -1,5 +1,12 @@
 import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
+// Parse a date string (YYYY-MM-DD) as local time, not UTC
+// This fixes timezone issues where "2025-12-15" parsed by new Date() becomes Dec 14 in western timezones
+export const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0); // noon to avoid any DST issues
+};
+
 // Helper to convert Firestore Timestamp or serialized timestamp to Date
 export const toDate = (value: unknown): Date => {
   if (!value) return new Date();

@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { closeModal } from '../../features/auth/uiSlice';
 import { createBudgetPeriod } from '../../features/budget-periods/budgetPeriodsSlice';
 import { Modal, Button, CurrencyInput, Select } from '../shared';
-import { getPeriodBoundaries, formatPeriodRange, getNextPeriodBoundaries } from '../../utils/date';
+import { getPeriodBoundaries, formatPeriodRange, getNextPeriodBoundaries, toDate } from '../../utils/date';
 import { canApplyRollover, calculateRollover } from '../../utils/rollover';
 import { formatCurrency } from '../../utils/currency';
 import { IncomeEntry } from '../../types';
@@ -32,13 +32,13 @@ export const CreateBudgetPeriodModal = () => {
   // Calculate next period dates
   const lastPeriod = periodIds.length > 0 ? periodsById[periodIds[0]] : null;
   const nextPeriod = lastPeriod
-    ? getNextPeriodBoundaries(lastPeriod.endDate.toDate(), payDays as [number, number])
+    ? getNextPeriodBoundaries(toDate(lastPeriod.endDate), payDays as [number, number])
     : getPeriodBoundaries(new Date(), payDays as [number, number]);
 
   // Calculate rollover
   let rolloverAmount = 0;
   if (lastPeriod && lastPeriod.status === 'closed') {
-    if (canApplyRollover(lastPeriod.endDate.toDate(), nextPeriod.startDate)) {
+    if (canApplyRollover(toDate(lastPeriod.endDate), nextPeriod.startDate)) {
       rolloverAmount = calculateRollover(lastPeriod);
     }
   }
