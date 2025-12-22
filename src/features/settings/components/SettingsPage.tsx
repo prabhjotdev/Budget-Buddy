@@ -1,8 +1,45 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Input, Select } from '../../../components/shared';
+
+// Get all supported timezones
+const getTimezones = (): string[] => {
+  try {
+    return Intl.supportedValuesOf('timeZone');
+  } catch {
+    // Fallback for browsers that don't support supportedValuesOf
+    return [
+      'America/New_York',
+      'America/Chicago',
+      'America/Denver',
+      'America/Los_Angeles',
+      'America/Anchorage',
+      'Pacific/Honolulu',
+      'America/Toronto',
+      'America/Vancouver',
+      'Europe/London',
+      'Europe/Paris',
+      'Europe/Berlin',
+      'Asia/Tokyo',
+      'Asia/Shanghai',
+      'Asia/Kolkata',
+      'Australia/Sydney',
+      'Pacific/Auckland',
+      'UTC',
+    ];
+  }
+};
+
+// Get the user's browser timezone
+const getBrowserTimezone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return 'America/New_York';
+  }
+};
 
 export const SettingsPage = () => {
   const dispatch = useAppDispatch();
@@ -12,7 +49,16 @@ export const SettingsPage = () => {
   const [payDay1, setPayDay1] = useState(settings?.payDays[0] || 1);
   const [payDay2, setPayDay2] = useState(settings?.payDays[1] || 15);
   const [currency, setCurrency] = useState(settings?.currency || 'USD');
+  const [timezone, setTimezone] = useState(settings?.timezone || getBrowserTimezone());
   const [isSaving, setIsSaving] = useState(false);
+
+  const timezoneOptions = useMemo(() => {
+    const timezones = getTimezones();
+    return timezones.map((tz) => ({
+      value: tz,
+      label: tz.replace(/_/g, ' '),
+    }));
+  }, []);
 
   const handleSave = async () => {
     if (!user) return;
@@ -25,6 +71,7 @@ export const SettingsPage = () => {
           updates: {
             payDays: [payDay1, payDay2] as [number, number],
             currency,
+            timezone,
           },
         })
       );
@@ -77,6 +124,21 @@ export const SettingsPage = () => {
               { value: 'AUD', label: 'AUD ($)' },
             ]}
           />
+        </Card>
+
+        <Card>
+          <CardHeader
+            title="Timezone"
+            subtitle="Select your timezone for date display"
+          />
+          <Select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            options={timezoneOptions}
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            Detected timezone: {getBrowserTimezone()}
+          </p>
         </Card>
 
         <Card>

@@ -17,10 +17,20 @@ export const getUserSettings = async (userId: string): Promise<UserSettings | nu
   return docSnap.data() as UserSettings;
 };
 
+// Get the user's browser timezone
+const getBrowserTimezone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return 'America/New_York';
+  }
+};
+
 export const createDefaultSettings = async (userId: string): Promise<UserSettings> => {
   const defaultSettings: UserSettings = {
     payDays: [1, 15],
     currency: 'USD',
+    timezone: getBrowserTimezone(),
     defaultTemplateId: null,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),

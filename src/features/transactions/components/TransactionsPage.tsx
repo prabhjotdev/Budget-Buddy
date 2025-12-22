@@ -5,7 +5,7 @@ import { fetchTransactions, deleteTransaction } from '../transactionsSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, Button, Badge, Select, EmptyState, IconButton } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { formatFullDate, toDate } from '../../../utils/date';
+import { formatFullDate, formatShortDate, toDate } from '../../../utils/date';
 
 export const TransactionsPage = () => {
   const dispatch = useAppDispatch();
@@ -13,6 +13,8 @@ export const TransactionsPage = () => {
   const { byId, allIds, isLoading } = useAppSelector((state) => state.transactions);
   const { byId: periodsById, allIds: periodIds } = useAppSelector((state) => state.budgetPeriods);
   const { byId: categoriesById, allIds: categoryIds } = useAppSelector((state) => state.categories);
+  const { data: settings } = useAppSelector((state) => state.settings);
+  const timezone = settings?.timezone;
 
   const [periodFilter, setPeriodFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -54,7 +56,7 @@ export const TransactionsPage = () => {
                 { value: '', label: 'All Periods' },
                 ...periodIds.map((id) => ({
                   value: id,
-                  label: `${toDate(periodsById[id].startDate).toLocaleDateString()} - ${toDate(periodsById[id].endDate).toLocaleDateString()}`,
+                  label: `${formatShortDate(toDate(periodsById[id].startDate), timezone)} - ${formatShortDate(toDate(periodsById[id].endDate), timezone)}`,
                 })),
               ]}
             />
@@ -112,7 +114,7 @@ export const TransactionsPage = () => {
                       <div>
                         <p className="font-medium text-gray-900">{tx.description}</p>
                         <p className="text-sm text-gray-500">
-                          {tx.categoryName} • {formatFullDate(toDate(tx.date))}
+                          {tx.categoryName} • {formatFullDate(toDate(tx.date), timezone)}
                         </p>
                       </div>
                     </div>
