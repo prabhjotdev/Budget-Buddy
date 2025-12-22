@@ -227,6 +227,40 @@ export const DashboardPage = () => {
                 </p>
               )}
             </div>
+            {/* Category Totals */}
+            {allocations && allocations.allIds.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                {(() => {
+                  const totalBudgeted = allocations.allIds.reduce(
+                    (sum, id) => sum + allocations.byId[id].budgetedAmount,
+                    0
+                  );
+                  const totalSpent = allocations.allIds.reduce(
+                    (sum, id) => sum + allocations.byId[id].spentAmount,
+                    0
+                  );
+                  const totalRemaining = totalBudgeted - totalSpent;
+                  return (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Total Budgeted</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(totalBudgeted)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Total Spent</span>
+                        <span className="font-medium text-red-600">{formatCurrency(totalSpent)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-medium">
+                        <span className="text-gray-700">Remaining</span>
+                        <span className={totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {formatCurrency(totalRemaining)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </Card>
 
           {/* Recent Transactions */}
