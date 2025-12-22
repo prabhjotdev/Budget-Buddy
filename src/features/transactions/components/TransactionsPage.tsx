@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Trash2, Receipt } from 'lucide-react';
+import { Trash2, Receipt, Upload } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchTransactions, deleteTransaction } from '../transactionsSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, Button, Badge, Select, EmptyState, IconButton } from '../../../components/shared';
+import { ImportTransactionsModal } from '../../../components/modals';
 import { formatCurrency } from '../../../utils/currency';
 import { formatFullDate, formatShortDate, toDate } from '../../../utils/date';
 
@@ -19,6 +20,7 @@ export const TransactionsPage = () => {
   const [periodFilter, setPeriodFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'' | 'expense' | 'income'>('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -48,7 +50,7 @@ export const TransactionsPage = () => {
       <div className="space-y-4">
         {/* Filters */}
         <Card>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Select
               value={periodFilter}
               onChange={(e) => setPeriodFilter(e.target.value)}
@@ -80,6 +82,11 @@ export const TransactionsPage = () => {
                 { value: 'income', label: 'Income' },
               ]}
             />
+            <div className="flex-1" />
+            <Button onClick={() => setIsImportModalOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
           </div>
         </Card>
 
@@ -146,6 +153,12 @@ export const TransactionsPage = () => {
           )}
         </Card>
       </div>
+
+      {/* Import Modal */}
+      <ImportTransactionsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
     </AppLayout>
   );
 };
