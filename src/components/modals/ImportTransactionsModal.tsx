@@ -88,6 +88,18 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
     );
   };
 
+  const handleTypeChange = (index: number, type: 'expense' | 'income') => {
+    setTransactions(prev =>
+      prev.map((tx, i) => (i === index ? { ...tx, type } : tx))
+    );
+  };
+
+  const handleBulkTypeChange = (type: 'expense' | 'income') => {
+    setTransactions(prev =>
+      prev.map(tx => (tx.selected ? { ...tx, type } : tx))
+    );
+  };
+
   const handleImport = async () => {
     if (!user || !activePeriodId) return;
 
@@ -259,7 +271,22 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
               </div>
               <div className="flex-1" />
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Set category for selected:</span>
+                <span className="text-sm text-gray-600">Set type:</span>
+                <button
+                  onClick={() => handleBulkTypeChange('expense')}
+                  className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-700 hover:bg-red-200"
+                >
+                  Expense
+                </button>
+                <button
+                  onClick={() => handleBulkTypeChange('income')}
+                  className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200"
+                >
+                  Income
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Category:</span>
                 <select
                   onChange={(e) => handleBulkCategoryChange(e.target.value)}
                   className="text-sm border border-gray-300 rounded-md px-2 py-1"
@@ -299,6 +326,7 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                       <th className="px-3 py-2 text-left text-gray-600">Date</th>
                       <th className="px-3 py-2 text-left text-gray-600">Description</th>
                       <th className="px-3 py-2 text-right text-gray-600">Amount</th>
+                      <th className="px-3 py-2 text-center text-gray-600">Type</th>
                       <th className="px-3 py-2 text-left text-gray-600">Category</th>
                     </tr>
                   </thead>
@@ -338,6 +366,18 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                           }`}>
                             {tx.type === 'expense' ? '-' : '+'}
                             {formatCurrency(tx.amount)}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => handleTypeChange(actualIndex, tx.type === 'expense' ? 'income' : 'expense')}
+                              className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                                tx.type === 'expense'
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              }`}
+                            >
+                              {tx.type === 'expense' ? 'Expense' : 'Income'}
+                            </button>
                           </td>
                           <td className="px-3 py-2">
                             <select
