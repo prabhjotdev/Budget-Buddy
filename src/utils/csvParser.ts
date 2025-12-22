@@ -159,14 +159,19 @@ function parseAmount(amountStr: string): number {
 }
 
 // Detect bank format from header row
-function detectBank(headers: string[]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
+function detectBank(headers: string[], rows: string[][]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
   const headerStr = headers.join(',').toLowerCase();
 
-  // TD format variations:
+  // TD EasyWeb export: first line is just "accountactivity" with no real headers
+  // Data format: Date, Description, Debit, Credit, Balance
+  if (headerStr === 'accountactivity' || headerStr.startsWith('accountactivity,')) {
+    return 'TD';
+  }
+
+  // TD format variations with proper headers:
   // "Date,Description,Withdrawals,Deposits,Balance"
   // "Date,Transaction Description,Debit Amount,Credit Amount,Balance"
   // "Date,Description,Debit,Credit,Balance"
-  // Some TD exports have "CAD$" or just numeric columns
   if (
     (headerStr.includes('withdrawal') && headerStr.includes('deposit')) ||
     (headerStr.includes('debit') && headerStr.includes('credit')) ||
@@ -192,23 +197,44 @@ function detectBank(headers: string[]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
 function parseTD(rows: string[][], headers: string[]): ParsedTransaction[] {
   const transactions: ParsedTransaction[] = [];
   const headerLower = headers.map(h => h.toLowerCase());
+  const headerStr = headerLower.join(',');
 
-  const dateIdx = headerLower.findIndex(h => h.includes('date'));
-  const descIdx = headerLower.findIndex(h => h.includes('description'));
+  // Check if this is the "accountactivity" format (no real headers)
+  // Format: Date, Description, Debit, Credit, Balance
+  const isAccountActivityFormat = headerStr === 'accountactivity' || headerStr.startsWith('accountactivity,');
 
-  // TD uses various column names for debits/credits
-  let debitIdx = headerLower.findIndex(h => h.includes('withdrawal'));
-  let creditIdx = headerLower.findIndex(h => h.includes('deposit'));
+  let dateIdx: number;
+  let descIdx: number;
+  let debitIdx: number;
+  let creditIdx: number;
+  let startRow: number;
 
-  // Try alternate names
-  if (debitIdx < 0) {
-    debitIdx = headerLower.findIndex(h => h.includes('debit'));
+  if (isAccountActivityFormat) {
+    // TD EasyWeb "accountactivity" export - fixed column positions, no header row
+    // Row 0 is "accountactivity", data starts at row 1
+    dateIdx = 0;
+    descIdx = 1;
+    debitIdx = 2;
+    creditIdx = 3;
+    startRow = 1;
+  } else {
+    // Standard header-based parsing
+    dateIdx = headerLower.findIndex(h => h.includes('date'));
+    descIdx = headerLower.findIndex(h => h.includes('description'));
+    debitIdx = headerLower.findIndex(h => h.includes('withdrawal'));
+    creditIdx = headerLower.findIndex(h => h.includes('deposit'));
+
+    // Try alternate names
+    if (debitIdx < 0) {
+      debitIdx = headerLower.findIndex(h => h.includes('debit'));
+    }
+    if (creditIdx < 0) {
+      creditIdx = headerLower.findIndex(h => h.includes('credit'));
+    }
+    startRow = 1;
   }
-  if (creditIdx < 0) {
-    creditIdx = headerLower.findIndex(h => h.includes('credit'));
-  }
 
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = startRow; i < rows.length; i++) {
     const row = rows[i];
     if (row.length < 3) continue;
 
@@ -236,13 +262,12 @@ function parseTD(rows: string[][], headers: string[]): ParsedTransaction[] {
       // Fallback: try to find any numeric value in remaining columns
       amount = 0;
       type = 'expense';
-      for (let j = 2; j < row.length; j++) {
+      for (let j = 2; j < row.length - 1; j++) { // Skip last column (balance)
         if (j === debitIdx || j === creditIdx) continue;
         const val = parseAmount(row[j]);
         if (val !== 0) {
           amount = Math.abs(val);
-          // Assume negative values or values in earlier columns are debits
-          type = val < 0 || j === 2 ? 'expense' : 'income';
+          type = 'expense'; // Default to expense for unknown columns
           break;
         }
       }
@@ -455,7 +480,7 @@ export function parseCSV(content: string): ParseResult {
     }
 
     const headers = rows[0];
-    const bank = detectBank(headers);
+    const bank = detectBank(headers, rows);
 
     let transactions: ParsedTransaction[];
 
