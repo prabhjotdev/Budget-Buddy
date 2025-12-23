@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Upload, FileText, AlertCircle, Check, X, Filter, Calendar } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { Upload, FileText, AlertCircle, Check, X, Filter, Calendar, Copy } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { addTransaction } from '../../features/transactions/transactionsSlice';
 import { updateAllocationSpent } from '../../features/budget-periods/budgetPeriodsSlice';
@@ -17,6 +17,14 @@ interface TransactionToImport extends ParsedTransaction {
   selected: boolean;
   categoryId: string;
   outOfPeriod: boolean;
+  isDuplicate: boolean;
+}
+
+// Generate a unique key for transaction comparison (date + amount + normalized description)
+function getTransactionKey(date: Date, amount: number, description: string): string {
+  const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  const normalizedDesc = description.toLowerCase().replace(/\s+/g, ' ').trim();
+  return `${dateStr}|${amount.toFixed(2)}|${normalizedDesc}`;
 }
 
 export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsModalProps) => {
@@ -26,8 +34,21 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
   const { user } = useAppSelector((state) => state.auth);
   const { activePeriodId, allocationsByPeriodId, byId: periodsById } = useAppSelector((state) => state.budgetPeriods);
   const { byId: categoriesById, allIds: categoryIds } = useAppSelector((state) => state.categories);
+  const { byId: transactionsById } = useAppSelector((state) => state.transactions);
   const { data: settings } = useAppSelector((state) => state.settings);
   const timezone = settings?.timezone;
+
+  // Build a set of existing transaction keys for duplicate detection
+  const existingTransactionKeys = useMemo(() => {
+    const keys = new Set<string>();
+    Object.values(transactionsById).forEach(tx => {
+      const txDate = toDate(tx.date);
+      if (txDate) {
+        keys.add(getTransactionKey(txDate, tx.amount, tx.description));
+      }
+    });
+    return keys;
+  }, [transactionsById]);
 
   // Get active period dates
   const activePeriod = activePeriodId ? periodsById[activePeriodId] : null;
@@ -39,6 +60,7 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
   const [isImporting, setIsImporting] = useState(false);
   const [showExcluded, setShowExcluded] = useState(false);
   const [showOutOfPeriod, setShowOutOfPeriod] = useState(false);
+  const [showDuplicates, setShowDuplicates] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
 
@@ -62,15 +84,18 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
       const result = parseCSV(content);
       setParseResult(result);
 
-      // Initialize transactions with selection, default category, and period check
+      // Initialize transactions with selection, default category, period check, and duplicate detection
       const defaultCategoryId = categoryIds[0] || '';
       const txs: TransactionToImport[] = result.transactions.map(tx => {
         const outOfPeriod = !isDateInPeriod(tx.date);
+        const txKey = getTransactionKey(tx.date, tx.amount, tx.description);
+        const isDuplicate = existingTransactionKeys.has(txKey);
         return {
           ...tx,
-          selected: !tx.excluded && !outOfPeriod, // Pre-select non-excluded, in-period transactions
+          selected: !tx.excluded && !outOfPeriod && !isDuplicate, // Pre-select non-excluded, in-period, non-duplicate transactions
           categoryId: defaultCategoryId,
           outOfPeriod,
+          isDuplicate,
         };
       });
       setTransactions(txs);
@@ -180,6 +205,7 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
     setImportedCount(0);
     setShowExcluded(false);
     setShowOutOfPeriod(false);
+    setShowDuplicates(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -189,13 +215,15 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
   const visibleTransactions = transactions.filter(tx => {
     if (!showExcluded && tx.excluded) return false;
     if (!showOutOfPeriod && tx.outOfPeriod) return false;
+    if (!showDuplicates && tx.isDuplicate) return false;
     return true;
   });
 
   const selectedCount = transactions.filter(tx => tx.selected).length;
   const excludedCount = transactions.filter(tx => tx.excluded).length;
   const outOfPeriodCount = transactions.filter(tx => tx.outOfPeriod).length;
-  const inPeriodCount = transactions.filter(tx => !tx.outOfPeriod && !tx.excluded).length;
+  const duplicateCount = transactions.filter(tx => tx.isDuplicate).length;
+  const newTransactionCount = transactions.filter(tx => !tx.outOfPeriod && !tx.excluded && !tx.isDuplicate).length;
   const totalExpenses = transactions
     .filter(tx => tx.selected && tx.type === 'expense')
     .reduce((sum, tx) => sum + tx.amount, 0);
@@ -268,13 +296,22 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                     Active period: <strong>{formatPeriodRange(periodStart, periodEnd, timezone)}</strong>
                   </span>
                   <span className="text-sm text-green-600">
-                    ({inPeriodCount} in period)
+                    ({newTransactionCount} new)
                   </span>
                 </div>
               )}
 
               {/* Filter toggles */}
               <div className="flex flex-wrap items-center gap-4 pt-1">
+                {duplicateCount > 0 && (
+                  <button
+                    onClick={() => setShowDuplicates(!showDuplicates)}
+                    className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                  >
+                    <Copy className="w-4 h-4" />
+                    {showDuplicates ? 'Hide' : 'Show'} {duplicateCount} duplicates
+                  </button>
+                )}
                 {outOfPeriodCount > 0 && (
                   <button
                     onClick={() => setShowOutOfPeriod(!showOutOfPeriod)}
@@ -388,11 +425,13 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                       const actualIndex = transactions.indexOf(tx);
                       const rowClass = tx.excluded
                         ? 'bg-gray-50 text-gray-400'
-                        : tx.outOfPeriod
-                          ? 'bg-orange-50 text-orange-700'
-                          : tx.selected
-                            ? 'bg-indigo-50'
-                            : '';
+                        : tx.isDuplicate
+                          ? 'bg-purple-50 text-purple-700'
+                          : tx.outOfPeriod
+                            ? 'bg-orange-50 text-orange-700'
+                            : tx.selected
+                              ? 'bg-indigo-50'
+                              : '';
                       return (
                         <tr key={index} className={rowClass}>
                           <td className="px-3 py-2">
@@ -405,7 +444,12 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             {formatShortDate(tx.date, timezone)}
-                            {tx.outOfPeriod && (
+                            {tx.isDuplicate && (
+                              <span className="ml-1 inline-block px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
+                                Duplicate
+                              </span>
+                            )}
+                            {tx.outOfPeriod && !tx.isDuplicate && (
                               <span className="ml-1 inline-block px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">
                                 Outside period
                               </span>
