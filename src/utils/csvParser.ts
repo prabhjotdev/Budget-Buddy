@@ -159,11 +159,24 @@ function parseAmount(amountStr: string): number {
 }
 
 // Detect bank format from header row
-function detectBank(headers: string[]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
+function detectBank(headers: string[], rows: string[][]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
   const headerStr = headers.join(',').toLowerCase();
 
-  // TD format: typically has "Date", "Description", "Withdrawals", "Deposits", "Balance"
-  if (headerStr.includes('withdrawals') && headerStr.includes('deposits')) {
+  // TD EasyWeb export: first line is just "accountactivity" with no real headers
+  // Data format: Date, Description, Debit, Credit, Balance
+  if (headerStr === 'accountactivity' || headerStr.startsWith('accountactivity,')) {
+    return 'TD';
+  }
+
+  // TD format variations with proper headers:
+  // "Date,Description,Withdrawals,Deposits,Balance"
+  // "Date,Transaction Description,Debit Amount,Credit Amount,Balance"
+  // "Date,Description,Debit,Credit,Balance"
+  if (
+    (headerStr.includes('withdrawal') && headerStr.includes('deposit')) ||
+    (headerStr.includes('debit') && headerStr.includes('credit')) ||
+    (headerStr.includes('date') && headerStr.includes('description') && headerStr.includes('balance'))
+  ) {
     return 'TD';
   }
 
@@ -172,18 +185,9 @@ function detectBank(headers: string[]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
     return 'RBC';
   }
 
-  // Amex format: simpler, typically "Date", "Description", "Amount" or "Card Member"
-  if (headerStr.includes('card member') || (headerStr.includes('reference') && headerStr.includes('amount'))) {
+  // Amex format: "Date", "Description", "Amount" or "Card Member", "Reference"
+  if (headerStr.includes('card member') || headerStr.includes('reference')) {
     return 'Amex';
-  }
-
-  // Check for Amex by column count and structure
-  if (headers.length >= 3 && headers.length <= 5) {
-    const hasDate = headers.some(h => h.toLowerCase().includes('date'));
-    const hasAmount = headers.some(h => h.toLowerCase().includes('amount'));
-    if (hasDate && hasAmount) {
-      return 'Amex';
-    }
   }
 
   return 'Generic';
@@ -193,26 +197,81 @@ function detectBank(headers: string[]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
 function parseTD(rows: string[][], headers: string[]): ParsedTransaction[] {
   const transactions: ParsedTransaction[] = [];
   const headerLower = headers.map(h => h.toLowerCase());
+  const headerStr = headerLower.join(',');
 
-  const dateIdx = headerLower.findIndex(h => h.includes('date'));
-  const descIdx = headerLower.findIndex(h => h.includes('description'));
-  const withdrawalIdx = headerLower.findIndex(h => h.includes('withdrawal'));
-  const depositIdx = headerLower.findIndex(h => h.includes('deposit'));
+  // Check if this is the "accountactivity" format (no real headers)
+  // Format: Date, Description, Debit, Credit, Balance
+  const isAccountActivityFormat = headerStr === 'accountactivity' || headerStr.startsWith('accountactivity,');
 
-  for (let i = 1; i < rows.length; i++) {
+  let dateIdx: number;
+  let descIdx: number;
+  let debitIdx: number;
+  let creditIdx: number;
+  let startRow: number;
+
+  if (isAccountActivityFormat) {
+    // TD EasyWeb "accountactivity" export - fixed column positions, no header row
+    // Row 0 is "accountactivity", data starts at row 1
+    dateIdx = 0;
+    descIdx = 1;
+    debitIdx = 2;
+    creditIdx = 3;
+    startRow = 1;
+  } else {
+    // Standard header-based parsing
+    dateIdx = headerLower.findIndex(h => h.includes('date'));
+    descIdx = headerLower.findIndex(h => h.includes('description'));
+    debitIdx = headerLower.findIndex(h => h.includes('withdrawal'));
+    creditIdx = headerLower.findIndex(h => h.includes('deposit'));
+
+    // Try alternate names
+    if (debitIdx < 0) {
+      debitIdx = headerLower.findIndex(h => h.includes('debit'));
+    }
+    if (creditIdx < 0) {
+      creditIdx = headerLower.findIndex(h => h.includes('credit'));
+    }
+    startRow = 1;
+  }
+
+  for (let i = startRow; i < rows.length; i++) {
     const row = rows[i];
     if (row.length < 3) continue;
 
-    const dateStr = row[dateIdx] || row[0];
+    const dateStr = row[dateIdx >= 0 ? dateIdx : 0];
     const date = parseDate(dateStr);
     if (!date) continue;
 
-    const description = row[descIdx] || row[1] || '';
-    const withdrawal = parseAmount(row[withdrawalIdx] || row[2] || '');
-    const deposit = parseAmount(row[depositIdx] || row[3] || '');
+    const description = row[descIdx >= 0 ? descIdx : 1] || '';
 
-    const amount = withdrawal > 0 ? withdrawal : deposit;
-    const type: 'expense' | 'income' = withdrawal > 0 ? 'expense' : 'income';
+    // Get debit and credit values
+    const debit = debitIdx >= 0 ? parseAmount(row[debitIdx] || '') : 0;
+    const credit = creditIdx >= 0 ? parseAmount(row[creditIdx] || '') : 0;
+
+    // Determine amount and type
+    let amount: number;
+    let type: 'expense' | 'income';
+
+    if (debit > 0) {
+      amount = debit;
+      type = 'expense';
+    } else if (credit > 0) {
+      amount = credit;
+      type = 'income';
+    } else {
+      // Fallback: try to find any numeric value in remaining columns
+      amount = 0;
+      type = 'expense';
+      for (let j = 2; j < row.length - 1; j++) { // Skip last column (balance)
+        if (j === debitIdx || j === creditIdx) continue;
+        const val = parseAmount(row[j]);
+        if (val !== 0) {
+          amount = Math.abs(val);
+          type = 'expense'; // Default to expense for unknown columns
+          break;
+        }
+      }
+    }
 
     if (amount === 0) continue;
 
@@ -421,7 +480,7 @@ export function parseCSV(content: string): ParseResult {
     }
 
     const headers = rows[0];
-    const bank = detectBank(headers);
+    const bank = detectBank(headers, rows);
 
     let transactions: ParsedTransaction[];
 

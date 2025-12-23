@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, AlertCircle, Check, X, Filter } from 'lucide-react';
+import { Upload, FileText, AlertCircle, Check, X, Filter, Calendar } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { addTransaction } from '../../features/transactions/transactionsSlice';
 import { updateAllocationSpent } from '../../features/budget-periods/budgetPeriodsSlice';
 import { Modal, Button, Select } from '../shared';
 import { parseCSV, readFileAsText, ParsedTransaction, ParseResult } from '../../utils/csvParser';
 import { formatCurrency } from '../../utils/currency';
-import { formatShortDate } from '../../utils/date';
+import { formatShortDate, formatPeriodRange, toDate } from '../../utils/date';
 
 interface ImportTransactionsModalProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ interface ImportTransactionsModalProps {
 interface TransactionToImport extends ParsedTransaction {
   selected: boolean;
   categoryId: string;
+  outOfPeriod: boolean;
 }
 
 export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsModalProps) => {
@@ -23,19 +24,34 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { user } = useAppSelector((state) => state.auth);
-  const { activePeriodId, allocationsByPeriodId } = useAppSelector((state) => state.budgetPeriods);
+  const { activePeriodId, allocationsByPeriodId, byId: periodsById } = useAppSelector((state) => state.budgetPeriods);
   const { byId: categoriesById, allIds: categoryIds } = useAppSelector((state) => state.categories);
   const { data: settings } = useAppSelector((state) => state.settings);
   const timezone = settings?.timezone;
+
+  // Get active period dates
+  const activePeriod = activePeriodId ? periodsById[activePeriodId] : null;
+  const periodStart = activePeriod ? toDate(activePeriod.startDate) : null;
+  const periodEnd = activePeriod ? toDate(activePeriod.endDate) : null;
 
   const [parseResult, setParseResult] = useState<ParseResult | null>(null);
   const [transactions, setTransactions] = useState<TransactionToImport[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [showExcluded, setShowExcluded] = useState(false);
+  const [showOutOfPeriod, setShowOutOfPeriod] = useState(false);
   const [importComplete, setImportComplete] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
 
   const allocations = activePeriodId ? allocationsByPeriodId[activePeriodId] : null;
+
+  // Check if date is within period
+  const isDateInPeriod = (date: Date): boolean => {
+    if (!periodStart || !periodEnd) return true;
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const startOnly = new Date(periodStart.getFullYear(), periodStart.getMonth(), periodStart.getDate());
+    const endOnly = new Date(periodEnd.getFullYear(), periodEnd.getMonth(), periodEnd.getDate());
+    return dateOnly >= startOnly && dateOnly <= endOnly;
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,13 +62,17 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
       const result = parseCSV(content);
       setParseResult(result);
 
-      // Initialize transactions with selection and default category
+      // Initialize transactions with selection, default category, and period check
       const defaultCategoryId = categoryIds[0] || '';
-      const txs: TransactionToImport[] = result.transactions.map(tx => ({
-        ...tx,
-        selected: !tx.excluded, // Pre-select non-excluded transactions
-        categoryId: defaultCategoryId,
-      }));
+      const txs: TransactionToImport[] = result.transactions.map(tx => {
+        const outOfPeriod = !isDateInPeriod(tx.date);
+        return {
+          ...tx,
+          selected: !tx.excluded && !outOfPeriod, // Pre-select non-excluded, in-period transactions
+          categoryId: defaultCategoryId,
+          outOfPeriod,
+        };
+      });
       setTransactions(txs);
       setImportComplete(false);
       setImportedCount(0);
@@ -85,6 +105,18 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
   const handleBulkCategoryChange = (categoryId: string) => {
     setTransactions(prev =>
       prev.map(tx => (tx.selected ? { ...tx, categoryId } : tx))
+    );
+  };
+
+  const handleTypeChange = (index: number, type: 'expense' | 'income') => {
+    setTransactions(prev =>
+      prev.map((tx, i) => (i === index ? { ...tx, type } : tx))
+    );
+  };
+
+  const handleBulkTypeChange = (type: 'expense' | 'income') => {
+    setTransactions(prev =>
+      prev.map(tx => (tx.selected ? { ...tx, type } : tx))
     );
   };
 
@@ -147,18 +179,23 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
     setImportComplete(false);
     setImportedCount(0);
     setShowExcluded(false);
+    setShowOutOfPeriod(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
     onClose();
   };
 
-  const visibleTransactions = showExcluded
-    ? transactions
-    : transactions.filter(tx => !tx.excluded);
+  const visibleTransactions = transactions.filter(tx => {
+    if (!showExcluded && tx.excluded) return false;
+    if (!showOutOfPeriod && tx.outOfPeriod) return false;
+    return true;
+  });
 
   const selectedCount = transactions.filter(tx => tx.selected).length;
   const excludedCount = transactions.filter(tx => tx.excluded).length;
+  const outOfPeriodCount = transactions.filter(tx => tx.outOfPeriod).length;
+  const inPeriodCount = transactions.filter(tx => !tx.outOfPeriod && !tx.excluded).length;
   const totalExpenses = transactions
     .filter(tx => tx.selected && tx.type === 'expense')
     .reduce((sum, tx) => sum + tx.amount, 0);
@@ -209,26 +246,54 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
         {/* Parse Results */}
         {parseResult && !importComplete && (
           <>
-            {/* Bank Detection Info */}
-            <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-gray-500" />
-                <span className="text-sm text-gray-700">
-                  Detected format: <strong>{parseResult.bank}</strong>
-                </span>
-                <span className="text-sm text-gray-500">
-                  ({transactions.length} transactions found)
-                </span>
+            {/* Bank Detection & Period Info */}
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-gray-500" />
+                  <span className="text-sm text-gray-700">
+                    Detected format: <strong>{parseResult.bank}</strong>
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    ({transactions.length} transactions found)
+                  </span>
+                </div>
               </div>
-              {excludedCount > 0 && (
-                <button
-                  onClick={() => setShowExcluded(!showExcluded)}
-                  className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
-                >
-                  <Filter className="w-4 h-4" />
-                  {showExcluded ? 'Hide' : 'Show'} {excludedCount} excluded
-                </button>
+
+              {/* Active Period Info */}
+              {activePeriod && periodStart && periodEnd && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-indigo-500" />
+                  <span className="text-sm text-gray-700">
+                    Active period: <strong>{formatPeriodRange(periodStart, periodEnd, timezone)}</strong>
+                  </span>
+                  <span className="text-sm text-green-600">
+                    ({inPeriodCount} in period)
+                  </span>
+                </div>
               )}
+
+              {/* Filter toggles */}
+              <div className="flex flex-wrap items-center gap-4 pt-1">
+                {outOfPeriodCount > 0 && (
+                  <button
+                    onClick={() => setShowOutOfPeriod(!showOutOfPeriod)}
+                    className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700"
+                  >
+                    <Filter className="w-4 h-4" />
+                    {showOutOfPeriod ? 'Hide' : 'Show'} {outOfPeriodCount} outside period
+                  </button>
+                )}
+                {excludedCount > 0 && (
+                  <button
+                    onClick={() => setShowExcluded(!showExcluded)}
+                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-700"
+                  >
+                    <Filter className="w-4 h-4" />
+                    {showExcluded ? 'Hide' : 'Show'} {excludedCount} excluded
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Errors */}
@@ -259,7 +324,22 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
               </div>
               <div className="flex-1" />
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Set category for selected:</span>
+                <span className="text-sm text-gray-600">Set type:</span>
+                <button
+                  onClick={() => handleBulkTypeChange('expense')}
+                  className="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-700 hover:bg-red-200"
+                >
+                  Expense
+                </button>
+                <button
+                  onClick={() => handleBulkTypeChange('income')}
+                  className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-700 hover:bg-green-200"
+                >
+                  Income
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Category:</span>
                 <select
                   onChange={(e) => handleBulkCategoryChange(e.target.value)}
                   className="text-sm border border-gray-300 rounded-md px-2 py-1"
@@ -299,19 +379,22 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                       <th className="px-3 py-2 text-left text-gray-600">Date</th>
                       <th className="px-3 py-2 text-left text-gray-600">Description</th>
                       <th className="px-3 py-2 text-right text-gray-600">Amount</th>
+                      <th className="px-3 py-2 text-center text-gray-600">Type</th>
                       <th className="px-3 py-2 text-left text-gray-600">Category</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {visibleTransactions.map((tx, index) => {
                       const actualIndex = transactions.indexOf(tx);
+                      const rowClass = tx.excluded
+                        ? 'bg-gray-50 text-gray-400'
+                        : tx.outOfPeriod
+                          ? 'bg-orange-50 text-orange-700'
+                          : tx.selected
+                            ? 'bg-indigo-50'
+                            : '';
                       return (
-                        <tr
-                          key={index}
-                          className={`${tx.excluded ? 'bg-gray-50 text-gray-400' : ''} ${
-                            tx.selected && !tx.excluded ? 'bg-indigo-50' : ''
-                          }`}
-                        >
+                        <tr key={index} className={rowClass}>
                           <td className="px-3 py-2">
                             <input
                               type="checkbox"
@@ -322,6 +405,11 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             {formatShortDate(tx.date, timezone)}
+                            {tx.outOfPeriod && (
+                              <span className="ml-1 inline-block px-1.5 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">
+                                Outside period
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-2">
                             <div className="max-w-xs truncate" title={tx.description}>
@@ -338,6 +426,18 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                           }`}>
                             {tx.type === 'expense' ? '-' : '+'}
                             {formatCurrency(tx.amount)}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <button
+                              onClick={() => handleTypeChange(actualIndex, tx.type === 'expense' ? 'income' : 'expense')}
+                              className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                                tx.type === 'expense'
+                                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              }`}
+                            >
+                              {tx.type === 'expense' ? 'Expense' : 'Income'}
+                            </button>
                           </td>
                           <td className="px-3 py-2">
                             <select
