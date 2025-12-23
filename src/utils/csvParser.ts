@@ -248,26 +248,21 @@ function parseTD(rows: string[][], headers: string[]): ParsedTransaction[] {
     const debit = debitIdx >= 0 ? parseAmount(row[debitIdx] || '') : 0;
     const credit = creditIdx >= 0 ? parseAmount(row[creditIdx] || '') : 0;
 
-    // Determine amount and type
+    // Determine amount - default type to expense (user can change if needed)
     let amount: number;
-    let type: 'expense' | 'income';
 
     if (debit > 0) {
       amount = debit;
-      type = 'expense';
     } else if (credit > 0) {
       amount = credit;
-      type = 'income';
     } else {
       // Fallback: try to find any numeric value in remaining columns
       amount = 0;
-      type = 'expense';
       for (let j = 2; j < row.length - 1; j++) { // Skip last column (balance)
         if (j === debitIdx || j === creditIdx) continue;
         const val = parseAmount(row[j]);
         if (val !== 0) {
           amount = Math.abs(val);
-          type = 'expense'; // Default to expense for unknown columns
           break;
         }
       }
@@ -281,7 +276,7 @@ function parseTD(rows: string[][], headers: string[]): ParsedTransaction[] {
       date,
       description: description.trim(),
       amount: Math.abs(amount),
-      type,
+      type: 'expense', // Always default to expense
       originalRow: row,
       excluded: !!excludeReason,
       excludeReason,
@@ -321,18 +316,15 @@ function parseRBC(rows: string[][], headers: string[]): ParsedTransaction[] {
     }
 
     let amount: number;
-    let type: 'expense' | 'income';
 
     if (withdrawalIdx >= 0 && depositIdx >= 0) {
       // Separate withdrawal/deposit columns
       const withdrawal = parseAmount(row[withdrawalIdx] || '');
       const deposit = parseAmount(row[depositIdx] || '');
       amount = withdrawal > 0 ? withdrawal : deposit;
-      type = withdrawal > 0 ? 'expense' : 'income';
     } else {
-      // Single amount column (negative = expense)
+      // Single amount column
       amount = parseAmount(row[amountIdx] || row[2] || '');
-      type = amount < 0 ? 'expense' : 'income';
       amount = Math.abs(amount);
     }
 
@@ -344,7 +336,7 @@ function parseRBC(rows: string[][], headers: string[]): ParsedTransaction[] {
       date,
       description: description.trim(),
       amount,
-      type,
+      type: 'expense', // Always default to expense
       originalRow: row,
       excluded: !!excludeReason,
       excludeReason,
@@ -376,8 +368,6 @@ function parseAmex(rows: string[][], headers: string[]): ParsedTransaction[] {
 
     if (amount === 0) continue;
 
-    // Amex: positive = charge (expense), negative = credit/payment (income)
-    const type: 'expense' | 'income' = amount > 0 ? 'expense' : 'income';
     amount = Math.abs(amount);
 
     const excludeReason = getExcludeReason(description);
@@ -386,7 +376,7 @@ function parseAmex(rows: string[][], headers: string[]): ParsedTransaction[] {
       date,
       description: description.trim(),
       amount,
-      type,
+      type: 'expense', // Always default to expense
       originalRow: row,
       excluded: !!excludeReason,
       excludeReason,
@@ -425,26 +415,21 @@ function parseGeneric(rows: string[][], headers: string[]): ParsedTransaction[] 
     const description = row[descIdx >= 0 ? descIdx : 1] || '';
 
     let amount: number;
-    let type: 'expense' | 'income';
 
     if (debitIdx >= 0 && creditIdx >= 0) {
       const debit = parseAmount(row[debitIdx] || '');
       const credit = parseAmount(row[creditIdx] || '');
       amount = debit > 0 ? debit : credit;
-      type = debit > 0 ? 'expense' : 'income';
     } else if (amountIdx >= 0) {
       amount = parseAmount(row[amountIdx]);
-      type = amount < 0 ? 'expense' : 'income';
       amount = Math.abs(amount);
     } else {
       // Try to find any numeric column
       amount = 0;
-      type = 'expense';
       for (let j = 0; j < row.length; j++) {
         const val = parseAmount(row[j]);
         if (val !== 0 && j !== dateIdx) {
           amount = Math.abs(val);
-          type = val < 0 ? 'expense' : 'income';
           break;
         }
       }
@@ -458,7 +443,7 @@ function parseGeneric(rows: string[][], headers: string[]): ParsedTransaction[] 
       date,
       description: description.trim(),
       amount,
-      type,
+      type: 'expense', // Always default to expense
       originalRow: row,
       excluded: !!excludeReason,
       excludeReason,
