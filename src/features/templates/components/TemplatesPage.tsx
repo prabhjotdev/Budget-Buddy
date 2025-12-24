@@ -1,11 +1,21 @@
 import { useState } from 'react';
-import { Plus, Trash2, FileText, Edit } from 'lucide-react';
+import { Plus, Trash2, FileText, Edit, AlertTriangle } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { createTemplate, deleteTemplate } from '../templatesSlice';
+import { createTemplate, updateTemplate, deleteTemplate } from '../templatesSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, Input, CurrencyInput, EmptyState, IconButton, Modal } from '../../../components/shared';
+import {
+  Card,
+  CardHeader,
+  Button,
+  Input,
+  CurrencyInput,
+  EmptyState,
+  IconButton,
+  Modal,
+  CategoryIcon,
+} from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { TemplateAllocation } from '../../../types';
+import { TemplateAllocation, BudgetTemplate } from '../../../types';
 
 export const TemplatesPage = () => {
   const dispatch = useAppDispatch();
@@ -13,13 +23,25 @@ export const TemplatesPage = () => {
   const { byId, allIds } = useAppSelector((state) => state.templates);
   const { byId: categoriesById, allIds: categoryIds } = useAppSelector((state) => state.categories);
 
+  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+
+  // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [allocations, setAllocations] = useState<TemplateAllocation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleOpenModal = () => {
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<BudgetTemplate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleOpenCreateModal = () => {
+    setModalMode('create');
+    setEditingTemplateId(null);
     setName('');
     setDescription('');
     setAllocations(
@@ -32,34 +54,77 @@ export const TemplatesPage = () => {
     setIsModalOpen(true);
   };
 
+  const handleOpenEditModal = (template: BudgetTemplate) => {
+    setModalMode('edit');
+    setEditingTemplateId(template.id);
+    setName(template.name);
+    setDescription(template.description || '');
+
+    // Merge existing allocations with all categories
+    const allocationMap = new Map(template.allocations.map((a) => [a.categoryId, a]));
+    setAllocations(
+      categoryIds.map((catId) => ({
+        categoryId: catId,
+        amount: allocationMap.get(catId)?.amount || 0,
+        note: allocationMap.get(catId)?.note || '',
+      }))
+    );
+    setIsModalOpen(true);
+  };
+
   const handleSave = async () => {
     if (!user || !name) return;
 
     setIsLoading(true);
     try {
-      await dispatch(
-        createTemplate({
-          userId: user.uid,
-          template: {
-            name,
-            description,
-            allocations: allocations.filter((a) => a.amount > 0),
-            isDefault: false,
-          },
-        })
-      );
+      const templateData = {
+        name,
+        description,
+        allocations: allocations.filter((a) => a.amount > 0),
+        isDefault: false,
+      };
+
+      if (modalMode === 'create') {
+        await dispatch(
+          createTemplate({
+            userId: user.uid,
+            template: templateData,
+          })
+        );
+      } else if (editingTemplateId) {
+        await dispatch(
+          updateTemplate({
+            userId: user.uid,
+            templateId: editingTemplateId,
+            updates: templateData,
+          })
+        );
+      }
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Failed to create template:', error);
+      console.error('Failed to save template:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDelete = async (templateId: string) => {
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this template?')) {
-      dispatch(deleteTemplate({ userId: user.uid, templateId }));
+  const handleDeleteClick = (template: BudgetTemplate) => {
+    setTemplateToDelete(template);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!user || !templateToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteTemplate({ userId: user.uid, templateId: templateToDelete.id }));
+      setDeleteConfirmOpen(false);
+      setTemplateToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -75,7 +140,7 @@ export const TemplatesPage = () => {
     <AppLayout title="Budget Templates">
       <div className="space-y-4">
         <div className="flex justify-end">
-          <Button onClick={handleOpenModal}>
+          <Button onClick={handleOpenCreateModal}>
             <Plus className="w-4 h-4 mr-2" />
             New Template
           </Button>
@@ -87,7 +152,7 @@ export const TemplatesPage = () => {
               icon={FileText}
               title="No Templates"
               description="Create reusable budget templates to quickly set up new periods."
-              action={<Button onClick={handleOpenModal}>Create Template</Button>}
+              action={<Button onClick={handleOpenCreateModal}>Create Template</Button>}
             />
           </Card>
         ) : (
@@ -103,12 +168,16 @@ export const TemplatesPage = () => {
                     subtitle={template.description}
                     action={
                       <div className="flex gap-2">
-                        <IconButton icon={Edit} size="sm" />
+                        <IconButton
+                          icon={Edit}
+                          size="sm"
+                          onClick={() => handleOpenEditModal(template)}
+                        />
                         <IconButton
                           icon={Trash2}
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDelete(templateId)}
+                          onClick={() => handleDeleteClick(template)}
                         />
                       </div>
                     }
@@ -116,13 +185,17 @@ export const TemplatesPage = () => {
                   <div className="space-y-2">
                     {template.allocations.slice(0, 5).map((alloc) => {
                       const category = categoriesById[alloc.categoryId];
+                      const categoryColor = category?.color || '#6366f1';
+                      const categoryIcon = category?.icon || 'shopping-cart';
                       return (
                         <div key={alloc.categoryId} className="flex justify-between text-sm">
                           <div className="flex items-center gap-2">
                             <div
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: category?.color || '#6366f1' }}
-                            />
+                              className="w-5 h-5 rounded flex items-center justify-center"
+                              style={{ backgroundColor: categoryColor }}
+                            >
+                              <CategoryIcon icon={categoryIcon} color="#ffffff" size="sm" />
+                            </div>
                             <span className="text-gray-700">{category?.name || 'Unknown'}</span>
                           </div>
                           <span className="font-medium">{formatCurrency(alloc.amount)}</span>
@@ -148,7 +221,13 @@ export const TemplatesPage = () => {
         )}
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Create Template" size="lg">
+      {/* Create/Edit Template Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={modalMode === 'create' ? 'Create Template' : 'Edit Template'}
+        size="lg"
+      >
         <div className="space-y-4">
           <Input
             label="Template Name"
@@ -171,12 +250,16 @@ export const TemplatesPage = () => {
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {allocations.map((alloc) => {
                 const category = categoriesById[alloc.categoryId];
+                const categoryColor = category?.color || '#6366f1';
+                const categoryIcon = category?.icon || 'shopping-cart';
                 return (
                   <div key={alloc.categoryId} className="flex items-center gap-3">
                     <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: category?.color || '#6366f1' }}
-                    />
+                      className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: categoryColor }}
+                    >
+                      <CategoryIcon icon={categoryIcon} color="#ffffff" size="sm" />
+                    </div>
                     <span className="text-sm text-gray-700 w-32 truncate">{category?.name}</span>
                     <CurrencyInput
                       value={alloc.amount}
@@ -194,9 +277,47 @@ export const TemplatesPage = () => {
               Cancel
             </Button>
             <Button onClick={handleSave} isLoading={isLoading} disabled={!name}>
-              Save Template
+              {modalMode === 'create' ? 'Create Template' : 'Save Changes'}
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Delete Template"
+        size="sm"
+      >
+        <div className="space-y-4">
+          {templateToDelete && (
+            <>
+              <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-red-800">
+                    Delete "{templateToDelete.name}"?
+                  </p>
+                  <p className="text-sm text-red-600 mt-1">
+                    This action cannot be undone. The template will be permanently removed.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  isLoading={isDeleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete Template
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </AppLayout>

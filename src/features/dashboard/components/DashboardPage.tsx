@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchRecentTransactions } from '../../transactions/transactionsSlice';
 import { openModal } from '../../auth/uiSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, ProgressBar, Badge, EmptyState } from '../../../components/shared';
+import { Card, CardHeader, Button, ProgressBar, Badge, EmptyState, CategoryIcon } from '../../../components/shared';
 import { EditAllocationModal } from '../../../components/modals';
 import { formatCurrency } from '../../../utils/currency';
 import { formatPeriodRange, formatShortDate, toDate } from '../../../utils/date';
@@ -189,6 +189,11 @@ export const DashboardPage = () => {
             <div className="space-y-3">
               {allocations?.allIds.map((allocId) => {
                 const alloc = allocations.byId[allocId];
+                const category = categories[alloc.categoryId];
+                // Use live category data, fall back to stored values
+                const categoryName = category?.name || alloc.categoryName;
+                const categoryColor = category?.color || alloc.categoryColor || '#6366f1';
+                const categoryIcon = category?.icon || 'shopping-cart';
                 const progress = calculateAllocationProgress(
                   alloc.budgetedAmount,
                   alloc.spentAmount
@@ -203,11 +208,13 @@ export const DashboardPage = () => {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: alloc.categoryColor }}
-                        />
+                          className="w-6 h-6 rounded flex items-center justify-center"
+                          style={{ backgroundColor: categoryColor }}
+                        >
+                          <CategoryIcon icon={categoryIcon} color="#ffffff" size="sm" />
+                        </div>
                         <span className="text-sm font-medium text-gray-700">
-                          {alloc.categoryName}
+                          {categoryName}
                         </span>
                         <Pencil className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
@@ -217,7 +224,7 @@ export const DashboardPage = () => {
                     </div>
                     <ProgressBar
                       value={progress.percent}
-                      color={alloc.categoryColor}
+                      color={categoryColor}
                       isOverBudget={progress.isOverBudget}
                       size="sm"
                     />
@@ -282,6 +289,11 @@ export const DashboardPage = () => {
                 const tx = transactionsById[txId];
                 if (!tx) return null;
 
+                const category = categories[tx.categoryId];
+                const categoryName = category?.name || tx.categoryName;
+                const categoryColor = category?.color || '#6366f1';
+                const categoryIcon = category?.icon || 'shopping-cart';
+
                 return (
                   <div
                     key={txId}
@@ -289,20 +301,15 @@ export const DashboardPage = () => {
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{
-                          backgroundColor: categories[tx.categoryId]?.color + '20',
-                        }}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: categoryColor }}
                       >
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: categories[tx.categoryId]?.color }}
-                        />
+                        <CategoryIcon icon={categoryIcon} color="#ffffff" size="md" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">{tx.description}</p>
                         <p className="text-xs text-gray-500">
-                          {tx.categoryName} • {formatShortDate(toDate(tx.date), timezone)}
+                          {categoryName} • {formatShortDate(toDate(tx.date), timezone)}
                         </p>
                       </div>
                     </div>
