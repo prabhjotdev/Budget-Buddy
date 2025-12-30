@@ -1,11 +1,20 @@
-import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, Pencil, Trash2, AlertTriangle, Wallet } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
 import { createCategory, updateCategory, deleteCategory } from '../../categories/categoriesSlice';
+import { fetchPaymentMethods } from '../../paycheck/paymentMethodsSlice';
+import { fetchBills } from '../../paycheck/billsSlice';
+import { fetchSpendingTags } from '../../paycheck/spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Input, Select, CategoryBadge, Modal } from '../../../components/shared';
 import { CategoryModal } from '../../../components/modals/CategoryModal';
+import {
+  PaycheckSetup,
+  PaymentMethodsManager,
+  BillsManager,
+  SpendingTagsManager,
+} from '../../paycheck/components';
 import { Category } from '../../../types';
 
 // Get all supported timezones
@@ -45,6 +54,8 @@ const getBrowserTimezone = (): string => {
   }
 };
 
+type SettingsTab = 'general' | 'paycheck';
+
 export const SettingsPage = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -52,6 +63,10 @@ export const SettingsPage = () => {
   const { byId: categoriesById, allIds: categoryIds } = useAppSelector((state) => state.categories);
   const { byId: transactionsById } = useAppSelector((state) => state.transactions);
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<SettingsTab>('paycheck');
+
+  // General settings state
   const [payDay1, setPayDay1] = useState(settings?.payDays[0] || 1);
   const [payDay2, setPayDay2] = useState(settings?.payDays[1] || 15);
   const [currency, setCurrency] = useState(settings?.currency || 'USD');
@@ -65,6 +80,15 @@ export const SettingsPage = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load paycheck system data when tab is selected
+  useEffect(() => {
+    if (activeTab === 'paycheck' && user) {
+      dispatch(fetchPaymentMethods(user.uid));
+      dispatch(fetchBills(user.uid));
+      dispatch(fetchSpendingTags(user.uid));
+    }
+  }, [activeTab, user, dispatch]);
 
   // Get transaction count for a category
   const getTransactionCount = (categoryId: string): number => {
@@ -189,133 +213,183 @@ export const SettingsPage = () => {
 
   return (
     <AppLayout title="Settings">
-      <div className="max-w-2xl space-y-6">
-        <Card>
-          <CardHeader
-            title="Pay Day Configuration"
-            subtitle="Set the days of the month when you get paid"
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="First Pay Day"
-              value={String(payDay1)}
-              onChange={(e) => setPayDay1(Number(e.target.value))}
-              options={dayOptions}
-            />
-            <Select
-              label="Second Pay Day"
-              value={String(payDay2)}
-              onChange={(e) => setPayDay2(Number(e.target.value))}
-              options={dayOptions}
-            />
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader title="Currency" subtitle="Select your preferred currency" />
-          <Select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            options={[
-              { value: 'USD', label: 'USD ($)' },
-              { value: 'EUR', label: 'EUR (\u20AC)' },
-              { value: 'GBP', label: 'GBP (\u00A3)' },
-              { value: 'CAD', label: 'CAD ($)' },
-              { value: 'AUD', label: 'AUD ($)' },
-            ]}
-          />
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Timezone"
-            subtitle="Select your timezone for date display"
-          />
-          <Select
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            options={timezoneOptions}
-          />
-          <p className="mt-2 text-xs text-gray-500">
-            Detected timezone: {getBrowserTimezone()}
-          </p>
-        </Card>
-
-        <Card>
-          <CardHeader title="Account" subtitle="Your account information" />
-          <div className="space-y-4">
-            <Input label="Email" value={user?.email || ''} disabled />
-            <Input label="Display Name" value={user?.displayName || ''} disabled />
-          </div>
-        </Card>
-
-        <div className="flex justify-end">
-          <Button onClick={handleSave} isLoading={isSaving}>
-            Save Settings
-          </Button>
+      {/* Tab Navigation */}
+      <div className="mb-6 border-b border-gray-200">
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('paycheck')}
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'paycheck'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Wallet className="w-4 h-4" />
+              Paycheck Budget
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('general')}
+            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'general'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            General & Legacy
+          </button>
         </div>
+      </div>
 
-        {/* Categories Management */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
+      {/* Paycheck Budget Tab */}
+      {activeTab === 'paycheck' && (
+        <div className="max-w-2xl space-y-6">
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4 mb-6">
+            <h3 className="font-semibold text-indigo-900 mb-1">Paycheck-Based Budgeting</h3>
+            <p className="text-sm text-indigo-700">
+              Budget based on when you get paid, not arbitrary monthly cycles.
+              Set up your payment methods, bills, and spending tags to get started.
+            </p>
+          </div>
+
+          <PaycheckSetup />
+          <PaymentMethodsManager />
+          <BillsManager />
+          <SpendingTagsManager />
+        </div>
+      )}
+
+      {/* General & Legacy Tab */}
+      {activeTab === 'general' && (
+        <div className="max-w-2xl space-y-6">
+          <Card>
             <CardHeader
-              title="Categories"
-              subtitle="Manage your expense categories"
+              title="Pay Day Configuration (Legacy)"
+              subtitle="Set the days of the month when you get paid"
             />
-            <Button onClick={handleAddCategory} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              Add Category
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="First Pay Day"
+                value={String(payDay1)}
+                onChange={(e) => setPayDay1(Number(e.target.value))}
+                options={dayOptions}
+              />
+              <Select
+                label="Second Pay Day"
+                value={String(payDay2)}
+                onChange={(e) => setPayDay2(Number(e.target.value))}
+                options={dayOptions}
+              />
+            </div>
+          </Card>
+
+          <Card>
+            <CardHeader title="Currency" subtitle="Select your preferred currency" />
+            <Select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              options={[
+                { value: 'USD', label: 'USD ($)' },
+                { value: 'EUR', label: 'EUR (\u20AC)' },
+                { value: 'GBP', label: 'GBP (\u00A3)' },
+                { value: 'CAD', label: 'CAD ($)' },
+                { value: 'AUD', label: 'AUD ($)' },
+              ]}
+            />
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Timezone"
+              subtitle="Select your timezone for date display"
+            />
+            <Select
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              options={timezoneOptions}
+            />
+            <p className="mt-2 text-xs text-gray-500">
+              Detected timezone: {getBrowserTimezone()}
+            </p>
+          </Card>
+
+          <Card>
+            <CardHeader title="Account" subtitle="Your account information" />
+            <div className="space-y-4">
+              <Input label="Email" value={user?.email || ''} disabled />
+              <Input label="Display Name" value={user?.displayName || ''} disabled />
+            </div>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSave} isLoading={isSaving}>
+              Save Settings
             </Button>
           </div>
 
-          {sortedCategories.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No categories yet. Add your first category to get started.</p>
+          {/* Categories Management (Legacy) */}
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <CardHeader
+                title="Categories (Legacy)"
+                subtitle="Manage your expense categories"
+              />
+              <Button onClick={handleAddCategory} className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Add Category
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {sortedCategories.map((category) => {
-                const txCount = getTransactionCount(category.id);
-                return (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <CategoryBadge
-                        name={category.name}
-                        icon={category.icon || 'shopping-cart'}
-                        color={category.color || '#3B82F6'}
-                      />
-                      {txCount > 0 && (
-                        <span className="text-xs text-gray-500">
-                          {txCount} transaction{txCount !== 1 ? 's' : ''}
-                        </span>
-                      )}
+
+            {sortedCategories.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No categories yet. Add your first category to get started.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {sortedCategories.map((category) => {
+                  const txCount = getTransactionCount(category.id);
+                  return (
+                    <div
+                      key={category.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CategoryBadge
+                          name={category.name}
+                          icon={category.icon || 'shopping-cart'}
+                          color={category.color || '#3B82F6'}
+                        />
+                        {txCount > 0 && (
+                          <span className="text-xs text-gray-500">
+                            {txCount} transaction{txCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEditCategory(category)}
+                          className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Edit category"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(category)}
+                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete category"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleEditCategory(category)}
-                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                        title="Edit category"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(category)}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete category"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-      </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
 
       {/* Category Modal */}
       <CategoryModal

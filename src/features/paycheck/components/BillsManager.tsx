@@ -1,0 +1,400 @@
+import { useState, useMemo } from 'react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Receipt,
+  AlertTriangle,
+  CalendarCheck,
+  RotateCcw,
+  Zap,
+} from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import { fetchBills, createBill, updateBill, deleteBill } from '../billsSlice';
+import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
+import { Bill, BillFrequency } from '../../../types';
+
+const FREQUENCY_LABELS: Record<BillFrequency, string> = {
+  monthly: 'Monthly',
+  quarterly: 'Quarterly',
+  'semi-annual': 'Semi-Annual',
+  annual: 'Annual',
+  'one-time': 'One-Time',
+};
+
+const FREQUENCY_ICONS: Record<BillFrequency, string> = {
+  monthly: '📅',
+  quarterly: '📆',
+  'semi-annual': '🗓️',
+  annual: '📋',
+  'one-time': '1️⃣',
+};
+
+export const BillsManager = () => {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { byId, allIds, isLoading } = useAppSelector((state) => state.bills);
+  const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector(
+    (state) => state.paymentMethods
+  );
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [billToDelete, setBillToDelete] = useState<Bill | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Form state
+  const [formName, setFormName] = useState('');
+  const [formAmount, setFormAmount] = useState('');
+  const [formDueDay, setFormDueDay] = useState(1);
+  const [formFrequency, setFormFrequency] = useState<BillFrequency>('monthly');
+  const [formIsVariable, setFormIsVariable] = useState(false);
+  const [formIsAutoPay, setFormIsAutoPay] = useState(false);
+  const [formPaymentMethodId, setFormPaymentMethodId] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const bills = useMemo(() => {
+    return allIds.map((id) => byId[id]).filter(Boolean);
+  }, [allIds, byId]);
+
+  const paymentMethodOptions = useMemo(() => {
+    return [
+      { value: '', label: 'None' },
+      ...paymentMethodIds.map((id) => ({
+        value: id,
+        label: paymentMethodsById[id]?.name || 'Unknown',
+      })),
+    ];
+  }, [paymentMethodIds, paymentMethodsById]);
+
+  const dayOptions = Array.from({ length: 31 }, (_, i) => ({
+    value: String(i + 1),
+    label: `${i + 1}${getOrdinalSuffix(i + 1)}`,
+  }));
+
+  const handleAdd = () => {
+    setEditingBill(null);
+    setFormName('');
+    setFormAmount('');
+    setFormDueDay(1);
+    setFormFrequency('monthly');
+    setFormIsVariable(false);
+    setFormIsAutoPay(false);
+    setFormPaymentMethodId('');
+    setModalOpen(true);
+  };
+
+  const handleEdit = (bill: Bill) => {
+    setEditingBill(bill);
+    setFormName(bill.name);
+    setFormAmount(String(bill.amount));
+    setFormDueDay(bill.dueDay);
+    setFormFrequency(bill.frequency);
+    setFormIsVariable(bill.isVariable);
+    setFormIsAutoPay(bill.isAutoPay);
+    setFormPaymentMethodId(bill.paymentMethodId || '');
+    setModalOpen(true);
+  };
+
+  const handleDeleteClick = (bill: Bill) => {
+    setBillToDelete(bill);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!user || !formName.trim()) return;
+
+    setIsSaving(true);
+    try {
+      const billData = {
+        name: formName.trim(),
+        amount: parseFloat(formAmount) || 0,
+        dueDay: formDueDay,
+        frequency: formFrequency,
+        isVariable: formIsVariable,
+        isAutoPay: formIsAutoPay,
+        paymentMethodId: formPaymentMethodId || null,
+        isActive: true,
+      };
+
+      if (editingBill) {
+        await dispatch(
+          updateBill({
+            userId: user.uid,
+            billId: editingBill.id,
+            updates: billData,
+          })
+        ).unwrap();
+      } else {
+        await dispatch(
+          createBill({
+            userId: user.uid,
+            bill: billData,
+          })
+        ).unwrap();
+      }
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Failed to save bill:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!user || !billToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await dispatch(
+        deleteBill({
+          userId: user.uid,
+          billId: billToDelete.id,
+        })
+      ).unwrap();
+      setDeleteConfirmOpen(false);
+      setBillToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete bill:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <CardHeader title="Bills" subtitle="Track your recurring bills and due dates" />
+          <Button onClick={handleAdd} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Add Bill
+          </Button>
+        </div>
+
+        {bills.length === 0 ? (
+          <div className="text-center py-8">
+            <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 mb-4">No bills tracked yet.</p>
+            <Button onClick={handleAdd}>Add Your First Bill</Button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {bills.map((bill) => {
+              const paymentMethod = bill.paymentMethodId
+                ? paymentMethodsById[bill.paymentMethodId]
+                : null;
+
+              return (
+                <div
+                  key={bill.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
+                      <Receipt className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{bill.name}</span>
+                        {bill.isAutoPay && (
+                          <span
+                            className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded"
+                            title="Auto-pay enabled"
+                          >
+                            <Zap className="w-3 h-3" />
+                          </span>
+                        )}
+                        {bill.isVariable && (
+                          <span
+                            className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded"
+                            title="Variable amount"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <CalendarCheck className="w-3 h-3" />
+                          Due: {bill.dueDay}
+                          {getOrdinalSuffix(bill.dueDay)}
+                        </span>
+                        <span>•</span>
+                        <span>{FREQUENCY_LABELS[bill.frequency]}</span>
+                        {paymentMethod && (
+                          <>
+                            <span>•</span>
+                            <span>{paymentMethod.name}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-gray-900">
+                      ${bill.amount.toFixed(2)}
+                      {bill.isVariable && <span className="text-xs text-gray-400"> ~</span>}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEdit(bill)}
+                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(bill)}
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {bills.length > 0 && (
+          <div className="mt-4 pt-4 border-t flex justify-between items-center">
+            <span className="text-sm text-gray-500">
+              {bills.length} bill{bills.length !== 1 ? 's' : ''} tracked
+            </span>
+            <span className="text-sm font-medium text-gray-900">
+              Monthly Total: ${bills.filter((b) => b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0).toFixed(2)}
+            </span>
+          </div>
+        )}
+      </Card>
+
+      {/* Add/Edit Modal */}
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingBill ? 'Edit Bill' : 'Add Bill'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Bill Name"
+            placeholder="e.g., Rent, Electric, Car Insurance"
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label={`Amount${formIsVariable ? ' (Estimated)' : ''}`}
+              type="number"
+              placeholder="0.00"
+              value={formAmount}
+              onChange={(e) => setFormAmount(e.target.value)}
+            />
+            <Select
+              label="Due Day"
+              value={String(formDueDay)}
+              onChange={(e) => setFormDueDay(Number(e.target.value))}
+              options={dayOptions}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Frequency"
+              value={formFrequency}
+              onChange={(e) => setFormFrequency(e.target.value as BillFrequency)}
+              options={[
+                { value: 'monthly', label: 'Monthly' },
+                { value: 'quarterly', label: 'Quarterly' },
+                { value: 'semi-annual', label: 'Semi-Annual' },
+                { value: 'annual', label: 'Annual' },
+                { value: 'one-time', label: 'One-Time' },
+              ]}
+            />
+            <Select
+              label="Paid With"
+              value={formPaymentMethodId}
+              onChange={(e) => setFormPaymentMethodId(e.target.value)}
+              options={paymentMethodOptions}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formIsVariable}
+                onChange={(e) => setFormIsVariable(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-700">Variable amount (confirm each cycle)</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formIsAutoPay}
+                onChange={(e) => setFormIsAutoPay(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-700">Auto-pay enabled</span>
+            </label>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} isLoading={isSaving} disabled={!formName.trim()}>
+              {editingBill ? 'Save' : 'Add Bill'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        title="Delete Bill"
+        size="sm"
+      >
+        <div className="space-y-4">
+          {billToDelete && (
+            <>
+              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <p className="text-sm text-red-700">
+                  Are you sure you want to delete <strong>{billToDelete.name}</strong>?
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  isLoading={isDeleting}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+    </>
+  );
+};
+
+// Helper function for ordinal suffixes
+function getOrdinalSuffix(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
+}
