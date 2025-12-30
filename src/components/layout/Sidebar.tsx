@@ -10,6 +10,7 @@ import {
   Wallet,
   Menu,
   Calendar,
+  ShieldCheck,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -19,6 +20,7 @@ import { ROUTES } from '../../constants';
 
 const navItems = [
   { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck', highlight: true },
+  { to: ROUTES.BUFFER, icon: ShieldCheck, label: 'Buffer' },
   { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard (Legacy)' },
   { to: ROUTES.BUDGET_HISTORY, icon: History, label: 'History' },
   { to: ROUTES.TEMPLATES, icon: FileText, label: 'Templates' },
