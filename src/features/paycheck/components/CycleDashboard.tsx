@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Wallet,
   Calendar,
@@ -14,12 +14,15 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchActiveCycle } from '../paycheckCyclesSlice';
 import { fetchTransactionsByCycle } from '../spendingTransactionsSlice';
 import { fetchBuffer } from '../bufferSlice';
+import { fetchPaymentMethods } from '../paymentMethodsSlice';
+import { fetchSpendingTags } from '../spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, ProgressBar, Badge } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { StartCycleWizard } from './StartCycleWizard';
 import { CycleBillsList } from './CycleBillsList';
 import { SpendingSummary } from './SpendingSummary';
+import { LogSpendingModal } from './LogSpendingModal';
 import { PaycheckCycle } from '../../../types';
 
 export const CycleDashboard = () => {
@@ -78,7 +81,18 @@ interface CycleDashboardContentProps {
 }
 
 const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) => {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
   const { data: settings } = useAppSelector((state) => state.settings);
+  const [logSpendingOpen, setLogSpendingOpen] = useState(false);
+
+  // Fetch payment methods and tags for the spending modal
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchPaymentMethods(user.uid));
+      dispatch(fetchSpendingTags(user.uid));
+    }
+  }, [dispatch, user]);
 
   // Calculate cycle progress
   const cycleProgress = useMemo(() => {
@@ -271,7 +285,10 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
       <Card>
         <CardHeader title="Quick Actions" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Button className="flex items-center justify-center gap-2">
+          <Button
+            className="flex items-center justify-center gap-2"
+            onClick={() => setLogSpendingOpen(true)}
+          >
             <Plus className="w-4 h-4" />
             Log Spending
           </Button>
@@ -314,6 +331,15 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
           </div>
         </div>
       </Card>
+
+      {/* Log Spending Modal */}
+      <LogSpendingModal
+        isOpen={logSpendingOpen}
+        onClose={() => setLogSpendingOpen(false)}
+        cycleId={cycle.id}
+        currentSpent={cycle.totalSpent}
+        spendingLimit={cycle.spendingLimit}
+      />
     </div>
   );
 };

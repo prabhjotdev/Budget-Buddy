@@ -6,3 +6,4 @@ export { CycleDashboard } from './CycleDashboard';
 export { StartCycleWizard } from './StartCycleWizard';
 export { CycleBillsList } from './CycleBillsList';
 export { SpendingSummary } from './SpendingSummary';
+export { LogSpendingModal } from './LogSpendingModal';
