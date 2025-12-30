@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from '../constants';
 import { LoginPage, AuthGuard } from '../features/auth';
 import { DashboardPage } from '../features/dashboard';
+import { CycleDashboard } from '../features/paycheck/components';
 import { BudgetHistoryPage } from '../features/budget-periods';
 import { TransactionsPage } from '../features/transactions';
 import { TemplatesPage } from '../features/templates';
@@ -20,6 +21,15 @@ export const AppRouter = () => {
           element={
             <AuthGuard>
               <DashboardPage />
+              <Modals />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path={ROUTES.PAYCHECK}
+          element={
+            <AuthGuard>
+              <CycleDashboard />
               <Modals />
             </AuthGuard>
           }

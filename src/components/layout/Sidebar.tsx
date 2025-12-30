@@ -9,6 +9,7 @@ import {
   LogOut,
   Wallet,
   Menu,
+  Calendar,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -17,7 +18,8 @@ import { toggleSidebar } from '../../features/auth/uiSlice';
 import { ROUTES } from '../../constants';
 
 const navItems = [
-  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
+  { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck', highlight: true },
+  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard (Legacy)' },
   { to: ROUTES.BUDGET_HISTORY, icon: History, label: 'History' },
   { to: ROUTES.TEMPLATES, icon: FileText, label: 'Templates' },
   { to: ROUTES.TRANSACTIONS, icon: Receipt, label: 'Transactions' },
