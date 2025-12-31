@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, ChangeEvent } from 'react';
-import { AlertTriangle, Trash2, Wallet } from 'lucide-react';
+import { AlertTriangle, Trash2, Wallet, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
 import { fetchPaymentMethods } from '../../paycheck/paymentMethodsSlice';
@@ -63,12 +63,21 @@ export const SettingsPage = () => {
   const [currency, setCurrency] = useState(settings?.currency || 'USD');
   const [timezone, setTimezone] = useState(settings?.timezone || getBrowserTimezone());
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Reset data state
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Sync state with loaded settings
+  useEffect(() => {
+    if (settings) {
+      setCurrency(settings.currency || 'USD');
+      setTimezone(settings.timezone || getBrowserTimezone());
+    }
+  }, [settings]);
 
   // Load paycheck system data
   useEffect(() => {
@@ -91,6 +100,7 @@ export const SettingsPage = () => {
     if (!user) return;
 
     setIsSaving(true);
+    setSaveSuccess(false);
     try {
       await dispatch(
         updateSettings({
@@ -100,7 +110,10 @@ export const SettingsPage = () => {
             timezone,
           },
         })
-      );
+      ).unwrap();
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error('Failed to save settings:', error);
     } finally {
@@ -198,7 +211,13 @@ export const SettingsPage = () => {
             <p className="text-xs text-gray-500">
               Detected timezone: {getBrowserTimezone()}
             </p>
-            <div className="flex justify-end">
+            <div className="flex justify-end items-center gap-3">
+              {saveSuccess && (
+                <span className="text-green-600 text-sm flex items-center gap-1">
+                  <Check className="w-4 h-4" />
+                  Saved!
+                </span>
+              )}
               <Button onClick={handleSaveGeneralSettings} isLoading={isSaving}>
                 Save Settings
               </Button>
