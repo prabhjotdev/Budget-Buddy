@@ -12,3 +12,4 @@ export { BufferWithdrawModal } from './BufferWithdrawModal';
 export { BufferDepositModal } from './BufferDepositModal';
 export { EndCycleModal } from './EndCycleModal';
 export { MarkBillPaidModal } from './MarkBillPaidModal';
+export { ManagePage } from './ManagePage';
