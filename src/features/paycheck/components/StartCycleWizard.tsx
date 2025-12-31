@@ -8,10 +8,11 @@ import {
   ChevronLeft,
   Check,
   AlertCircle,
+  Plus,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { fetchBills } from '../billsSlice';
+import { fetchBills, createBill } from '../billsSlice';
 import { createPaycheckCycle } from '../paycheckCyclesSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
@@ -41,6 +42,13 @@ export const StartCycleWizard = () => {
   const [cycleEndDate, setCycleEndDate] = useState('');
   const [selectedBills, setSelectedBills] = useState<Record<string, { selected: boolean; amount: number }>>({});
   const [minimumSave, setMinimumSave] = useState(50);
+
+  // Inline bill creation state
+  const [showAddBill, setShowAddBill] = useState(false);
+  const [newBillName, setNewBillName] = useState('');
+  const [newBillAmount, setNewBillAmount] = useState('');
+  const [newBillDueDay, setNewBillDueDay] = useState('1');
+  const [isAddingBill, setIsAddingBill] = useState(false);
 
   // Load bills
   useEffect(() => {
@@ -127,6 +135,45 @@ export const StartCycleWizard = () => {
       ...prev,
       [billId]: { ...prev[billId], amount },
     }));
+  };
+
+  const handleAddBill = async () => {
+    if (!user || !newBillName || !newBillAmount) return;
+
+    setIsAddingBill(true);
+    try {
+      const result = await dispatch(
+        createBill({
+          userId: user.uid,
+          bill: {
+            name: newBillName,
+            amount: parseFloat(newBillAmount),
+            dueDay: parseInt(newBillDueDay) || 1,
+            isActive: true,
+            isVariable: false,
+            frequency: 'monthly',
+            paymentMethodId: null,
+            isAutoPay: false,
+          },
+        })
+      ).unwrap();
+
+      // Auto-select the new bill
+      setSelectedBills((prev) => ({
+        ...prev,
+        [result.id]: { selected: true, amount: parseFloat(newBillAmount) },
+      }));
+
+      // Reset form
+      setNewBillName('');
+      setNewBillAmount('');
+      setNewBillDueDay('1');
+      setShowAddBill(false);
+    } catch (error) {
+      console.error('Failed to add bill:', error);
+    } finally {
+      setIsAddingBill(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -270,13 +317,9 @@ export const StartCycleWizard = () => {
               title="Bills Due This Cycle"
               subtitle="Select which bills are due before your next paycheck"
             />
-            {activeBills.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>No bills set up yet.</p>
-                <p className="text-sm">You can add bills in Settings later.</p>
-              </div>
-            ) : (
+
+            {/* Existing bills list */}
+            {activeBills.length > 0 && (
               <div className="space-y-3">
                 {activeBills.map((bill) => (
                   <div
@@ -320,6 +363,86 @@ export const StartCycleWizard = () => {
                 ))}
               </div>
             )}
+
+            {/* Empty state / Add bill prompt */}
+            {activeBills.length === 0 && !showAddBill && (
+              <div className="text-center py-8">
+                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-gray-500 mb-4">No bills set up yet.</p>
+                <Button onClick={() => setShowAddBill(true)} className="inline-flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Your First Bill
+                </Button>
+              </div>
+            )}
+
+            {/* Add bill form */}
+            {showAddBill && (
+              <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <h4 className="font-medium text-gray-900 mb-4">Add a Bill</h4>
+                <div className="space-y-4">
+                  <Input
+                    label="Bill Name"
+                    placeholder="e.g., Rent, Electric, Internet"
+                    value={newBillName}
+                    onChange={(e) => setNewBillName(e.target.value)}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          placeholder="0.00"
+                          value={newBillAmount}
+                          onChange={(e) => setNewBillAmount(e.target.value)}
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Due Day</label>
+                      <select
+                        value={newBillDueDay}
+                        onChange={(e) => setNewBillDueDay(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                          <option key={day} value={day}>
+                            {day}{getOrdinalSuffix(day)} of the month
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleAddBill}
+                      disabled={!newBillName || !newBillAmount || isAddingBill}
+                      isLoading={isAddingBill}
+                    >
+                      Add Bill
+                    </Button>
+                    <Button variant="secondary" onClick={() => setShowAddBill(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Add another bill button (when bills exist) */}
+            {activeBills.length > 0 && !showAddBill && (
+              <button
+                onClick={() => setShowAddBill(true)}
+                className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Another Bill
+              </button>
+            )}
+
             <div className="pt-4 border-t flex justify-between items-center">
               <span className="text-gray-600">Total Bills Reserved</span>
               <span className="text-xl font-bold text-gray-900">
