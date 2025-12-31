@@ -5,7 +5,6 @@ import {
   TrendingDown,
   PiggyBank,
   AlertCircle,
-  ChevronRight,
   Plus,
   Receipt,
   Shield,
@@ -18,7 +17,7 @@ import { fetchBuffer } from '../bufferSlice';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, ProgressBar, Badge } from '../../../components/shared';
+import { Card, CardHeader, Button, ProgressBar } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { StartCycleWizard } from './StartCycleWizard';
 import { CycleBillsList } from './CycleBillsList';
@@ -37,7 +36,6 @@ export const CycleDashboard = () => {
     (state) => state.paycheckCycles
   );
   const { buffer } = useAppSelector((state) => state.buffer);
-  const { data: settings } = useAppSelector((state) => state.settings);
 
   const activeCycle = activeCycleId ? cyclesById[activeCycleId] : null;
 
@@ -88,7 +86,6 @@ interface CycleDashboardContentProps {
 const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { data: settings } = useAppSelector((state) => state.settings);
   const [logSpendingOpen, setLogSpendingOpen] = useState(false);
   const [endCycleOpen, setEndCycleOpen] = useState(false);
   const [markBillPaidOpen, setMarkBillPaidOpen] = useState(false);
@@ -128,11 +125,6 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
 
     return { percent, isOverBudget, dailyBudget };
   }, [cycle, cycleProgress]);
-
-  const formatDateRange = (start: Date, end: Date) => {
-    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
-  };
 
   return (
     <div className="space-y-6">

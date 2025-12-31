@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Transaction } from '../../types';
 import * as transactionsService from '../../services/firebase/transactions';
 
@@ -136,7 +136,7 @@ const transactionsSlice = createSlice({
       })
       .addCase(fetchTransactions.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { transactions, hasMore, filters } = action.payload;
+        const { transactions, hasMore } = action.payload;
 
         // Clear existing if fresh fetch
         state.byId = {};

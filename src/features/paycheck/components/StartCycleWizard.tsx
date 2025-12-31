@@ -18,7 +18,7 @@ import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice
 import { createPaycheckCycle } from '../paycheckCyclesSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { Bill, CycleBillEntry, CycleStatus, PaymentMethodType } from '../../../types';
+import { CycleBillEntry, CycleStatus, PaymentMethodType } from '../../../types';
 
 type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'review';
 
@@ -35,7 +35,6 @@ export const StartCycleWizard = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { byId: billsById, allIds: billIds } = useAppSelector((state) => state.bills);
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector((state) => state.paymentMethods);
-  const { data: settings } = useAppSelector((state) => state.settings);
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('paycheck');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,9 +99,9 @@ export const StartCycleWizard = () => {
   }, [billIds, billsById]);
 
   const billsTotal = useMemo(() => {
-    return Object.entries(selectedBills)
-      .filter(([_, { selected }]) => selected)
-      .reduce((sum, [_, { amount }]) => sum + amount, 0);
+    return Object.values(selectedBills)
+      .filter(({ selected }) => selected)
+      .reduce((sum, { amount }) => sum + amount, 0);
   }, [selectedBills]);
 
   const spendingLimit = useMemo(() => {
@@ -234,7 +233,7 @@ export const StartCycleWizard = () => {
 
       // Build cycle bills
       const cycleBills: CycleBillEntry[] = Object.entries(selectedBills)
-        .filter(([_, { selected }]) => selected)
+        .filter((entry) => entry[1].selected)
         .map(([billId, { amount }]) => {
           const bill = billsById[billId];
           const dueDay = bill?.dueDay || 1;

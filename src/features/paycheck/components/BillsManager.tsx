@@ -10,7 +10,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { fetchBills, createBill, updateBill, deleteBill } from '../billsSlice';
+import { createBill, updateBill, deleteBill } from '../billsSlice';
 import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
 import { Bill, BillFrequency } from '../../../types';
 
@@ -22,18 +22,10 @@ const FREQUENCY_LABELS: Record<BillFrequency, string> = {
   'one-time': 'One-Time',
 };
 
-const FREQUENCY_ICONS: Record<BillFrequency, string> = {
-  monthly: '📅',
-  quarterly: '📆',
-  'semi-annual': '🗓️',
-  annual: '📋',
-  'one-time': '1️⃣',
-};
-
 export const BillsManager = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { byId, allIds, isLoading } = useAppSelector((state) => state.bills);
+  const { byId, allIds } = useAppSelector((state) => state.bills);
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector(
     (state) => state.paymentMethods
   );

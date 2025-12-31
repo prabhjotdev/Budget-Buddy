@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchSettings } from '../../features/settings/settingsSlice';
 import { fetchCategories } from '../../features/categories/categoriesSlice';
-import { fetchBudgetPeriods, fetchAllocations, setActivePeriod } from '../../features/budget-periods/budgetPeriodsSlice';
+import { fetchBudgetPeriods, setActivePeriod } from '../../features/budget-periods/budgetPeriodsSlice';
 import { fetchIncomeSources } from '../../features/income/incomeSourcesSlice';
 import { fetchTemplates } from '../../features/templates/templatesSlice';
 import { fetchRecurringTransactions } from '../../features/recurring/recurringSlice';

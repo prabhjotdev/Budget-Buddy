@@ -159,7 +159,7 @@ function parseAmount(amountStr: string): number {
 }
 
 // Detect bank format from header row
-function detectBank(headers: string[], rows: string[][]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
+function detectBank(headers: string[]): 'TD' | 'RBC' | 'Amex' | 'Generic' {
   const headerStr = headers.join(',').toLowerCase();
 
   // TD EasyWeb export: first line is just "accountactivity" with no real headers
@@ -465,7 +465,7 @@ export function parseCSV(content: string): ParseResult {
     }
 
     const headers = rows[0];
-    const bank = detectBank(headers, rows);
+    const bank = detectBank(headers);
 
     let transactions: ParsedTransaction[];
 

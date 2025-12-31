@@ -1,9 +1,9 @@
 import { useState, useRef, useMemo } from 'react';
-import { Upload, FileText, AlertCircle, Check, X, Filter, Calendar, Copy } from 'lucide-react';
+import { Upload, FileText, AlertCircle, Check, Filter, Calendar, Copy } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { addTransaction } from '../../features/transactions/transactionsSlice';
 import { updateAllocationSpent } from '../../features/budget-periods/budgetPeriodsSlice';
-import { Modal, Button, Select } from '../shared';
+import { Modal, Button } from '../shared';
 import { parseCSV, readFileAsText, ParsedTransaction, ParseResult } from '../../utils/csvParser';
 import { formatCurrency } from '../../utils/currency';
 import { formatShortDate, formatPeriodRange, toDate } from '../../utils/date';
