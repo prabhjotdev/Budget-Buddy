@@ -48,7 +48,19 @@ export const store = configureStore({
           'budgetPeriods/setPeriods',
           'transactions/setTransactions',
           'transactions/addTransactions',
+          // Settings actions with Timestamps
+          'settings/fetchSettings/fulfilled',
+          'settings/updateSettings/fulfilled',
           // Paycheck system actions with Timestamps
+          'paymentMethods/fetch/fulfilled',
+          'paymentMethods/create/fulfilled',
+          'paymentMethods/update/fulfilled',
+          'bills/fetch/fulfilled',
+          'bills/create/fulfilled',
+          'bills/update/fulfilled',
+          'spendingTags/fetch/fulfilled',
+          'spendingTags/create/fulfilled',
+          'spendingTags/update/fulfilled',
           'paycheckCycles/fetch/fulfilled',
           'paycheckCycles/fetchActive/fulfilled',
           'paycheckCycles/create/fulfilled',
@@ -66,6 +78,8 @@ export const store = configureStore({
           'budgetPeriods.allocationsByPeriodId',
           'transactions.byId',
           'transactions.lastDoc',
+          // Settings paths with Timestamps
+          'settings.data',
           // Paycheck system paths with Timestamps
           'paycheckCycles.byId',
           'spendingTransactions.byId',
