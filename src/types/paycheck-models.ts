@@ -58,7 +58,7 @@ export interface PaymentMethod {
 
 // --- Bills ---
 
-export type BillFrequency = 'monthly' | 'quarterly' | 'semi-annual' | 'annual' | 'one-time';
+export type BillFrequency = 'monthly' | 'bi-weekly' | 'quarterly' | 'semi-annual' | 'annual' | 'one-time';
 
 export interface Bill {
   id: string;
