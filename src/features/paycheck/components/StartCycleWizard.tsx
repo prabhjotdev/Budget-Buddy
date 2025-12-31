@@ -64,7 +64,7 @@ export const StartCycleWizard = () => {
   // Calculate default end date (14 days from start for bi-weekly)
   useEffect(() => {
     if (cycleStartDate) {
-      const start = new Date(cycleStartDate);
+      const start = parseLocalDate(cycleStartDate);
       const end = new Date(start);
       end.setDate(end.getDate() + 13); // 14 days including start
       setCycleEndDate(end.toISOString().split('T')[0]);
@@ -134,8 +134,8 @@ export const StartCycleWizard = () => {
 
     setIsSubmitting(true);
     try {
-      const startDate = new Date(cycleStartDate);
-      const endDate = new Date(cycleEndDate);
+      const startDate = parseLocalDate(cycleStartDate);
+      const endDate = parseLocalDate(cycleEndDate);
 
       // Build cycle bills
       const cycleBills: CycleBillEntry[] = Object.entries(selectedBills)
@@ -415,8 +415,8 @@ export const StartCycleWizard = () => {
             </div>
 
             <div className="text-sm text-gray-500 text-center">
-              Cycle: {new Date(cycleStartDate).toLocaleDateString()} -{' '}
-              {new Date(cycleEndDate).toLocaleDateString()}
+              Cycle: {parseLocalDate(cycleStartDate).toLocaleDateString()} -{' '}
+              {parseLocalDate(cycleEndDate).toLocaleDateString()}
             </div>
           </div>
         )}
@@ -463,6 +463,12 @@ function getOrdinalSuffix(n: number): string {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
   return s[(v - 20) % 10] || s[v] || s[0];
+}
+
+// Parse a YYYY-MM-DD string as local time instead of UTC
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
 }
 
 // Calculate the actual due date for a bill within a cycle
