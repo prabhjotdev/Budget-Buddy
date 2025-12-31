@@ -9,6 +9,7 @@ import {
   Plus,
   Receipt,
   Shield,
+  Pencil,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchActiveCycle } from '../paycheckCyclesSlice';
@@ -26,6 +27,7 @@ import { LogSpendingModal } from './LogSpendingModal';
 import { EndCycleModal } from './EndCycleModal';
 import { MarkBillPaidModal } from './MarkBillPaidModal';
 import { BufferWithdrawModal } from './BufferWithdrawModal';
+import { EditPaycheckModal } from './EditPaycheckModal';
 import { PaycheckCycle } from '../../../types';
 
 export const CycleDashboard = () => {
@@ -91,6 +93,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
   const [endCycleOpen, setEndCycleOpen] = useState(false);
   const [markBillPaidOpen, setMarkBillPaidOpen] = useState(false);
   const [useBufferOpen, setUseBufferOpen] = useState(false);
+  const [editPaycheckOpen, setEditPaycheckOpen] = useState(false);
 
   // Fetch payment methods and tags for the spending modal
   useEffect(() => {
@@ -328,7 +331,16 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
 
       {/* Paycheck Breakdown */}
       <Card>
-        <CardHeader title="Paycheck Breakdown" />
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Paycheck Breakdown</h3>
+          <button
+            onClick={() => setEditPaycheckOpen(true)}
+            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="Edit paycheck amount"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+        </div>
         <div className="space-y-3">
           <div className="flex justify-between items-center py-2">
             <span className="text-gray-600">Paycheck Amount</span>
@@ -381,6 +393,17 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         onClose={() => setUseBufferOpen(false)}
         maxAmount={buffer?.totalAmount || 0}
         cycleId={cycle.id}
+      />
+
+      {/* Edit Paycheck Modal */}
+      <EditPaycheckModal
+        isOpen={editPaycheckOpen}
+        onClose={() => setEditPaycheckOpen(false)}
+        cycleId={cycle.id}
+        currentAmount={cycle.paycheckAmount}
+        billsTotal={cycle.billsTotal}
+        minimumSave={cycle.minimumSave}
+        totalSpent={cycle.totalSpent}
       />
     </div>
   );
