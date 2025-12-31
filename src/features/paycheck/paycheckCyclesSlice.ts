@@ -60,6 +60,29 @@ export const createPaycheckCycle = createAsyncThunk(
   }
 );
 
+export const updatePaycheckCycle = createAsyncThunk(
+  'paycheckCycles/update',
+  async (
+    {
+      userId,
+      cycleId,
+      updates,
+    }: {
+      userId: string;
+      cycleId: string;
+      updates: Partial<Omit<PaycheckCycle, 'id' | 'createdAt' | 'updatedAt'>>;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      await paycheckCyclesService.updatePaycheckCycle(userId, cycleId, updates);
+      return { cycleId, updates };
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
 export const updateCycleSpending = createAsyncThunk(
   'paycheckCycles/updateSpending',
   async (
@@ -218,6 +241,12 @@ const paycheckCyclesSlice = createSlice({
             state.byId[state.activeCycleId].status = 'completed';
           }
           state.activeCycleId = cycle.id;
+        }
+      })
+      .addCase(updatePaycheckCycle.fulfilled, (state, action) => {
+        const { cycleId, updates } = action.payload;
+        if (state.byId[cycleId]) {
+          state.byId[cycleId] = { ...state.byId[cycleId], ...updates };
         }
       })
       .addCase(updateCycleSpending.fulfilled, (state, action) => {
