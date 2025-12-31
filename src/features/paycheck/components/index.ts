@@ -10,3 +10,5 @@ export { LogSpendingModal } from './LogSpendingModal';
 export { BufferManager } from './BufferManager';
 export { BufferWithdrawModal } from './BufferWithdrawModal';
 export { BufferDepositModal } from './BufferDepositModal';
+export { EndCycleModal } from './EndCycleModal';
+export { MarkBillPaidModal } from './MarkBillPaidModal';

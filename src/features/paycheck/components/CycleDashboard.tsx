@@ -23,6 +23,9 @@ import { StartCycleWizard } from './StartCycleWizard';
 import { CycleBillsList } from './CycleBillsList';
 import { SpendingSummary } from './SpendingSummary';
 import { LogSpendingModal } from './LogSpendingModal';
+import { EndCycleModal } from './EndCycleModal';
+import { MarkBillPaidModal } from './MarkBillPaidModal';
+import { BufferWithdrawModal } from './BufferWithdrawModal';
 import { PaycheckCycle } from '../../../types';
 
 export const CycleDashboard = () => {
@@ -85,6 +88,9 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
   const { user } = useAppSelector((state) => state.auth);
   const { data: settings } = useAppSelector((state) => state.settings);
   const [logSpendingOpen, setLogSpendingOpen] = useState(false);
+  const [endCycleOpen, setEndCycleOpen] = useState(false);
+  const [markBillPaidOpen, setMarkBillPaidOpen] = useState(false);
+  const [useBufferOpen, setUseBufferOpen] = useState(false);
 
   // Fetch payment methods and tags for the spending modal
   useEffect(() => {
@@ -292,15 +298,28 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
             <Plus className="w-4 h-4" />
             Log Spending
           </Button>
-          <Button variant="secondary" className="flex items-center justify-center gap-2">
+          <Button
+            variant="secondary"
+            className="flex items-center justify-center gap-2"
+            onClick={() => setMarkBillPaidOpen(true)}
+          >
             <Receipt className="w-4 h-4" />
             Mark Bill Paid
           </Button>
-          <Button variant="secondary" className="flex items-center justify-center gap-2">
+          <Button
+            variant="secondary"
+            className="flex items-center justify-center gap-2"
+            onClick={() => setUseBufferOpen(true)}
+            disabled={!buffer || buffer.totalAmount <= 0}
+          >
             <Shield className="w-4 h-4" />
             Use Buffer
           </Button>
-          <Button variant="secondary" className="flex items-center justify-center gap-2">
+          <Button
+            variant="secondary"
+            className="flex items-center justify-center gap-2"
+            onClick={() => setEndCycleOpen(true)}
+          >
             <Calendar className="w-4 h-4" />
             End Cycle
           </Button>
@@ -339,6 +358,29 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         cycleId={cycle.id}
         currentSpent={cycle.totalSpent}
         spendingLimit={cycle.spendingLimit}
+      />
+
+      {/* End Cycle Modal */}
+      <EndCycleModal
+        isOpen={endCycleOpen}
+        onClose={() => setEndCycleOpen(false)}
+        cycle={cycle}
+      />
+
+      {/* Mark Bill Paid Modal */}
+      <MarkBillPaidModal
+        isOpen={markBillPaidOpen}
+        onClose={() => setMarkBillPaidOpen(false)}
+        cycleId={cycle.id}
+        bills={cycle.bills}
+      />
+
+      {/* Use Buffer Modal */}
+      <BufferWithdrawModal
+        isOpen={useBufferOpen}
+        onClose={() => setUseBufferOpen(false)}
+        maxAmount={buffer?.totalAmount || 0}
+        cycleId={cycle.id}
       />
     </div>
   );
