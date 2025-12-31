@@ -23,6 +23,7 @@ import { StartCycleWizard } from './StartCycleWizard';
 import { CycleBillsList } from './CycleBillsList';
 import { SpendingSummary } from './SpendingSummary';
 import { LogSpendingModal } from './LogSpendingModal';
+import { EndCycleModal } from './EndCycleModal';
 import { PaycheckCycle } from '../../../types';
 
 export const CycleDashboard = () => {
@@ -85,6 +86,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
   const { user } = useAppSelector((state) => state.auth);
   const { data: settings } = useAppSelector((state) => state.settings);
   const [logSpendingOpen, setLogSpendingOpen] = useState(false);
+  const [endCycleOpen, setEndCycleOpen] = useState(false);
 
   // Fetch payment methods and tags for the spending modal
   useEffect(() => {
@@ -300,7 +302,11 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
             <Shield className="w-4 h-4" />
             Use Buffer
           </Button>
-          <Button variant="secondary" className="flex items-center justify-center gap-2">
+          <Button
+            variant="secondary"
+            className="flex items-center justify-center gap-2"
+            onClick={() => setEndCycleOpen(true)}
+          >
             <Calendar className="w-4 h-4" />
             End Cycle
           </Button>
@@ -339,6 +345,13 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         cycleId={cycle.id}
         currentSpent={cycle.totalSpent}
         spendingLimit={cycle.spendingLimit}
+      />
+
+      {/* End Cycle Modal */}
+      <EndCycleModal
+        isOpen={endCycleOpen}
+        onClose={() => setEndCycleOpen(false)}
+        cycle={cycle}
       />
     </div>
   );
