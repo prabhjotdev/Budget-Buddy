@@ -18,7 +18,7 @@ import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice
 import { createPaycheckCycle } from '../paycheckCyclesSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { CycleBillEntry, CycleStatus, PaymentMethodType } from '../../../types';
+import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency } from '../../../types';
 
 type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'review';
 
@@ -57,7 +57,10 @@ export const StartCycleWizard = () => {
   const [newBillName, setNewBillName] = useState('');
   const [newBillAmount, setNewBillAmount] = useState('');
   const [newBillDueDay, setNewBillDueDay] = useState('1');
+  const [newBillFrequency, setNewBillFrequency] = useState<BillFrequency>('monthly');
   const [newBillPaymentMethodId, setNewBillPaymentMethodId] = useState<string | null>(null);
+  const [newBillIsVariable, setNewBillIsVariable] = useState(false);
+  const [newBillIsAutoPay, setNewBillIsAutoPay] = useState(false);
   const [isAddingBill, setIsAddingBill] = useState(false);
 
   // Load payment methods and bills
@@ -196,10 +199,10 @@ export const StartCycleWizard = () => {
             amount: parseFloat(newBillAmount),
             dueDay: parseInt(newBillDueDay) || 1,
             isActive: true,
-            isVariable: false,
-            frequency: 'monthly',
+            isVariable: newBillIsVariable,
+            frequency: newBillFrequency,
             paymentMethodId: newBillPaymentMethodId,
-            isAutoPay: false,
+            isAutoPay: newBillIsAutoPay,
           },
         })
       ).unwrap();
@@ -214,7 +217,10 @@ export const StartCycleWizard = () => {
       setNewBillName('');
       setNewBillAmount('');
       setNewBillDueDay('1');
+      setNewBillFrequency('monthly');
       setNewBillPaymentMethodId(null);
+      setNewBillIsVariable(false);
+      setNewBillIsAutoPay(false);
       setShowAddBill(false);
     } catch (error) {
       console.error('Failed to add bill:', error);
@@ -559,7 +565,9 @@ export const StartCycleWizard = () => {
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Amount{newBillIsVariable ? ' (Estimated)' : ''}
+                      </label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
                         <input
@@ -580,29 +588,64 @@ export const StartCycleWizard = () => {
                       >
                         {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                           <option key={day} value={day}>
-                            {day}{getOrdinalSuffix(day)} of the month
+                            {day}{getOrdinalSuffix(day)}
                           </option>
                         ))}
                       </select>
                     </div>
                   </div>
-                  {activePaymentMethods.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method (optional)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                      <select
+                        value={newBillFrequency}
+                        onChange={(e) => setNewBillFrequency(e.target.value as BillFrequency)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="monthly">Monthly</option>
+                        <option value="bi-weekly">Bi-Weekly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="semi-annual">Semi-Annual</option>
+                        <option value="annual">Annual</option>
+                        <option value="one-time">One-Time</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Paid With</label>
                       <select
                         value={newBillPaymentMethodId || ''}
                         onChange={(e) => setNewBillPaymentMethodId(e.target.value || null)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
-                        <option value="">Select payment method...</option>
+                        <option value="">None</option>
                         {activePaymentMethods.map((method) => (
                           <option key={method.id} value={method.id}>
-                            {method.name} ({method.type})
+                            {method.name}
                           </option>
                         ))}
                       </select>
                     </div>
-                  )}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newBillIsVariable}
+                        onChange={(e) => setNewBillIsVariable(e.target.checked)}
+                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">Variable amount (confirm each cycle)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newBillIsAutoPay}
+                        onChange={(e) => setNewBillIsAutoPay(e.target.checked)}
+                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">Auto-pay enabled</span>
+                    </label>
+                  </div>
                   <div className="flex gap-3">
                     <Button
                       onClick={handleAddBill}
