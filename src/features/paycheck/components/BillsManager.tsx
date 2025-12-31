@@ -16,6 +16,7 @@ import { Bill, BillFrequency } from '../../../types';
 
 const FREQUENCY_LABELS: Record<BillFrequency, string> = {
   monthly: 'Monthly',
+  'bi-weekly': 'Bi-Weekly',
   quarterly: 'Quarterly',
   'semi-annual': 'Semi-Annual',
   annual: 'Annual',
@@ -302,6 +303,7 @@ export const BillsManager = () => {
               onChange={(e) => setFormFrequency(e.target.value as BillFrequency)}
               options={[
                 { value: 'monthly', label: 'Monthly' },
+                { value: 'bi-weekly', label: 'Bi-Weekly' },
                 { value: 'quarterly', label: 'Quarterly' },
                 { value: 'semi-annual', label: 'Semi-Annual' },
                 { value: 'annual', label: 'Annual' },
