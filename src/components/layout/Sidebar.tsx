@@ -1,10 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  History,
-  FileText,
-  Receipt,
-  DollarSign,
   Settings,
   LogOut,
   Wallet,
@@ -19,13 +14,8 @@ import { toggleSidebar } from '../../features/auth/uiSlice';
 import { ROUTES } from '../../constants';
 
 const navItems = [
-  { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck', highlight: true },
+  { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck' },
   { to: ROUTES.BUFFER, icon: ShieldCheck, label: 'Buffer' },
-  { to: ROUTES.DASHBOARD, icon: LayoutDashboard, label: 'Dashboard (Legacy)' },
-  { to: ROUTES.BUDGET_HISTORY, icon: History, label: 'History' },
-  { to: ROUTES.TEMPLATES, icon: FileText, label: 'Templates' },
-  { to: ROUTES.TRANSACTIONS, icon: Receipt, label: 'Transactions' },
-  { to: ROUTES.INCOME, icon: DollarSign, label: 'Income' },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings' },
 ];
 
