@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Calendar, CalendarDays, DollarSign, Info } from 'lucide-react';
+import { Calendar, CalendarDays, DollarSign, Info, Check } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
+import { updateSettings } from '../../settings/settingsSlice';
 import { Card, CardHeader, Button, Select, Input } from '../../../components/shared';
 import { PaycheckScheduleType } from '../../../types';
 
@@ -22,12 +24,30 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
   );
   const [defaultMinimumSave, setDefaultMinimumSave] = useState(50);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Load existing settings if any
   useEffect(() => {
-    if (settings?.payDays) {
-      setSemiMonthlyDay1(settings.payDays[0]);
-      setSemiMonthlyDay2(settings.payDays[1]);
+    if (settings) {
+      // Load paycheck-specific settings
+      if (settings.scheduleType) {
+        setScheduleType(settings.scheduleType);
+      }
+      if (settings.semiMonthlyDays) {
+        setSemiMonthlyDay1(settings.semiMonthlyDays[0]);
+        setSemiMonthlyDay2(settings.semiMonthlyDays[1]);
+      } else if (settings.payDays) {
+        // Fallback to legacy payDays
+        setSemiMonthlyDay1(settings.payDays[0]);
+        setSemiMonthlyDay2(settings.payDays[1]);
+      }
+      if (settings.biWeeklyAnchorDate) {
+        const date = settings.biWeeklyAnchorDate.toDate();
+        setBiWeeklyAnchorDate(date.toISOString().split('T')[0]);
+      }
+      if (settings.defaultMinimumSave !== undefined) {
+        setDefaultMinimumSave(settings.defaultMinimumSave);
+      }
     }
   }, [settings]);
 
@@ -40,16 +60,22 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
     if (!user) return;
 
     setIsSaving(true);
+    setSaveSuccess(false);
     try {
-      // TODO: Save paycheck settings to Firebase
-      // This will be connected in Stage 3
-      console.log('Saving paycheck settings:', {
-        scheduleType,
-        semiMonthlyDays: [semiMonthlyDay1, semiMonthlyDay2],
-        biWeeklyAnchorDate,
-        defaultMinimumSave,
-      });
+      await dispatch(
+        updateSettings({
+          userId: user.uid,
+          updates: {
+            scheduleType,
+            semiMonthlyDays: [semiMonthlyDay1, semiMonthlyDay2] as [number, number],
+            biWeeklyAnchorDate: Timestamp.fromDate(new Date(biWeeklyAnchorDate)),
+            defaultMinimumSave,
+          },
+        })
+      ).unwrap();
 
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
       onSetupComplete?.();
     } catch (error) {
       console.error('Failed to save paycheck settings:', error);
@@ -188,7 +214,13 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
         </div>
 
         {/* Save Button */}
-        <div className="pt-4 flex justify-end">
+        <div className="pt-4 flex justify-end items-center gap-3">
+          {saveSuccess && (
+            <span className="text-green-600 text-sm flex items-center gap-1">
+              <Check className="w-4 h-4" />
+              Saved!
+            </span>
+          )}
           <Button onClick={handleSave} isLoading={isSaving}>
             Save Schedule
           </Button>

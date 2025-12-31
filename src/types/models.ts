@@ -1,11 +1,20 @@
 import { Timestamp } from 'firebase/firestore';
+import { PaycheckScheduleType } from './paycheck-models';
 
 // User Settings
 export interface UserSettings {
+  // Legacy fields
   payDays: [number, number];
   currency: string;
   timezone: string;
   defaultTemplateId: string | null;
+
+  // Paycheck schedule fields
+  scheduleType?: PaycheckScheduleType;
+  semiMonthlyDays?: [number, number];
+  biWeeklyAnchorDate?: Timestamp;
+  defaultMinimumSave?: number;
+
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
