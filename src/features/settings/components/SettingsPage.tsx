@@ -1,21 +1,21 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Plus, Pencil, Trash2, AlertTriangle, Wallet } from 'lucide-react';
+import { useState, useMemo, useEffect, ChangeEvent } from 'react';
+import { AlertTriangle, Trash2, Wallet } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
-import { createCategory, updateCategory, deleteCategory } from '../../categories/categoriesSlice';
 import { fetchPaymentMethods } from '../../paycheck/paymentMethodsSlice';
 import { fetchBills } from '../../paycheck/billsSlice';
 import { fetchSpendingTags } from '../../paycheck/spendingTagsSlice';
+import { clearPaycheckCycles } from '../../paycheck/paycheckCyclesSlice';
+import { clearBuffer } from '../../paycheck/bufferSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, Input, Select, CategoryBadge, Modal } from '../../../components/shared';
-import { CategoryModal } from '../../../components/modals/CategoryModal';
+import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
 import {
   PaycheckSetup,
   PaymentMethodsManager,
   BillsManager,
   SpendingTagsManager,
 } from '../../paycheck/components';
-import { Category } from '../../../types';
+import { resetAllData } from '../../../services/firebase/dataReset';
 
 // Get all supported timezones
 const getTimezones = (): string[] => {
@@ -54,57 +54,30 @@ const getBrowserTimezone = (): string => {
   }
 };
 
-type SettingsTab = 'general' | 'paycheck';
-
 export const SettingsPage = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { data: settings } = useAppSelector((state) => state.settings);
-  const { byId: categoriesById, allIds: categoryIds } = useAppSelector((state) => state.categories);
-  const { byId: transactionsById } = useAppSelector((state) => state.transactions);
-
-  // Tab state
-  const [activeTab, setActiveTab] = useState<SettingsTab>('paycheck');
 
   // General settings state
-  const [payDay1, setPayDay1] = useState(settings?.payDays[0] || 1);
-  const [payDay2, setPayDay2] = useState(settings?.payDays[1] || 15);
   const [currency, setCurrency] = useState(settings?.currency || 'USD');
   const [timezone, setTimezone] = useState(settings?.timezone || getBrowserTimezone());
   const [isSaving, setIsSaving] = useState(false);
 
-  // Category management state
-  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [categoryModalMode, setCategoryModalMode] = useState<'add' | 'edit'>('add');
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // Reset data state
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  // Load paycheck system data when tab is selected
+  // Load paycheck system data
   useEffect(() => {
-    if (activeTab === 'paycheck' && user) {
+    if (user) {
       dispatch(fetchPaymentMethods(user.uid));
       dispatch(fetchBills(user.uid));
       dispatch(fetchSpendingTags(user.uid));
     }
-  }, [activeTab, user, dispatch]);
-
-  // Get transaction count for a category
-  const getTransactionCount = (categoryId: string): number => {
-    return Object.values(transactionsById).filter((tx) => tx.categoryId === categoryId).length;
-  };
-
-  // Sort categories by sortOrder then by name
-  const sortedCategories = useMemo(() => {
-    return categoryIds
-      .map((id) => categoriesById[id])
-      .filter(Boolean)
-      .sort((a, b) => {
-        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
-        return a.name.localeCompare(b.name);
-      });
-  }, [categoryIds, categoriesById]);
+  }, [user, dispatch]);
 
   const timezoneOptions = useMemo(() => {
     const timezones = getTimezones();
@@ -114,7 +87,7 @@ export const SettingsPage = () => {
     }));
   }, []);
 
-  const handleSave = async () => {
+  const handleSaveGeneralSettings = async () => {
     if (!user) return;
 
     setIsSaving(true);
@@ -123,7 +96,6 @@ export const SettingsPage = () => {
         updateSettings({
           userId: user.uid,
           updates: {
-            payDays: [payDay1, payDay2] as [number, number],
             currency,
             timezone,
           },
@@ -136,307 +108,230 @@ export const SettingsPage = () => {
     }
   };
 
-  const dayOptions = Array.from({ length: 28 }, (_, i) => ({
-    value: String(i + 1),
-    label: String(i + 1),
-  }));
+  const handleResetAllData = async () => {
+    if (!user || resetConfirmText !== 'DELETE') return;
 
-  // Category handlers
-  const handleAddCategory = () => {
-    setCategoryModalMode('add');
-    setEditingCategory(null);
-    setCategoryModalOpen(true);
-  };
+    setIsResetting(true);
+    setResetResult(null);
 
-  const handleEditCategory = (category: Category) => {
-    setCategoryModalMode('edit');
-    setEditingCategory(category);
-    setCategoryModalOpen(true);
-  };
-
-  const handleDeleteClick = (category: Category) => {
-    setCategoryToDelete(category);
-    setDeleteConfirmOpen(true);
-  };
-
-  const handleSaveCategory = async (data: { name: string; icon: string; color: string }) => {
-    if (!user) return;
-
-    if (categoryModalMode === 'add') {
-      await dispatch(
-        createCategory({
-          userId: user.uid,
-          category: {
-            name: data.name,
-            icon: data.icon,
-            color: data.color,
-            parentId: null,
-            sortOrder: sortedCategories.length,
-            isActive: true,
-          },
-        })
-      ).unwrap();
-    } else if (editingCategory) {
-      await dispatch(
-        updateCategory({
-          userId: user.uid,
-          categoryId: editingCategory.id,
-          updates: {
-            name: data.name,
-            icon: data.icon,
-            color: data.color,
-          },
-        })
-      ).unwrap();
-    }
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!user || !categoryToDelete) return;
-
-    setIsDeleting(true);
     try {
-      await dispatch(
-        deleteCategory({
-          userId: user.uid,
-          categoryId: categoryToDelete.id,
-        })
-      ).unwrap();
-      setDeleteConfirmOpen(false);
-      setCategoryToDelete(null);
+      const result = await resetAllData(user.uid);
+
+      // Clear Redux state
+      dispatch(clearPaycheckCycles());
+      dispatch(clearBuffer());
+
+      setResetResult({
+        success: true,
+        message: `Successfully deleted ${result.totalDocumentsDeleted} records from ${result.collectionsCleared.length} collections.`,
+      });
+
+      // Close modal after a delay
+      setTimeout(() => {
+        setResetModalOpen(false);
+        setResetConfirmText('');
+        setResetResult(null);
+        // Reload the page to refresh all state
+        window.location.reload();
+      }, 2000);
     } catch (error) {
-      console.error('Failed to delete category:', error);
+      console.error('Failed to reset data:', error);
+      setResetResult({
+        success: false,
+        message: 'Failed to reset data. Please try again.',
+      });
     } finally {
-      setIsDeleting(false);
+      setIsResetting(false);
     }
   };
 
   return (
     <AppLayout title="Settings">
-      {/* Tab Navigation */}
-      <div className="mb-6 border-b border-gray-200">
-        <div className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('paycheck')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'paycheck'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Wallet className="w-4 h-4" />
-              Paycheck Budget
+      <div className="max-w-2xl space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <Wallet className="w-6 h-6 text-indigo-600" />
+            <div>
+              <h3 className="font-semibold text-indigo-900">Paycheck-Based Budgeting</h3>
+              <p className="text-sm text-indigo-700">
+                Budget based on when you get paid. Configure your payment methods, bills, and tags below.
+              </p>
             </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('general')}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'general'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            General & Legacy
-          </button>
-        </div>
-      </div>
-
-      {/* Paycheck Budget Tab */}
-      {activeTab === 'paycheck' && (
-        <div className="max-w-2xl space-y-6">
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4 mb-6">
-            <h3 className="font-semibold text-indigo-900 mb-1">Paycheck-Based Budgeting</h3>
-            <p className="text-sm text-indigo-700">
-              Budget based on when you get paid, not arbitrary monthly cycles.
-              Set up your payment methods, bills, and spending tags to get started.
-            </p>
           </div>
-
-          <PaycheckSetup />
-          <PaymentMethodsManager />
-          <BillsManager />
-          <SpendingTagsManager />
         </div>
-      )}
 
-      {/* General & Legacy Tab */}
-      {activeTab === 'general' && (
-        <div className="max-w-2xl space-y-6">
-          <Card>
-            <CardHeader
-              title="Pay Day Configuration (Legacy)"
-              subtitle="Set the days of the month when you get paid"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Select
-                label="First Pay Day"
-                value={String(payDay1)}
-                onChange={(e) => setPayDay1(Number(e.target.value))}
-                options={dayOptions}
-              />
-              <Select
-                label="Second Pay Day"
-                value={String(payDay2)}
-                onChange={(e) => setPayDay2(Number(e.target.value))}
-                options={dayOptions}
-              />
-            </div>
-          </Card>
+        {/* Paycheck Setup */}
+        <PaycheckSetup />
 
-          <Card>
-            <CardHeader title="Currency" subtitle="Select your preferred currency" />
+        {/* Payment Methods */}
+        <PaymentMethodsManager />
+
+        {/* Bills */}
+        <BillsManager />
+
+        {/* Spending Tags */}
+        <SpendingTagsManager />
+
+        {/* General Settings */}
+        <Card>
+          <CardHeader title="General Settings" subtitle="Currency and timezone preferences" />
+          <div className="space-y-4">
             <Select
+              label="Currency"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               options={[
                 { value: 'USD', label: 'USD ($)' },
-                { value: 'EUR', label: 'EUR (\u20AC)' },
-                { value: 'GBP', label: 'GBP (\u00A3)' },
+                { value: 'EUR', label: 'EUR (€)' },
+                { value: 'GBP', label: 'GBP (£)' },
                 { value: 'CAD', label: 'CAD ($)' },
                 { value: 'AUD', label: 'AUD ($)' },
               ]}
             />
-          </Card>
-
-          <Card>
-            <CardHeader
-              title="Timezone"
-              subtitle="Select your timezone for date display"
-            />
             <Select
+              label="Timezone"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
               options={timezoneOptions}
             />
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="text-xs text-gray-500">
               Detected timezone: {getBrowserTimezone()}
             </p>
-          </Card>
-
-          <Card>
-            <CardHeader title="Account" subtitle="Your account information" />
-            <div className="space-y-4">
-              <Input label="Email" value={user?.email || ''} disabled />
-              <Input label="Display Name" value={user?.displayName || ''} disabled />
-            </div>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button onClick={handleSave} isLoading={isSaving}>
-              Save Settings
-            </Button>
-          </div>
-
-          {/* Categories Management (Legacy) */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <CardHeader
-                title="Categories (Legacy)"
-                subtitle="Manage your expense categories"
-              />
-              <Button onClick={handleAddCategory} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Category
+            <div className="flex justify-end">
+              <Button onClick={handleSaveGeneralSettings} isLoading={isSaving}>
+                Save Settings
               </Button>
             </div>
+          </div>
+        </Card>
 
-            {sortedCategories.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p>No categories yet. Add your first category to get started.</p>
+        {/* Account Info */}
+        <Card>
+          <CardHeader title="Account" subtitle="Your account information" />
+          <div className="space-y-4">
+            <Input label="Email" value={user?.email || ''} disabled />
+            <Input label="Display Name" value={user?.displayName || ''} disabled />
+          </div>
+        </Card>
+
+        {/* Danger Zone */}
+        <Card className="border-red-200">
+          <CardHeader
+            title="Danger Zone"
+            subtitle="Irreversible actions - proceed with caution"
+          />
+          <div className="p-4 bg-red-50 rounded-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h4 className="font-medium text-red-900">Reset All Data</h4>
+                <p className="text-sm text-red-700 mt-1">
+                  Delete all your budget data including cycles, transactions, bills, payment methods,
+                  tags, and buffer history. This action cannot be undone.
+                </p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {sortedCategories.map((category) => {
-                  const txCount = getTransactionCount(category.id);
-                  return (
-                    <div
-                      key={category.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <CategoryBadge
-                          name={category.name}
-                          icon={category.icon || 'shopping-cart'}
-                          color={category.color || '#3B82F6'}
-                        />
-                        {txCount > 0 && (
-                          <span className="text-xs text-gray-500">
-                            {txCount} transaction{txCount !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleEditCategory(category)}
-                          className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                          title="Edit category"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(category)}
-                          className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete category"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-        </div>
-      )}
+              <Button
+                variant="danger"
+                onClick={() => setResetModalOpen(true)}
+                className="flex-shrink-0"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Reset Data
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
 
-      {/* Category Modal */}
-      <CategoryModal
-        isOpen={categoryModalOpen}
-        onClose={() => setCategoryModalOpen(false)}
-        onSave={handleSaveCategory}
-        category={editingCategory}
-        mode={categoryModalMode}
-      />
-
-      {/* Delete Confirmation Modal */}
+      {/* Reset Confirmation Modal */}
       <Modal
-        isOpen={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-        title="Delete Category"
-        size="sm"
+        isOpen={resetModalOpen}
+        onClose={() => {
+          if (!isResetting) {
+            setResetModalOpen(false);
+            setResetConfirmText('');
+            setResetResult(null);
+          }
+        }}
+        title="Reset All Data"
       >
-        <div className="space-y-4">
-          {categoryToDelete && (
+        <div className="space-y-6">
+          {!resetResult ? (
             <>
-              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-red-700">
-                    Are you sure you want to delete <strong>{categoryToDelete.name}</strong>?
+                  <h4 className="font-medium text-red-900">Warning: This action is irreversible</h4>
+                  <p className="text-sm text-red-700 mt-1">
+                    This will permanently delete:
                   </p>
-                  {getTransactionCount(categoryToDelete.id) > 0 && (
-                    <p className="text-xs text-red-600 mt-1">
-                      This category has {getTransactionCount(categoryToDelete.id)} transaction(s).
-                      They will remain but show as "Unknown" category.
-                    </p>
-                  )}
+                  <ul className="text-sm text-red-700 mt-2 list-disc list-inside space-y-1">
+                    <li>All paycheck cycles and spending transactions</li>
+                    <li>All payment methods, bills, and spending tags</li>
+                    <li>Your entire buffer history</li>
+                    <li>All legacy budget data (if any)</li>
+                  </ul>
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Type <span className="font-bold text-red-600">DELETE</span> to confirm
+                </label>
+                <Input
+                  value={resetConfirmText}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setResetConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                />
+              </div>
+
               <div className="flex justify-end gap-3">
-                <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setResetModalOpen(false);
+                    setResetConfirmText('');
+                  }}
+                  disabled={isResetting}
+                >
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleConfirmDelete}
-                  isLoading={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
+                  variant="danger"
+                  onClick={handleResetAllData}
+                  disabled={resetConfirmText !== 'DELETE' || isResetting}
+                  isLoading={isResetting}
                 >
-                  Delete
+                  {isResetting ? 'Deleting...' : 'Delete All Data'}
                 </Button>
               </div>
             </>
+          ) : (
+            <div
+              className={`p-4 rounded-lg ${
+                resetResult.success
+                  ? 'bg-green-50 border border-green-200'
+                  : 'bg-red-50 border border-red-200'
+              }`}
+            >
+              <p
+                className={`font-medium ${
+                  resetResult.success ? 'text-green-900' : 'text-red-900'
+                }`}
+              >
+                {resetResult.success ? 'Data Reset Complete' : 'Reset Failed'}
+              </p>
+              <p
+                className={`text-sm mt-1 ${
+                  resetResult.success ? 'text-green-700' : 'text-red-700'
+                }`}
+              >
+                {resetResult.message}
+              </p>
+              {resetResult.success && (
+                <p className="text-sm text-green-600 mt-2">Reloading page...</p>
+              )}
+            </div>
           )}
         </div>
       </Modal>

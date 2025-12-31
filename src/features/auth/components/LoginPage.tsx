@@ -13,7 +13,7 @@ export const LoginPage = () => {
   const handleGoogleLogin = async () => {
     const result = await dispatch(signInWithGoogle());
     if (signInWithGoogle.fulfilled.match(result)) {
-      navigate(ROUTES.DASHBOARD);
+      navigate(ROUTES.PAYCHECK);
     }
   };
 
@@ -26,7 +26,7 @@ export const LoginPage = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Budget Buddy</h1>
           <p className="text-gray-500 mt-2 text-center">
-            Manage your bi-weekly budget with ease
+            Paycheck-based budgeting made simple
           </p>
         </div>
 
