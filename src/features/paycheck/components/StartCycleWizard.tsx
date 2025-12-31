@@ -142,11 +142,13 @@ export const StartCycleWizard = () => {
         .filter(([_, { selected }]) => selected)
         .map(([billId, { amount }]) => {
           const bill = billsById[billId];
+          const dueDay = bill?.dueDay || 1;
+          const actualDueDate = calculateBillDueDate(dueDay, startDate, endDate);
           return {
             billId,
             billName: bill?.name || 'Unknown',
             amount,
-            dueDate: Timestamp.fromDate(new Date()), // TODO: Calculate actual due date
+            dueDate: Timestamp.fromDate(actualDueDate),
             isPaid: false,
             isDeferred: false,
           };
@@ -461,4 +463,41 @@ function getOrdinalSuffix(n: number): string {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
   return s[(v - 20) % 10] || s[v] || s[0];
+}
+
+// Calculate the actual due date for a bill within a cycle
+function calculateBillDueDate(dueDay: number, cycleStart: Date, cycleEnd: Date): Date {
+  // Try the due day in the start month first
+  const startMonth = cycleStart.getMonth();
+  const startYear = cycleStart.getFullYear();
+
+  // Get the last day of the start month
+  const lastDayOfStartMonth = new Date(startYear, startMonth + 1, 0).getDate();
+  const effectiveDueDay = Math.min(dueDay, lastDayOfStartMonth);
+
+  let dueDate = new Date(startYear, startMonth, effectiveDueDay);
+
+  // If the due date is within the cycle, use it
+  if (dueDate >= cycleStart && dueDate <= cycleEnd) {
+    return dueDate;
+  }
+
+  // If the due date is before the cycle start, try next month
+  if (dueDate < cycleStart) {
+    const nextMonth = startMonth + 1;
+    const nextYear = nextMonth > 11 ? startYear + 1 : startYear;
+    const actualNextMonth = nextMonth % 12;
+
+    const lastDayOfNextMonth = new Date(nextYear, actualNextMonth + 1, 0).getDate();
+    const effectiveDueDayNext = Math.min(dueDay, lastDayOfNextMonth);
+
+    dueDate = new Date(nextYear, actualNextMonth, effectiveDueDayNext);
+  }
+
+  // Clamp to cycle end if still outside range
+  if (dueDate > cycleEnd) {
+    return cycleEnd;
+  }
+
+  return dueDate;
 }
