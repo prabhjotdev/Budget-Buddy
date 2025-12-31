@@ -9,19 +9,22 @@ import {
   Check,
   AlertCircle,
   Plus,
+  CreditCard,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchBills, createBill } from '../billsSlice';
+import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice';
 import { createPaycheckCycle } from '../paycheckCyclesSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { Bill, CycleBillEntry, CycleStatus } from '../../../types';
+import { Bill, CycleBillEntry, CycleStatus, PaymentMethodType } from '../../../types';
 
-type WizardStep = 'paycheck' | 'bills' | 'savings' | 'review';
+type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'review';
 
 const STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'paycheck', title: 'Paycheck', icon: Wallet },
+  { id: 'paymentMethods', title: 'Accounts', icon: CreditCard },
   { id: 'bills', title: 'Bills', icon: Receipt },
   { id: 'savings', title: 'Savings', icon: PiggyBank },
   { id: 'review', title: 'Review', icon: Check },
@@ -31,6 +34,7 @@ export const StartCycleWizard = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { byId: billsById, allIds: billIds } = useAppSelector((state) => state.bills);
+  const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector((state) => state.paymentMethods);
   const { data: settings } = useAppSelector((state) => state.settings);
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('paycheck');
@@ -43,16 +47,24 @@ export const StartCycleWizard = () => {
   const [selectedBills, setSelectedBills] = useState<Record<string, { selected: boolean; amount: number }>>({});
   const [minimumSave, setMinimumSave] = useState(50);
 
+  // Inline payment method creation state
+  const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
+  const [newMethodName, setNewMethodName] = useState('');
+  const [newMethodType, setNewMethodType] = useState<PaymentMethodType>('debit');
+  const [isAddingMethod, setIsAddingMethod] = useState(false);
+
   // Inline bill creation state
   const [showAddBill, setShowAddBill] = useState(false);
   const [newBillName, setNewBillName] = useState('');
   const [newBillAmount, setNewBillAmount] = useState('');
   const [newBillDueDay, setNewBillDueDay] = useState('1');
+  const [newBillPaymentMethodId, setNewBillPaymentMethodId] = useState<string | null>(null);
   const [isAddingBill, setIsAddingBill] = useState(false);
 
-  // Load bills
+  // Load payment methods and bills
   useEffect(() => {
     if (user) {
+      dispatch(fetchPaymentMethods(user.uid));
       dispatch(fetchBills(user.uid));
     }
   }, [dispatch, user]);
@@ -79,6 +91,10 @@ export const StartCycleWizard = () => {
     }
   }, [cycleStartDate]);
 
+  const activePaymentMethods = useMemo(() => {
+    return paymentMethodIds.map((id) => paymentMethodsById[id]).filter((m) => m && m.isActive);
+  }, [paymentMethodIds, paymentMethodsById]);
+
   const activeBills = useMemo(() => {
     return billIds.map((id) => billsById[id]).filter((b) => b && b.isActive);
   }, [billIds, billsById]);
@@ -98,6 +114,8 @@ export const StartCycleWizard = () => {
     switch (currentStep) {
       case 'paycheck':
         return parseFloat(paycheckAmount) > 0 && cycleStartDate && cycleEndDate;
+      case 'paymentMethods':
+        return true; // Can skip payment methods
       case 'bills':
         return true; // Can skip bills
       case 'savings':
@@ -120,6 +138,35 @@ export const StartCycleWizard = () => {
     const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
     if (stepIndex > 0) {
       setCurrentStep(STEPS[stepIndex - 1].id);
+    }
+  };
+
+  const handleAddPaymentMethod = async () => {
+    if (!user || !newMethodName) return;
+
+    setIsAddingMethod(true);
+    try {
+      await dispatch(
+        createPaymentMethod({
+          userId: user.uid,
+          paymentMethod: {
+            name: newMethodName,
+            type: newMethodType,
+            isActive: true,
+            isDefault: activePaymentMethods.length === 0,
+            sortOrder: activePaymentMethods.length,
+          },
+        })
+      ).unwrap();
+
+      // Reset form
+      setNewMethodName('');
+      setNewMethodType('debit');
+      setShowAddPaymentMethod(false);
+    } catch (error) {
+      console.error('Failed to add payment method:', error);
+    } finally {
+      setIsAddingMethod(false);
     }
   };
 
@@ -152,7 +199,7 @@ export const StartCycleWizard = () => {
             isActive: true,
             isVariable: false,
             frequency: 'monthly',
-            paymentMethodId: null,
+            paymentMethodId: newBillPaymentMethodId,
             isAutoPay: false,
           },
         })
@@ -168,6 +215,7 @@ export const StartCycleWizard = () => {
       setNewBillName('');
       setNewBillAmount('');
       setNewBillDueDay('1');
+      setNewBillPaymentMethodId(null);
       setShowAddBill(false);
     } catch (error) {
       console.error('Failed to add bill:', error);
@@ -311,6 +359,124 @@ export const StartCycleWizard = () => {
           </div>
         )}
 
+        {currentStep === 'paymentMethods' && (
+          <div className="space-y-6">
+            <CardHeader
+              title="Your Payment Methods"
+              subtitle="Add your bank accounts and credit cards"
+            />
+
+            {/* Existing payment methods */}
+            {activePaymentMethods.length > 0 && (
+              <div className="space-y-3">
+                {activePaymentMethods.map((method) => (
+                  <div
+                    key={method.id}
+                    className="p-4 rounded-lg border border-gray-200 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        method.type === 'credit' ? 'bg-purple-100' : method.type === 'debit' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        <CreditCard className={`w-5 h-5 ${
+                          method.type === 'credit' ? 'text-purple-600' : method.type === 'debit' ? 'text-blue-600' : 'text-green-600'
+                        }`} />
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-900">{method.name}</span>
+                        <span className="text-xs text-gray-500 ml-2 capitalize">{method.type}</span>
+                      </div>
+                    </div>
+                    {method.isDefault && (
+                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">Default</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {activePaymentMethods.length === 0 && !showAddPaymentMethod && (
+              <div className="text-center py-8">
+                <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-gray-500 mb-4">No payment methods set up yet.</p>
+                <Button onClick={() => setShowAddPaymentMethod(true)} className="inline-flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Payment Method
+                </Button>
+              </div>
+            )}
+
+            {/* Add payment method form */}
+            {showAddPaymentMethod && (
+              <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <h4 className="font-medium text-gray-900 mb-4">Add a Payment Method</h4>
+                <div className="space-y-4">
+                  <Input
+                    label="Name"
+                    placeholder="e.g., Chase Checking, Amex Gold"
+                    value={newMethodName}
+                    onChange={(e) => setNewMethodName(e.target.value)}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {(['debit', 'credit', 'cash'] as const).map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setNewMethodType(type)}
+                          className={`p-3 rounded-lg border-2 text-center transition-colors ${
+                            newMethodType === type
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className="capitalize font-medium">{type}</span>
+                          <p className="text-xs mt-1">
+                            {type === 'debit' && 'Bank account'}
+                            {type === 'credit' && 'Credit card'}
+                            {type === 'cash' && 'Cash spending'}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleAddPaymentMethod}
+                      disabled={!newMethodName || isAddingMethod}
+                      isLoading={isAddingMethod}
+                    >
+                      Add
+                    </Button>
+                    <Button variant="secondary" onClick={() => setShowAddPaymentMethod(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Add another button */}
+            {activePaymentMethods.length > 0 && !showAddPaymentMethod && (
+              <button
+                onClick={() => setShowAddPaymentMethod(true)}
+                className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Another Payment Method
+              </button>
+            )}
+
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Tip:</strong> Add the accounts you use to pay bills and make purchases.
+                This helps track which payment method each bill uses.
+              </p>
+            </div>
+          </div>
+        )}
+
         {currentStep === 'bills' && (
           <div className="space-y-6">
             <CardHeader
@@ -344,6 +510,11 @@ export const StartCycleWizard = () => {
                             Due: {bill.dueDay}
                             {getOrdinalSuffix(bill.dueDay)}
                           </span>
+                          {bill.paymentMethodId && paymentMethodsById[bill.paymentMethodId] && (
+                            <span className="text-xs text-indigo-600 ml-2">
+                              via {paymentMethodsById[bill.paymentMethodId].name}
+                            </span>
+                          )}
                         </div>
                       </label>
                       <div className="flex items-center gap-2">
@@ -416,6 +587,23 @@ export const StartCycleWizard = () => {
                       </select>
                     </div>
                   </div>
+                  {activePaymentMethods.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method (optional)</label>
+                      <select
+                        value={newBillPaymentMethodId || ''}
+                        onChange={(e) => setNewBillPaymentMethodId(e.target.value || null)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="">Select payment method...</option>
+                        {activePaymentMethods.map((method) => (
+                          <option key={method.id} value={method.id}>
+                            {method.name} ({method.type})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="flex gap-3">
                     <Button
                       onClick={handleAddBill}
