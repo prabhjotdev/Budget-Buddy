@@ -1,20 +1,12 @@
 import { useState, useMemo, useEffect, ChangeEvent } from 'react';
-import { AlertTriangle, Trash2, Wallet, Check } from 'lucide-react';
+import { AlertTriangle, Trash2, Settings as SettingsIcon, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
-import { fetchPaymentMethods } from '../../paycheck/paymentMethodsSlice';
-import { fetchBills } from '../../paycheck/billsSlice';
-import { fetchSpendingTags } from '../../paycheck/spendingTagsSlice';
 import { clearPaycheckCycles } from '../../paycheck/paycheckCyclesSlice';
 import { clearBuffer } from '../../paycheck/bufferSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
-import {
-  PaycheckSetup,
-  PaymentMethodsManager,
-  BillsManager,
-  SpendingTagsManager,
-} from '../../paycheck/components';
+import { PaycheckSetup } from '../../paycheck/components';
 import { resetAllData } from '../../../services/firebase/dataReset';
 
 // Get all supported timezones
@@ -78,15 +70,6 @@ export const SettingsPage = () => {
       setTimezone(settings.timezone || getBrowserTimezone());
     }
   }, [settings]);
-
-  // Load paycheck system data
-  useEffect(() => {
-    if (user) {
-      dispatch(fetchPaymentMethods(user.uid));
-      dispatch(fetchBills(user.uid));
-      dispatch(fetchSpendingTags(user.uid));
-    }
-  }, [user, dispatch]);
 
   const timezoneOptions = useMemo(() => {
     const timezones = getTimezones();
@@ -162,29 +145,20 @@ export const SettingsPage = () => {
     <AppLayout title="Settings">
       <div className="max-w-2xl space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4">
           <div className="flex items-center gap-3">
-            <Wallet className="w-6 h-6 text-indigo-600" />
+            <SettingsIcon className="w-6 h-6 text-gray-600" />
             <div>
-              <h3 className="font-semibold text-indigo-900">Paycheck-Based Budgeting</h3>
-              <p className="text-sm text-indigo-700">
-                Budget based on when you get paid. Configure your payment methods, bills, and tags below.
+              <h3 className="font-semibold text-gray-900">App Settings</h3>
+              <p className="text-sm text-gray-600">
+                Configure your paycheck schedule, preferences, and account settings.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Paycheck Setup */}
+        {/* Paycheck Schedule Setup */}
         <PaycheckSetup />
-
-        {/* Payment Methods */}
-        <PaymentMethodsManager />
-
-        {/* Bills */}
-        <BillsManager />
-
-        {/* Spending Tags */}
-        <SpendingTagsManager />
 
         {/* General Settings */}
         <Card>

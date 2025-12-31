@@ -6,6 +6,7 @@ import {
   Menu,
   Calendar,
   ShieldCheck,
+  ClipboardList,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -16,6 +17,7 @@ import { ROUTES } from '../../constants';
 const navItems = [
   { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck' },
   { to: ROUTES.BUFFER, icon: ShieldCheck, label: 'Buffer' },
+  { to: ROUTES.MANAGE, icon: ClipboardList, label: 'Manage' },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings' },
 ];
 
