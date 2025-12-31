@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Clock, Receipt, ChevronRight } from 'lucide-react';
+import { Check, Clock, Receipt, ChevronRight, ChevronDown } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { markCycleBillPaid } from '../paycheckCyclesSlice';
 import { Card, CardHeader, Button, Modal } from '../../../components/shared';
@@ -10,6 +10,8 @@ interface CycleBillsListProps {
   bills: CycleBillEntry[];
 }
 
+const MAX_VISIBLE_BILLS = 4;
+
 export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -17,9 +19,15 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
 
   const [selectedBill, setSelectedBill] = useState<CycleBillEntry | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const paidBills = bills.filter((b) => b.isPaid);
   const unpaidBills = bills.filter((b) => !b.isPaid);
+
+  // Show unpaid first, then paid
+  const sortedBills = [...unpaidBills, ...paidBills];
+  const visibleBills = isExpanded ? sortedBills : sortedBills.slice(0, MAX_VISIBLE_BILLS);
+  const hasMoreBills = bills.length > MAX_VISIBLE_BILLS;
 
   const handleMarkPaid = async (bill: CycleBillEntry) => {
     if (!user || !activeCycleId) return;
@@ -52,10 +60,16 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
           title="Bills This Cycle"
           subtitle={`${paidBills.length}/${bills.length} paid`}
           action={
-            <Button variant="ghost" size="sm">
-              View All
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+            hasMoreBills ? (
+              <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)}>
+                {isExpanded ? 'Show Less' : `View All (${bills.length})`}
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4 ml-1 rotate-180" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                )}
+              </Button>
+            ) : null
           }
         />
 
@@ -66,48 +80,37 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
           </div>
         ) : (
           <div className="space-y-2">
-            {/* Unpaid Bills First */}
-            {unpaidBills.map((bill) => (
+            {visibleBills.map((bill) => (
               <div
                 key={bill.billId}
-                onClick={() => setSelectedBill(bill)}
-                className="flex items-center justify-between p-3 bg-amber-50 rounded-lg cursor-pointer hover:bg-amber-100 transition-colors"
+                onClick={() => !bill.isPaid && setSelectedBill(bill)}
+                className={`flex items-center justify-between p-3 rounded-lg ${
+                  bill.isPaid
+                    ? 'bg-green-50 opacity-75'
+                    : 'bg-amber-50 cursor-pointer hover:bg-amber-100'
+                } transition-colors`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                    <Clock className="w-4 h-4 text-amber-600" />
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                    bill.isPaid ? 'bg-green-100' : 'bg-amber-100'
+                  }`}>
+                    {bill.isPaid ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-amber-600" />
+                    )}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-900">{bill.billName}</span>
+                    <span className={`font-medium ${bill.isPaid ? 'text-gray-700 line-through' : 'text-gray-900'}`}>
+                      {bill.billName}
+                    </span>
                     {bill.isDeferred && (
                       <span className="ml-2 text-xs text-gray-500">(Deferred)</span>
                     )}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(bill.amount)}
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {/* Paid Bills */}
-            {paidBills.map((bill) => (
-              <div
-                key={bill.billId}
-                className="flex items-center justify-between p-3 bg-green-50 rounded-lg opacity-75"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <Check className="w-4 h-4 text-green-600" />
-                  </div>
-                  <span className="font-medium text-gray-700 line-through">
-                    {bill.billName}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="font-semibold text-gray-500 line-through">
+                  <span className={`font-semibold ${bill.isPaid ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                     {formatCurrency(bill.amount)}
                   </span>
                 </div>
