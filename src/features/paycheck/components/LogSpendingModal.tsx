@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { DollarSign, Tag, CreditCard, Calendar, X, Plus, Check } from 'lucide-react';
+import { DollarSign, Tag, CreditCard, X, Plus, Check } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createSpendingTransaction } from '../spendingTransactionsSlice';

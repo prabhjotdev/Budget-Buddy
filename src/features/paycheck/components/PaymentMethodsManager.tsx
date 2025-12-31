@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, CreditCard, Wallet, Banknote, AlertTriangle, Star } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import {
-  fetchPaymentMethods,
   createPaymentMethod,
   updatePaymentMethod,
   deletePaymentMethod,
@@ -26,7 +25,7 @@ const PAYMENT_METHOD_COLORS: Record<PaymentMethodType, string> = {
 export const PaymentMethodsManager = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { byId, allIds, isLoading } = useAppSelector((state) => state.paymentMethods);
+  const { byId, allIds } = useAppSelector((state) => state.paymentMethods);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMethod, setEditingMethod] = useState<PaymentMethod | null>(null);

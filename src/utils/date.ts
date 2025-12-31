@@ -1,4 +1,4 @@
-import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 // Parse a date string (YYYY-MM-DD) as local time, not UTC
 // This fixes timezone issues where "2025-12-15" parsed by new Date() becomes Dec 14 in western timezones

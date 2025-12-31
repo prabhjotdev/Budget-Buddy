@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { Timestamp } from 'firebase/firestore';
 import { Buffer, BufferTransaction } from '../../types';
 import * as bufferService from '../../services/firebase/buffer';
 
@@ -169,13 +170,13 @@ const bufferSlice = createSlice({
         } else {
           state.buffer = {
             totalAmount: newTotal,
-            updatedAt: { toDate: () => new Date() } as any,
+            updatedAt: { toDate: () => new Date() } as unknown as Timestamp,
           };
         }
         // Add transaction to the beginning of the list
         state.transactions.unshift({
           ...transaction,
-          createdAt: { toDate: () => new Date() } as any,
+          createdAt: { toDate: () => new Date() } as unknown as Timestamp,
         });
       })
       .addCase(withdrawFromBuffer.fulfilled, (state, action) => {
@@ -186,7 +187,7 @@ const bufferSlice = createSlice({
         // Add transaction to the beginning of the list
         state.transactions.unshift({
           ...transaction,
-          createdAt: { toDate: () => new Date() } as any,
+          createdAt: { toDate: () => new Date() } as unknown as Timestamp,
         });
       })
       .addCase(initializeBuffer.fulfilled, (state, action: PayloadAction<Buffer>) => {

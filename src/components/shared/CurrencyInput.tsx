@@ -10,7 +10,7 @@ interface CurrencyInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
 }
 
 export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
-  ({ value, onChange, label, error, currency = 'USD', className, id, ...props }, ref) => {
+  ({ value, onChange, label, error, className, id, ...props }, ref) => {
     const [displayValue, setDisplayValue] = useState(value.toFixed(2));
     const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
 

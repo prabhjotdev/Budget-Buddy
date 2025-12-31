@@ -10,7 +10,6 @@ import {
   where,
   limit,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
 import { PaycheckCycle, CycleStatus } from '../../types';

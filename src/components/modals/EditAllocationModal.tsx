@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { closeModal } from '../../features/auth/uiSlice';
+
 import { updateAllocation } from '../../services/firebase/budgetPeriods';
 import { fetchAllocations } from '../../features/budget-periods/budgetPeriodsSlice';
 import { Modal, Button, CurrencyInput, Input } from '../shared';

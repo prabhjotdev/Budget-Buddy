@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { Plus, Pencil, Trash2, Tag, AlertTriangle, Sparkles } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import {
-  fetchSpendingTags,
   createSpendingTag,
   updateSpendingTag,
   deleteSpendingTag,
@@ -14,7 +13,7 @@ import { SpendingTag } from '../../../types';
 export const SpendingTagsManager = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { byId, allIds, isLoading } = useAppSelector((state) => state.spendingTags);
+  const { byId, allIds } = useAppSelector((state) => state.spendingTags);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTag, setEditingTag] = useState<SpendingTag | null>(null);
