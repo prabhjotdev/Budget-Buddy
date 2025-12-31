@@ -107,6 +107,9 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
                     {bill.isDeferred && (
                       <span className="ml-2 text-xs text-gray-500">(Deferred)</span>
                     )}
+                    <p className={`text-xs ${bill.isPaid ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Due: {bill.dueDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -146,7 +149,12 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
           <div className="space-y-4">
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-900">{selectedBill.billName}</span>
+                <div>
+                  <span className="font-medium text-gray-900">{selectedBill.billName}</span>
+                  <p className="text-xs text-gray-500">
+                    Due: {selectedBill.dueDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
                 <span className="text-lg font-bold text-gray-900">
                   {formatCurrency(selectedBill.amount)}
                 </span>
