@@ -9,6 +9,9 @@ import { Card, CardHeader, Button, Input, Select, Modal } from '../../../compone
 import { PaycheckSetup } from '../../paycheck/components';
 import { resetAllData } from '../../../services/firebase/dataReset';
 
+// App version - update this when releasing new versions
+const APP_VERSION = '1.2.0';
+
 // Get all supported timezones
 const getTimezones = (): string[] => {
   try {
@@ -234,6 +237,11 @@ export const SettingsPage = () => {
             </div>
           </div>
         </Card>
+
+        {/* Version Footer */}
+        <div className="text-center py-6 text-gray-400 text-sm">
+          <p>Budget Buddy v{APP_VERSION}</p>
+        </div>
       </div>
 
       {/* Reset Confirmation Modal */}
