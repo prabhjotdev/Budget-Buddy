@@ -7,9 +7,13 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
 } from 'recharts';
 import {
   TrendingUp,
+  TrendingDown,
   Filter,
   X,
   ChevronDown,
@@ -36,6 +40,43 @@ const DATE_RANGE_OPTIONS = [
   { value: '365', label: 'Last Year' },
 ];
 
+interface MonthData {
+  month: string;
+  monthIndex: number;
+  year: number;
+  amount: number;
+  fullDate: Date;
+}
+
+// Custom dot component for the chart - must be outside to avoid recreation on each render
+const CustomDot = (props: {
+  cx?: number;
+  cy?: number;
+  payload?: MonthData;
+  selectedMonth?: MonthData | null;
+  onClick?: (data: MonthData) => void;
+}) => {
+  const { cx, cy, payload, selectedMonth, onClick } = props;
+  if (!cx || !cy || !payload) return null;
+
+  const isSelected =
+    selectedMonth?.monthIndex === payload.monthIndex &&
+    selectedMonth?.year === payload.year;
+
+  return (
+    <circle
+      cx={cx}
+      cy={cy}
+      r={isSelected ? 6 : 4}
+      fill={isSelected ? '#4f46e5' : '#6366f1'}
+      stroke={isSelected ? '#4f46e5' : 'white'}
+      strokeWidth={2}
+      style={{ cursor: 'pointer' }}
+      onClick={() => onClick?.(payload)}
+    />
+  );
+};
+
 export const SpendingLogsPage = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -50,6 +91,9 @@ export const SpendingLogsPage = () => {
   const [selectedTagId, setSelectedTagId] = useState('all');
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState('all');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+
+  // Drill-down state
+  const [selectedMonth, setSelectedMonth] = useState<MonthData | null>(null);
 
   // Pagination
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
@@ -96,13 +140,15 @@ export const SpendingLogsPage = () => {
   // Calculate monthly data for chart (past 12 months)
   const chartData = useMemo(() => {
     const now = new Date();
-    const months: { month: string; amount: number; fullDate: Date }[] = [];
+    const months: MonthData[] = [];
 
     // Generate past 12 months
     for (let i = 11; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       months.push({
         month: date.toLocaleDateString('en-US', { month: 'short' }),
+        monthIndex: date.getMonth(),
+        year: date.getFullYear(),
         fullDate: date,
         amount: 0,
       });
@@ -125,10 +171,72 @@ export const SpendingLogsPage = () => {
     });
 
     return months.map((m) => ({
-      month: m.month,
+      ...m,
       amount: Math.round(m.amount * 100) / 100,
     }));
   }, [allTransactions]);
+
+  // Get transactions for selected month
+  const selectedMonthTransactions = useMemo(() => {
+    if (!selectedMonth) return [];
+    return allTransactions.filter((tx) => {
+      const txDate = tx.date.toDate();
+      return (
+        txDate.getMonth() === selectedMonth.monthIndex &&
+        txDate.getFullYear() === selectedMonth.year
+      );
+    });
+  }, [allTransactions, selectedMonth]);
+
+  // Get breakdown by tag for selected month
+  const tagBreakdown = useMemo(() => {
+    if (!selectedMonth) return [];
+    const breakdown: Record<string, { name: string; amount: number }> = {};
+
+    selectedMonthTransactions.forEach((tx) => {
+      if (tx.tagNames.length === 0) {
+        if (!breakdown['uncategorized']) {
+          breakdown['uncategorized'] = { name: 'Uncategorized', amount: 0 };
+        }
+        breakdown['uncategorized'].amount += tx.amount;
+      } else {
+        tx.tagNames.forEach((tagName, idx) => {
+          const tagId = tx.tagIds[idx] || tagName;
+          if (!breakdown[tagId]) {
+            breakdown[tagId] = { name: tagName, amount: 0 };
+          }
+          breakdown[tagId].amount += tx.amount;
+        });
+      }
+    });
+
+    return Object.values(breakdown)
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
+      .map((item) => ({
+        ...item,
+        amount: Math.round(item.amount * 100) / 100,
+      }));
+  }, [selectedMonth, selectedMonthTransactions]);
+
+  // Get top 3 transactions by amount for selected month
+  const topTransactions = useMemo(() => {
+    return [...selectedMonthTransactions]
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 3);
+  }, [selectedMonthTransactions]);
+
+  // Get previous month data for comparison
+  const previousMonthData = useMemo(() => {
+    if (!selectedMonth) return null;
+    const currentIndex = chartData.findIndex(
+      (m) => m.monthIndex === selectedMonth.monthIndex && m.year === selectedMonth.year
+    );
+    if (currentIndex > 0) {
+      return chartData[currentIndex - 1];
+    }
+    return null;
+  }, [selectedMonth, chartData]);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -174,6 +282,15 @@ export const SpendingLogsPage = () => {
         day: 'numeric',
         year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
       });
+    }
+  };
+
+  // Handle chart click
+  const handleChartClick = (data: MonthData) => {
+    if (selectedMonth?.monthIndex === data.monthIndex && selectedMonth?.year === data.year) {
+      setSelectedMonth(null); // Deselect if clicking same month
+    } else {
+      setSelectedMonth(data);
     }
   };
 
@@ -228,7 +345,7 @@ export const SpendingLogsPage = () => {
         <Card>
           <CardHeader
             title="Spending Trend"
-            subtitle="Monthly spending over the past year"
+            subtitle="Click on a month to see details"
             action={
               <div className="flex items-center gap-1 text-indigo-600">
                 <TrendingUp className="w-4 h-4" />
@@ -260,18 +377,149 @@ export const SpendingLogsPage = () => {
                     borderRadius: '8px',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                   }}
+                  labelFormatter={(label) => `${label} - Click for details`}
                 />
                 <Line
                   type="monotone"
                   dataKey="amount"
                   stroke="#6366f1"
                   strokeWidth={2}
-                  dot={{ fill: '#6366f1', strokeWidth: 2, r: 3 }}
-                  activeDot={{ r: 5, fill: '#6366f1' }}
+                  dot={(props) => (
+                    <CustomDot
+                      {...props}
+                      selectedMonth={selectedMonth}
+                      onClick={handleChartClick}
+                    />
+                  )}
+                  activeDot={{ r: 6, fill: '#4f46e5', cursor: 'pointer' }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
+
+          {/* Month Drill-Down Panel */}
+          {selectedMonth && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-semibold text-gray-900">
+                    {selectedMonth.fullDate.toLocaleDateString('en-US', {
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </h4>
+                  <div className="flex items-center gap-3 mt-1 text-sm">
+                    <span className="text-gray-600">
+                      {formatCurrency(selectedMonth.amount)} total
+                    </span>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-600">
+                      {selectedMonthTransactions.length} transactions
+                    </span>
+                    {previousMonthData && (
+                      <>
+                        <span className="text-gray-400">•</span>
+                        {selectedMonth.amount >= previousMonthData.amount ? (
+                          <span className="flex items-center gap-1 text-red-600">
+                            <TrendingUp className="w-3 h-3" />
+                            +{formatCurrency(selectedMonth.amount - previousMonthData.amount)} vs prev
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-green-600">
+                            <TrendingDown className="w-3 h-3" />
+                            {formatCurrency(selectedMonth.amount - previousMonthData.amount)} vs prev
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedMonth(null)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {selectedMonthTransactions.length === 0 ? (
+                <p className="text-gray-500 text-sm py-4 text-center">
+                  No spending recorded this month
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Breakdown by Tag */}
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">By Category</h5>
+                    {tagBreakdown.length > 0 ? (
+                      <div className="h-32">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={tagBreakdown}
+                            layout="vertical"
+                            margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+                          >
+                            <XAxis type="number" hide />
+                            <YAxis
+                              type="category"
+                              dataKey="name"
+                              tick={{ fontSize: 11, fill: '#6b7280' }}
+                              tickLine={false}
+                              axisLine={false}
+                              width={80}
+                            />
+                            <Tooltip
+                              formatter={(value: number) => [formatCurrency(value), 'Spent']}
+                              contentStyle={{
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
+                              {tagBreakdown.map((_, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={index === 0 ? '#6366f1' : '#a5b4fc'}
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 text-sm">No category data</p>
+                    )}
+                  </div>
+
+                  {/* Top Transactions */}
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">Largest Expenses</h5>
+                    <div className="space-y-2">
+                      {topTransactions.map((tx, idx) => (
+                        <div
+                          key={tx.id}
+                          className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xs text-gray-400 w-4">{idx + 1}.</span>
+                            <span className="text-sm text-gray-700 truncate">
+                              {tx.description || 'No description'}
+                            </span>
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 ml-2">
+                            {formatCurrency(tx.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </Card>
 
         {/* Filters */}
