@@ -7,6 +7,7 @@ import {
   Calendar,
   ShieldCheck,
   ClipboardList,
+  Receipt,
   X,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -17,6 +18,7 @@ import { ROUTES } from '../../constants';
 
 const navItems = [
   { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck' },
+  { to: ROUTES.SPENDING, icon: Receipt, label: 'Spending' },
   { to: ROUTES.BUFFER, icon: ShieldCheck, label: 'Buffer' },
   { to: ROUTES.MANAGE, icon: ClipboardList, label: 'Manage' },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings' },

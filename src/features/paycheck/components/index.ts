@@ -14,3 +14,4 @@ export { EndCycleModal } from './EndCycleModal';
 export { MarkBillPaidModal } from './MarkBillPaidModal';
 export { EditPaycheckModal } from './EditPaycheckModal';
 export { ManagePage } from './ManagePage';
+export { SpendingLogsPage } from './SpendingLogsPage';
