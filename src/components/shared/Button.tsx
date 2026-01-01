@@ -23,8 +23,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500': variant === 'danger',
             'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500':
               variant === 'ghost',
-            'px-3 py-1.5 text-sm': size === 'sm',
-            'px-4 py-2 text-sm': size === 'md',
+            'px-3 py-2 text-sm': size === 'sm',
+            'px-4 py-2.5 text-sm': size === 'md',
             'px-6 py-3 text-base': size === 'lg',
             'opacity-50 cursor-not-allowed': disabled || isLoading,
           },

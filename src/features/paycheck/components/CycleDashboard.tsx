@@ -143,32 +143,32 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
       )}
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {/* Remaining to Spend */}
         <Card className={spendingProgress.isOverBudget ? 'ring-2 ring-red-200' : ''}>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Remaining to Spend</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm text-gray-500">Remaining to Spend</p>
               <p
-                className={`text-3xl font-bold ${
+                className={`text-xl md:text-3xl font-bold truncate ${
                   spendingProgress.isOverBudget ? 'text-red-600' : 'text-green-600'
                 }`}
               >
                 {formatCurrency(Math.max(0, cycle.remainingToSpend))}
               </p>
               {cycleProgress.daysRemaining > 0 && !spendingProgress.isOverBudget && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 mt-1 hidden md:block">
                   ~{formatCurrency(spendingProgress.dailyBudget)}/day
                 </p>
               )}
             </div>
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center ${
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                 spendingProgress.isOverBudget ? 'bg-red-100' : 'bg-green-100'
               }`}
             >
               <Wallet
-                className={`w-6 h-6 ${
+                className={`w-5 h-5 md:w-6 md:h-6 ${
                   spendingProgress.isOverBudget ? 'text-red-600' : 'text-green-600'
                 }`}
               />
@@ -179,17 +179,17 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         {/* Total Spent */}
         <Card>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Spent This Cycle</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm text-gray-500">Spent This Cycle</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 truncate">
                 {formatCurrency(cycle.totalSpent)}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1 hidden md:block">
                 of {formatCurrency(cycle.spendingLimit)} limit
               </p>
             </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-orange-600" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-orange-600" />
             </div>
           </div>
         </Card>
@@ -197,17 +197,17 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         {/* Bills Reserved */}
         <Card>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Bills Reserved</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm text-gray-500">Bills Reserved</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 truncate">
                 {formatCurrency(cycle.billsTotal)}
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 {cycle.bills.filter((b) => b.isPaid).length}/{cycle.bills.length} paid
               </p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <Receipt className="w-6 h-6 text-blue-600" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Receipt className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             </div>
           </div>
         </Card>
@@ -215,17 +215,17 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         {/* Minimum Save */}
         <Card>
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500">Saving This Cycle</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs md:text-sm text-gray-500">Saving This Cycle</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 truncate">
                 {formatCurrency(cycle.minimumSave)}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-1 hidden md:block">
                 Buffer: {formatCurrency(buffer?.totalAmount || 0)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-              <PiggyBank className="w-6 h-6 text-emerald-600" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <PiggyBank className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
             </div>
           </div>
         </Card>
@@ -274,7 +274,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Bills Due */}
         <CycleBillsList bills={cycle.bills} />
 
@@ -285,7 +285,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
       {/* Quick Actions */}
       <Card>
         <CardHeader title="Quick Actions" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Button
             className="flex items-center justify-center gap-2"
             onClick={() => setLogSpendingOpen(true)}

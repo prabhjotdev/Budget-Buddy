@@ -33,29 +33,37 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div
         className={clsx(
-          'relative bg-white rounded-xl shadow-xl max-h-[90vh] overflow-hidden flex flex-col',
+          'relative bg-white shadow-xl overflow-hidden flex flex-col',
+          // Mobile: bottom sheet style with rounded top corners
+          'w-full rounded-t-2xl md:rounded-xl',
+          'max-h-[85vh] md:max-h-[90vh]',
+          // Desktop: centered with max-width
           {
-            'w-full max-w-sm': size === 'sm',
-            'w-full max-w-md': size === 'md',
-            'w-full max-w-lg': size === 'lg',
-            'w-full max-w-2xl': size === 'xl',
+            'md:max-w-sm': size === 'sm',
+            'md:max-w-md': size === 'md',
+            'md:max-w-lg': size === 'lg',
+            'md:max-w-2xl': size === 'xl',
           }
         )}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        {/* Drag handle for mobile */}
+        <div className="flex justify-center pt-2 pb-1 md:hidden">
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        </div>
+        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b">
+          <h2 className="text-base md:text-lg font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="px-6 py-4 overflow-y-auto">{children}</div>
+        <div className="px-4 md:px-6 py-4 overflow-y-auto">{children}</div>
       </div>
     </div>,
     document.body

@@ -14,9 +14,9 @@ export const Card = ({ children, className, padding = 'md' }: CardProps) => {
         'bg-white rounded-xl shadow-sm border border-gray-200',
         {
           'p-0': padding === 'none',
-          'p-4': padding === 'sm',
-          'p-6': padding === 'md',
-          'p-8': padding === 'lg',
+          'p-3 md:p-4': padding === 'sm',
+          'p-4 md:p-6': padding === 'md',
+          'p-6 md:p-8': padding === 'lg',
         },
         className
       )}
@@ -34,10 +34,10 @@ interface CardHeaderProps {
 
 export const CardHeader = ({ title, subtitle, action }: CardHeaderProps) => {
   return (
-    <div className="flex items-start justify-between mb-4">
+    <div className="flex items-start justify-between mb-3 md:mb-4">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-        {subtitle && <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>}
+        <h3 className="text-base md:text-lg font-semibold text-gray-900">{title}</h3>
+        {subtitle && <p className="text-xs md:text-sm text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {action && <div>{action}</div>}
     </div>
