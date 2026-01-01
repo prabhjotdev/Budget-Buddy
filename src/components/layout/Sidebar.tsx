@@ -49,16 +49,13 @@ export const Sidebar = () => {
       <aside
         className={clsx(
           'fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-300 z-50',
-          // Desktop styles
-          'hidden md:block',
+          // Mobile: controlled by mobileMenuOpen state
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
+          'w-72 md:translate-x-0',
+          // Desktop: width based on collapsed state
           {
             'md:w-64': !sidebarCollapsed,
             'md:w-20': sidebarCollapsed,
-          },
-          // Mobile styles - slide in from left
-          {
-            'block w-72': mobileMenuOpen,
-            'hidden': !mobileMenuOpen,
           }
         )}
       >
@@ -69,9 +66,10 @@ export const Sidebar = () => {
             <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
               <Wallet className="w-5 h-5 text-indigo-600" />
             </div>
-            {!sidebarCollapsed && (
-              <span className="font-semibold text-gray-900">Budget Buddy</span>
-            )}
+            {/* Always show on mobile, hide on desktop when collapsed */}
+            <span className={clsx('font-semibold text-gray-900', { 'md:hidden': sidebarCollapsed })}>
+              Budget Buddy
+            </span>
           </div>
           {/* Desktop: toggle collapse, Mobile: close menu */}
           <button
