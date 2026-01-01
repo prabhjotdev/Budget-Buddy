@@ -50,12 +50,13 @@ export const AppLayout = ({ children, title }: AppLayoutProps) => {
       <Sidebar />
       <div
         className={clsx('transition-all duration-300', {
-          'ml-64': !sidebarCollapsed,
-          'ml-20': sidebarCollapsed,
+          // No margin on mobile since sidebar is hidden
+          'ml-0 md:ml-64': !sidebarCollapsed,
+          'ml-0 md:ml-20': sidebarCollapsed,
         })}
       >
         <Header title={title} />
-        <main className="p-6">{children}</main>
+        <main className="p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={clsx(
-            'w-full px-3 py-2 border rounded-lg shadow-sm bg-white',
+            'w-full px-3 py-2.5 md:py-2 border rounded-lg shadow-sm bg-white text-base md:text-sm',
             'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
             {
               'border-gray-300': !error,

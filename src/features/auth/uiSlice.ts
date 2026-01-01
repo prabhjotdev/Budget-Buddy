@@ -26,6 +26,7 @@ interface UIState {
   } | null;
   notifications: Notification[];
   sidebarCollapsed: boolean;
+  mobileMenuOpen: boolean;
 }
 
 const initialState: UIState = {
@@ -44,6 +45,7 @@ const initialState: UIState = {
   confirmationData: null,
   notifications: [],
   sidebarCollapsed: false,
+  mobileMenuOpen: false,
 };
 
 const uiSlice = createSlice({
@@ -96,6 +98,15 @@ const uiSlice = createSlice({
     toggleSidebar: (state) => {
       state.sidebarCollapsed = !state.sidebarCollapsed;
     },
+    openMobileMenu: (state) => {
+      state.mobileMenuOpen = true;
+    },
+    closeMobileMenu: (state) => {
+      state.mobileMenuOpen = false;
+    },
+    toggleMobileMenu: (state) => {
+      state.mobileMenuOpen = !state.mobileMenuOpen;
+    },
   },
 });
 
@@ -110,6 +121,9 @@ export const {
   addNotification,
   removeNotification,
   toggleSidebar,
+  openMobileMenu,
+  closeMobileMenu,
+  toggleMobileMenu,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

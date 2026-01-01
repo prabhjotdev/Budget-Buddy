@@ -47,7 +47,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
             onChange={handleChange}
             onBlur={handleBlur}
             className={clsx(
-              'w-full pl-7 pr-3 py-2 border rounded-lg shadow-sm',
+              'w-full pl-7 pr-3 py-2.5 md:py-2 border rounded-lg shadow-sm text-base md:text-sm',
               'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
               {
                 'border-gray-300': !error,
