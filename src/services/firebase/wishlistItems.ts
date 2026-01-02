@@ -8,7 +8,6 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
 import { WishlistItem } from '../../types';

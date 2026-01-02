@@ -24,7 +24,6 @@ import {
   markWishlistItemPurchased,
 } from '../wishlistSlice';
 import { fetchBuffer } from '../bufferSlice';
-import { fetchBills } from '../billsSlice';
 import { fetchActiveCycle } from '../paycheckCyclesSlice';
 import { AppLayout } from '../../../components/layout';
 import {
@@ -88,7 +87,6 @@ export const WishlistPage = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { byId, allIds, isLoading } = useAppSelector((state) => state.wishlist);
   const { buffer } = useAppSelector((state) => state.buffer);
-  const { byId: billsById, allIds: billIds } = useAppSelector((state) => state.bills);
   const { byId: cyclesById, activeCycleId } = useAppSelector((state) => state.paycheckCycles);
   const activeCycle = activeCycleId ? cyclesById[activeCycleId] : null;
 
@@ -106,7 +104,6 @@ export const WishlistPage = () => {
     if (user) {
       dispatch(fetchWishlistItems(user.uid));
       dispatch(fetchBuffer(user.uid));
-      dispatch(fetchBills(user.uid));
       dispatch(fetchActiveCycle(user.uid));
     }
   }, [dispatch, user]);
@@ -123,36 +120,6 @@ export const WishlistPage = () => {
     }
     return allItems.filter((item) => !item.isPurchased);
   }, [allItems, showPurchased]);
-
-  // Calculate upcoming bills total
-  const upcomingBillsTotal = useMemo(() => {
-    const activeBills = billIds
-      .map((id) => billsById[id])
-      .filter((bill) => bill && bill.isActive);
-
-    // Simple calculation: sum of monthly equivalent bills
-    return activeBills.reduce((total, bill) => {
-      let monthlyAmount = bill.amount;
-      switch (bill.frequency) {
-        case 'bi-weekly':
-          monthlyAmount = bill.amount * 2.17; // ~2.17 bi-weekly periods per month
-          break;
-        case 'quarterly':
-          monthlyAmount = bill.amount / 3;
-          break;
-        case 'semi-annual':
-          monthlyAmount = bill.amount / 6;
-          break;
-        case 'annual':
-          monthlyAmount = bill.amount / 12;
-          break;
-        case 'one-time':
-          monthlyAmount = 0; // Don't count one-time in regular calculation
-          break;
-      }
-      return total + monthlyAmount;
-    }, 0);
-  }, [billsById, billIds]);
 
   // Calculate available funds and emergency floor
   const financialStatus = useMemo(() => {
