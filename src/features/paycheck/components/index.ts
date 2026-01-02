@@ -15,3 +15,4 @@ export { MarkBillPaidModal } from './MarkBillPaidModal';
 export { EditPaycheckModal } from './EditPaycheckModal';
 export { ManagePage } from './ManagePage';
 export { SpendingLogsPage } from './SpendingLogsPage';
+export { WishlistPage } from './WishlistPage';

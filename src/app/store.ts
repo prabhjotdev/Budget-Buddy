@@ -17,6 +17,7 @@ import {
   paycheckCyclesReducer,
   spendingTransactionsReducer,
   bufferReducer,
+  wishlistReducer,
 } from '../features/paycheck';
 
 export const store = configureStore({
@@ -39,6 +40,7 @@ export const store = configureStore({
     paycheckCycles: paycheckCyclesReducer,
     spendingTransactions: spendingTransactionsReducer,
     buffer: bufferReducer,
+    wishlist: wishlistReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -72,6 +74,10 @@ export const store = configureStore({
           'buffer/add/fulfilled',
           'buffer/withdraw/fulfilled',
           'buffer/initialize/fulfilled',
+          'wishlist/fetch/fulfilled',
+          'wishlist/create/fulfilled',
+          'wishlist/update/fulfilled',
+          'wishlist/markPurchased/fulfilled',
         ],
         ignoredPaths: [
           'budgetPeriods.byId',
@@ -88,6 +94,7 @@ export const store = configureStore({
           'paymentMethods.byId',
           'bills.byId',
           'spendingTags.byId',
+          'wishlist.byId',
         ],
       },
     }),
