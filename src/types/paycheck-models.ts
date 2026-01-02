@@ -197,6 +197,28 @@ export interface CreditCardSnapshot {
   createdAt: Timestamp;
 }
 
+// --- Wishlist ---
+
+export type WishlistItemType = 'want' | 'need';
+export type WishlistPriority = 'high' | 'medium' | 'low';
+export type WishlistRecommendation = 'safe' | 'wait' | 'save' | 'not-recommended';
+
+export interface WishlistItem {
+  id: string;
+  name: string;
+  price: number;
+  type: WishlistItemType;
+  priority: WishlistPriority;
+  notes: string;
+
+  // Tracking
+  isPurchased: boolean;
+  purchasedAt?: Timestamp;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 // ============================================
 // HELPER TYPES
 // ============================================

@@ -5,6 +5,7 @@ export * from './spendingTagsSlice';
 export * from './paycheckCyclesSlice';
 export * from './spendingTransactionsSlice';
 export * from './bufferSlice';
+export * from './wishlistSlice';
 
 // Default exports for store configuration
 export { default as paymentMethodsReducer } from './paymentMethodsSlice';
@@ -13,3 +14,4 @@ export { default as spendingTagsReducer } from './spendingTagsSlice';
 export { default as paycheckCyclesReducer } from './paycheckCyclesSlice';
 export { default as spendingTransactionsReducer } from './spendingTransactionsSlice';
 export { default as bufferReducer } from './bufferSlice';
+export { default as wishlistReducer } from './wishlistSlice';
