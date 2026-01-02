@@ -7,6 +7,7 @@ export { StartCycleWizard } from './StartCycleWizard';
 export { CycleBillsList } from './CycleBillsList';
 export { SpendingSummary } from './SpendingSummary';
 export { LogSpendingModal } from './LogSpendingModal';
+export { EditSpendingModal } from './EditSpendingModal';
 export { BufferManager } from './BufferManager';
 export { BufferWithdrawModal } from './BufferWithdrawModal';
 export { BufferDepositModal } from './BufferDepositModal';

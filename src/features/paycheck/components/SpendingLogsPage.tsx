@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronUp,
   Calendar,
+  Edit2,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchSpendingTransactions } from '../spendingTransactionsSlice';
@@ -28,6 +29,7 @@ import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Select } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { SpendingTransaction } from '../../../types';
+import { EditSpendingModal } from './EditSpendingModal';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -97,6 +99,9 @@ export const SpendingLogsPage = () => {
 
   // Pagination
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
+  // Edit modal state
+  const [editingTransaction, setEditingTransaction] = useState<SpendingTransaction | null>(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -614,7 +619,8 @@ export const SpendingLogsPage = () => {
                 {visibleTransactions.map((tx) => (
                   <div
                     key={tx.id}
-                    className="px-4 md:px-6 py-3 hover:bg-gray-50 transition-colors"
+                    onClick={() => setEditingTransaction(tx)}
+                    className="px-4 md:px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
@@ -635,9 +641,12 @@ export const SpendingLogsPage = () => {
                           )}
                         </div>
                       </div>
-                      <p className="font-semibold text-gray-900 ml-4">
-                        -{formatCurrency(tx.amount)}
-                      </p>
+                      <div className="flex items-center gap-3 ml-4">
+                        <p className="font-semibold text-gray-900">
+                          -{formatCurrency(tx.amount)}
+                        </p>
+                        <Edit2 className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -656,6 +665,13 @@ export const SpendingLogsPage = () => {
             </>
           )}
         </Card>
+
+        {/* Edit Transaction Modal */}
+        <EditSpendingModal
+          isOpen={!!editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          transaction={editingTransaction}
+        />
       </div>
     </AppLayout>
   );
