@@ -354,7 +354,16 @@ export const SpendingLogsPage = () => {
           />
           <div className="h-48 md:h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                onClick={(e) => {
+                  if (e && e.activePayload && e.activePayload.length > 0) {
+                    handleChartClick(e.activePayload[0].payload as MonthData);
+                  }
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="month"
