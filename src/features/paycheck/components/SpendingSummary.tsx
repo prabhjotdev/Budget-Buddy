@@ -14,7 +14,10 @@ export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
   );
   const { byId: tagsById } = useAppSelector((state) => state.spendingTags);
 
-  const cycleTransactionIds = idsByCycle[cycleId] || [];
+  const cycleTransactionIds = useMemo(
+    () => idsByCycle[cycleId] || [],
+    [idsByCycle, cycleId]
+  );
 
   const transactions = useMemo(() => {
     return cycleTransactionIds

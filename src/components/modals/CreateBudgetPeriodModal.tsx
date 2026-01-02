@@ -74,7 +74,9 @@ export const CreateBudgetPeriodModal = () => {
       }
     } else {
       // Default: equal allocation to all categories
-      const perCategory = totalIncome / categoryIds.length || 0;
+      // Calculate income total inline to avoid dependency issues
+      const currentTotalIncome = Object.values(incomeAmounts).reduce((sum, amount) => sum + amount, 0);
+      const perCategory = currentTotalIncome / categoryIds.length || 0;
       setAllocations(
         categoryIds.map((catId) => ({
           categoryId: catId,
@@ -83,7 +85,7 @@ export const CreateBudgetPeriodModal = () => {
         }))
       );
     }
-  }, [selectedTemplateId, templatesById, categoryIds]);
+  }, [selectedTemplateId, templatesById, categoryIds, incomeAmounts]);
 
   const totalIncome = Object.values(incomeAmounts).reduce((sum, amount) => sum + amount, 0);
   const totalAvailable = totalIncome + rolloverAmount;
