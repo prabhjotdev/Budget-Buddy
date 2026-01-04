@@ -102,6 +102,10 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
       const selectedTags = selectedTagIds.map((id) => tagsById[id]).filter(Boolean);
 
       // Update the transaction
+      // Parse date as local time (not UTC) to avoid timezone issues
+      const [year, month, day] = date.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day, 12, 0, 0); // noon local time
+
       await dispatch(
         updateSpendingTransaction({
           userId: user.uid,
@@ -113,7 +117,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
             paymentMethodName: selectedPaymentMethod?.name || 'Unknown',
             tagIds: selectedTagIds,
             tagNames: selectedTags.map((t) => t.name),
-            date: Timestamp.fromDate(new Date(date)),
+            date: Timestamp.fromDate(localDate),
           },
         })
       ).unwrap();
