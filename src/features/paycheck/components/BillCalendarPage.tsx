@@ -36,7 +36,6 @@ import { AppLayout } from '../../../components/layout';
 import { Card, Modal, Button, Badge } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { Bill, PaycheckCycle } from '../../../types';
-import { Timestamp } from 'firebase/firestore';
 
 // Projected bill instance for calendar display
 interface ProjectedBill {
