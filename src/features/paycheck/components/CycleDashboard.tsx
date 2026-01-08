@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchActiveCycle } from '../paycheckCyclesSlice';
-import { fetchTransactionsByCycle } from '../spendingTransactionsSlice';
+import { fetchSpendingTransactions } from '../spendingTransactionsSlice';
 import { fetchBuffer } from '../bufferSlice';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
@@ -43,14 +43,9 @@ export const CycleDashboard = () => {
     if (user) {
       dispatch(fetchActiveCycle(user.uid));
       dispatch(fetchBuffer(user.uid));
+      dispatch(fetchSpendingTransactions(user.uid));
     }
   }, [dispatch, user]);
-
-  useEffect(() => {
-    if (user && activeCycleId) {
-      dispatch(fetchTransactionsByCycle({ userId: user.uid, cycleId: activeCycleId }));
-    }
-  }, [dispatch, user, activeCycleId]);
 
   // If no active cycle, show the start wizard
   if (!activeCycle && !isLoading) {
