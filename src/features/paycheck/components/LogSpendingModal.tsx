@@ -16,6 +16,14 @@ interface LogSpendingModalProps {
   spendingLimit: number;
 }
 
+// Helper to get local date string (YYYY-MM-DD) without timezone issues
+const getLocalDateString = (d: Date = new Date()) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const LogSpendingModal = ({
   isOpen,
   onClose,
@@ -34,7 +42,7 @@ export const LogSpendingModal = ({
   const [description, setDescription] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState(defaultId || '');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getLocalDateString());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNewTagInput, setShowNewTagInput] = useState(false);
   const [newTagName, setNewTagName] = useState('');
@@ -46,7 +54,7 @@ export const LogSpendingModal = ({
       setDescription('');
       setPaymentMethodId(defaultId || paymentMethodIds[0] || '');
       setSelectedTagIds([]);
-      setDate(new Date().toISOString().split('T')[0]);
+      setDate(getLocalDateString());
       setShowNewTagInput(false);
       setNewTagName('');
     }

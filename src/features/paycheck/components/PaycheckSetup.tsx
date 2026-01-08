@@ -6,6 +6,14 @@ import { updateSettings } from '../../settings/settingsSlice';
 import { Card, CardHeader, Button, Select, Input } from '../../../components/shared';
 import { PaycheckScheduleType } from '../../../types';
 
+// Helper to format Date as YYYY-MM-DD in local time
+const formatLocalDate = (d: Date): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 interface PaycheckSetupProps {
   onSetupComplete?: () => void;
 }
@@ -20,7 +28,7 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
   const [semiMonthlyDay1, setSemiMonthlyDay1] = useState(1);
   const [semiMonthlyDay2, setSemiMonthlyDay2] = useState(15);
   const [biWeeklyAnchorDate, setBiWeeklyAnchorDate] = useState(
-    new Date().toISOString().split('T')[0]
+    formatLocalDate(new Date())
   );
   const [defaultMinimumSave, setDefaultMinimumSave] = useState(50);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,7 +51,7 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
       }
       if (settings.biWeeklyAnchorDate) {
         const date = settings.biWeeklyAnchorDate.toDate();
-        setBiWeeklyAnchorDate(date.toISOString().split('T')[0]);
+        setBiWeeklyAnchorDate(formatLocalDate(date));
       }
       if (settings.defaultMinimumSave !== undefined) {
         setDefaultMinimumSave(settings.defaultMinimumSave);

@@ -41,7 +41,7 @@ export const StartCycleWizard = () => {
 
   // Form state
   const [paycheckAmount, setPaycheckAmount] = useState('');
-  const [cycleStartDate, setCycleStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [cycleStartDate, setCycleStartDate] = useState(formatLocalDate(new Date()));
   const [cycleEndDate, setCycleEndDate] = useState('');
   const [selectedBills, setSelectedBills] = useState<Record<string, { selected: boolean; amount: number }>>({});
   const [minimumSave, setMinimumSave] = useState(50);
@@ -89,7 +89,7 @@ export const StartCycleWizard = () => {
       const start = parseLocalDate(cycleStartDate);
       const end = new Date(start);
       end.setDate(end.getDate() + 13); // 14 days including start
-      setCycleEndDate(end.toISOString().split('T')[0]);
+      setCycleEndDate(formatLocalDate(end));
     }
   }, [cycleStartDate]);
 
@@ -822,6 +822,14 @@ function getOrdinalSuffix(n: number): string {
 function parseLocalDate(dateString: string): Date {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day);
+}
+
+// Format a Date to YYYY-MM-DD string in local time (not UTC)
+function formatLocalDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // Calculate the actual due date for a bill within a cycle
