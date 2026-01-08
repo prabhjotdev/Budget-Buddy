@@ -8,6 +8,14 @@ import { incrementTagUsage, createSpendingTag } from '../spendingTagsSlice';
 import { Modal, Button, Input } from '../../../components/shared';
 import { SpendingTransaction } from '../../../types';
 
+// Helper to get local date string (YYYY-MM-DD) without timezone issues
+const getLocalDateString = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 interface EditSpendingModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -40,7 +48,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
       setDescription(transaction.description);
       setPaymentMethodId(transaction.paymentMethodId);
       setSelectedTagIds(transaction.tagIds);
-      setDate(transaction.date.toDate().toISOString().split('T')[0]);
+      setDate(getLocalDateString(transaction.date.toDate()));
       setShowNewTagInput(false);
       setNewTagName('');
       setShowDeleteConfirm(false);
