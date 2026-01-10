@@ -97,24 +97,35 @@ const projectBillsForRange = (
     let currentDate: Date;
 
     if (bill.frequency === 'bi-weekly') {
-      // For bi-weekly bills, anchor to the dueDay of the start month
-      // and project forward/backward from there
-      const startYear = startDate.getFullYear();
-      const startMonth = startDate.getMonth();
+      // For bi-weekly bills, use startDate as anchor (or createdAt as fallback)
+      // This ensures continuous 2-week cycles across months
+      const anchorSource = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
       const anchorDate = new Date(
-        startYear,
-        startMonth,
-        Math.min(bill.dueDay, new Date(startYear, startMonth + 1, 0).getDate())
+        anchorSource.getFullYear(),
+        anchorSource.getMonth(),
+        anchorSource.getDate()
       );
 
-      // Go back to find the first occurrence before or at the start of range
+      // Start from the anchor
       currentDate = anchorDate;
-      while (isAfter(currentDate, startDate)) {
-        const prevDate = addWeeks(currentDate, -2);
-        if (isBefore(prevDate, startDate) && !isSameDay(prevDate, startDate)) {
-          break;
-        }
+
+      // If anchor is in the future past the range, skip this bill
+      if (isAfter(currentDate, endDate)) {
+        return;
+      }
+
+      // If anchor is before the range, advance by 2 weeks until we reach the range
+      while (isBefore(currentDate, startDate)) {
+        currentDate = addWeeks(currentDate, 2);
+      }
+
+      // Now go back by 2 weeks if needed to find the first occurrence in range
+      // (in case we jumped past it)
+      let prevDate = addWeeks(currentDate, -2);
+      while ((isAfter(prevDate, startDate) || isSameDay(prevDate, startDate)) &&
+             (isBefore(prevDate, endDate) || isSameDay(prevDate, endDate))) {
         currentDate = prevDate;
+        prevDate = addWeeks(currentDate, -2);
       }
     } else if (bill.frequency === 'quarterly' || bill.frequency === 'semi-annual' || bill.frequency === 'annual') {
       // For quarterly, semi-annual, and annual bills, use startDate as the anchor

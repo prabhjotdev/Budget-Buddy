@@ -23,8 +23,8 @@ const getLocalDateString = (d: Date = new Date()) => {
   return `${year}-${month}-${day}`;
 };
 
-// Frequencies that require a start date
-const REQUIRES_START_DATE: BillFrequency[] = ['quarterly', 'semi-annual', 'annual'];
+// Frequencies that require a start date for proper calendar projection
+const REQUIRES_START_DATE: BillFrequency[] = ['bi-weekly', 'quarterly', 'semi-annual', 'annual'];
 
 const FREQUENCY_LABELS: Record<BillFrequency, string> = {
   monthly: 'Monthly',
