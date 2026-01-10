@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, ChevronRight, Tag } from 'lucide-react';
 import { useAppSelector } from '../../../app/hooks';
 import { Card, CardHeader, Button } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
+import { ROUTES } from '../../../constants';
 
 interface SpendingSummaryProps {
   cycleId: string;
 }
 
 export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
+  const navigate = useNavigate();
   const { byId: transactionsById, idsByCycle } = useAppSelector(
     (state) => state.spendingTransactions
   );
@@ -87,7 +90,7 @@ export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
       <CardHeader
         title="Recent Spending"
         action={
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.SPENDING)}>
             View All
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
