@@ -24,7 +24,7 @@ const getLocalDateString = (d: Date = new Date()) => {
 };
 
 // Frequencies that require a start date for proper calendar projection
-const REQUIRES_START_DATE: BillFrequency[] = ['bi-weekly', 'quarterly', 'semi-annual', 'annual'];
+const REQUIRES_START_DATE: BillFrequency[] = ['bi-weekly', 'quarterly', 'semi-annual', 'annual', 'one-time'];
 
 const FREQUENCY_LABELS: Record<BillFrequency, string> = {
   monthly: 'Monthly',
@@ -341,17 +341,19 @@ export const BillsManager = () => {
             />
           </div>
 
-          {/* Start date for quarterly/semi-annual/annual bills */}
+          {/* Start date for non-monthly bills */}
           {REQUIRES_START_DATE.includes(formFrequency) && (
             <div>
               <Input
-                label="First Payment Date"
+                label={formFrequency === 'one-time' ? 'Payment Date' : 'First Payment Date'}
                 type="date"
                 value={formStartDate}
                 onChange={(e) => setFormStartDate(e.target.value)}
               />
               <p className="mt-1 text-xs text-gray-500">
-                When is the first (or next) payment due? This helps show the bill on the correct months in the calendar.
+                {formFrequency === 'one-time'
+                  ? 'When is this payment due?'
+                  : 'When is the first (or next) payment due? This helps show the bill on the correct dates in the calendar.'}
               </p>
             </div>
           )}
