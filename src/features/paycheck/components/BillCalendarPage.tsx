@@ -149,8 +149,21 @@ const projectBillsForRange = (
       while (isBefore(currentDate, startDate)) {
         currentDate = advanceBillDate(currentDate, bill.frequency);
       }
+    } else if (bill.frequency === 'one-time') {
+      // For one-time bills, use startDate if set, otherwise use createdAt
+      const paymentDate = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
+      currentDate = new Date(
+        paymentDate.getFullYear(),
+        paymentDate.getMonth(),
+        paymentDate.getDate()
+      );
+
+      // If the one-time payment is outside the range, skip it
+      if (isBefore(currentDate, startDate) || isAfter(currentDate, endDate)) {
+        return;
+      }
     } else {
-      // For monthly and one-time bills, use simple lookback approach
+      // For monthly bills, use simple lookback approach
       const lookbackStart = subMonths(startDate, 1);
       currentDate = new Date(
         lookbackStart.getFullYear(),
