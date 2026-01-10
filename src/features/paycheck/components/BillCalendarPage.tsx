@@ -90,21 +90,45 @@ const projectBillsForRange = (
   cycles: PaycheckCycle[]
 ): ProjectedBill[] => {
   const projectedBills: ProjectedBill[] = [];
-  const lookbackStart = subMonths(startDate, 1); // Look back a month for bills that might fall in range
 
   bills.forEach((bill) => {
     if (!bill.isActive) return;
 
-    // Find the first occurrence after lookbackStart
-    let currentDate = new Date(
-      lookbackStart.getFullYear(),
-      lookbackStart.getMonth(),
-      Math.min(bill.dueDay, new Date(lookbackStart.getFullYear(), lookbackStart.getMonth() + 1, 0).getDate())
-    );
+    let currentDate: Date;
 
-    // If before lookback, advance to first valid occurrence
-    if (isBefore(currentDate, lookbackStart)) {
-      currentDate = getNextBillDate(bill, lookbackStart);
+    if (bill.frequency === 'bi-weekly') {
+      // For bi-weekly bills, anchor to the dueDay of the start month
+      // and project forward/backward from there
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth();
+      const anchorDate = new Date(
+        startYear,
+        startMonth,
+        Math.min(bill.dueDay, new Date(startYear, startMonth + 1, 0).getDate())
+      );
+
+      // Go back to find the first occurrence before or at the start of range
+      currentDate = anchorDate;
+      while (isAfter(currentDate, startDate)) {
+        const prevDate = addWeeks(currentDate, -2);
+        if (isBefore(prevDate, startDate) && !isSameDay(prevDate, startDate)) {
+          break;
+        }
+        currentDate = prevDate;
+      }
+    } else {
+      // For other frequencies, use lookback approach
+      const lookbackStart = subMonths(startDate, 1);
+      currentDate = new Date(
+        lookbackStart.getFullYear(),
+        lookbackStart.getMonth(),
+        Math.min(bill.dueDay, new Date(lookbackStart.getFullYear(), lookbackStart.getMonth() + 1, 0).getDate())
+      );
+
+      // If before lookback, advance to first valid occurrence
+      if (isBefore(currentDate, lookbackStart)) {
+        currentDate = getNextBillDate(bill, lookbackStart);
+      }
     }
 
     // Generate all occurrences within the range
