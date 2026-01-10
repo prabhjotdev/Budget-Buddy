@@ -117,8 +117,24 @@ const projectBillsForRange = (
         currentDate = prevDate;
       }
     } else {
-      // For other frequencies, use lookback approach
-      const lookbackStart = subMonths(startDate, 1);
+      // For other frequencies, use lookback approach based on frequency
+      // We need to look back far enough to catch the bill's cycle
+      let lookbackMonths = 1;
+      switch (bill.frequency) {
+        case 'quarterly':
+          lookbackMonths = 3;
+          break;
+        case 'semi-annual':
+          lookbackMonths = 6;
+          break;
+        case 'annual':
+          lookbackMonths = 12;
+          break;
+        default:
+          lookbackMonths = 1;
+      }
+
+      const lookbackStart = subMonths(startDate, lookbackMonths);
       currentDate = new Date(
         lookbackStart.getFullYear(),
         lookbackStart.getMonth(),
