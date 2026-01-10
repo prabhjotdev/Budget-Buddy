@@ -38,6 +38,7 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       <div
         className={clsx(
           'relative bg-white shadow-xl overflow-hidden flex flex-col',
+          'dark:bg-gray-800',
           // Mobile: bottom sheet style with rounded top corners
           'w-full rounded-t-2xl md:rounded-xl',
           'max-h-[85vh] md:max-h-[90vh]',
@@ -52,13 +53,13 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       >
         {/* Drag handle for mobile */}
         <div className="flex justify-center pt-2 pb-1 md:hidden">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
         </div>
-        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b">
-          <h2 className="text-base md:text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b dark:border-gray-700">
+          <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700"
           >
             <X className="w-5 h-5" />
           </button>
