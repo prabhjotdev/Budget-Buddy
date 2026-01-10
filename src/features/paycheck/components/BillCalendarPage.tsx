@@ -116,25 +116,31 @@ const projectBillsForRange = (
         }
         currentDate = prevDate;
       }
-    } else {
-      // For other frequencies, use lookback approach based on frequency
-      // We need to look back far enough to catch the bill's cycle
-      let lookbackMonths = 1;
-      switch (bill.frequency) {
-        case 'quarterly':
-          lookbackMonths = 3;
-          break;
-        case 'semi-annual':
-          lookbackMonths = 6;
-          break;
-        case 'annual':
-          lookbackMonths = 12;
-          break;
-        default:
-          lookbackMonths = 1;
+    } else if (bill.frequency === 'quarterly' || bill.frequency === 'semi-annual' || bill.frequency === 'annual') {
+      // For quarterly, semi-annual, and annual bills, use createdAt as the anchor
+      // This ensures we only show bills on the correct months based on when the bill started
+      const billCreatedAt = bill.createdAt.toDate();
+      const anchorDate = new Date(
+        billCreatedAt.getFullYear(),
+        billCreatedAt.getMonth(),
+        Math.min(bill.dueDay, new Date(billCreatedAt.getFullYear(), billCreatedAt.getMonth() + 1, 0).getDate())
+      );
+
+      // Start from the anchor and find occurrences that fall within or before the range
+      currentDate = anchorDate;
+
+      // If anchor is after the range end, we won't have any occurrences
+      if (isAfter(currentDate, endDate)) {
+        return; // Skip this bill - no occurrences in range
       }
 
-      const lookbackStart = subMonths(startDate, lookbackMonths);
+      // Advance until we reach or pass the start of the range
+      while (isBefore(currentDate, startDate)) {
+        currentDate = advanceBillDate(currentDate, bill.frequency);
+      }
+    } else {
+      // For monthly and one-time bills, use simple lookback approach
+      const lookbackStart = subMonths(startDate, 1);
       currentDate = new Date(
         lookbackStart.getFullYear(),
         lookbackStart.getMonth(),
