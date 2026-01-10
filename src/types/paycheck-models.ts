@@ -69,6 +69,10 @@ export interface Bill {
   dueDay: number; // Day of month (1-31)
   frequency: BillFrequency;
 
+  // For quarterly, semi-annual, and annual bills: when the first payment is due
+  // Used to calculate correct projection months on the calendar
+  startDate?: Timestamp;
+
   // Which payment method pays this bill
   paymentMethodId: string | null;
 
