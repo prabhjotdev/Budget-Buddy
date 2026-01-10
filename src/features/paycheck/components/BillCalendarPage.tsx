@@ -117,13 +117,13 @@ const projectBillsForRange = (
         currentDate = prevDate;
       }
     } else if (bill.frequency === 'quarterly' || bill.frequency === 'semi-annual' || bill.frequency === 'annual') {
-      // For quarterly, semi-annual, and annual bills, use createdAt as the anchor
-      // This ensures we only show bills on the correct months based on when the bill started
-      const billCreatedAt = bill.createdAt.toDate();
+      // For quarterly, semi-annual, and annual bills, use startDate as the anchor
+      // Falls back to createdAt if startDate is not set (for backwards compatibility)
+      const anchorSource = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
       const anchorDate = new Date(
-        billCreatedAt.getFullYear(),
-        billCreatedAt.getMonth(),
-        Math.min(bill.dueDay, new Date(billCreatedAt.getFullYear(), billCreatedAt.getMonth() + 1, 0).getDate())
+        anchorSource.getFullYear(),
+        anchorSource.getMonth(),
+        Math.min(bill.dueDay, new Date(anchorSource.getFullYear(), anchorSource.getMonth() + 1, 0).getDate())
       );
 
       // Start from the anchor and find occurrences that fall within or before the range

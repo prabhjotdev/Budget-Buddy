@@ -9,10 +9,22 @@ import {
   RotateCcw,
   Zap,
 } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createBill, updateBill, deleteBill } from '../billsSlice';
 import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
 import { Bill, BillFrequency } from '../../../types';
+
+// Helper to get local date string (YYYY-MM-DD)
+const getLocalDateString = (d: Date = new Date()) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Frequencies that require a start date
+const REQUIRES_START_DATE: BillFrequency[] = ['quarterly', 'semi-annual', 'annual'];
 
 const FREQUENCY_LABELS: Record<BillFrequency, string> = {
   monthly: 'Monthly',
@@ -42,6 +54,7 @@ export const BillsManager = () => {
   const [formAmount, setFormAmount] = useState('');
   const [formDueDay, setFormDueDay] = useState(1);
   const [formFrequency, setFormFrequency] = useState<BillFrequency>('monthly');
+  const [formStartDate, setFormStartDate] = useState(''); // For quarterly/semi-annual/annual
   const [formIsVariable, setFormIsVariable] = useState(false);
   const [formIsAutoPay, setFormIsAutoPay] = useState(false);
   const [formPaymentMethodId, setFormPaymentMethodId] = useState<string>('');
@@ -72,6 +85,7 @@ export const BillsManager = () => {
     setFormAmount('');
     setFormDueDay(1);
     setFormFrequency('monthly');
+    setFormStartDate('');
     setFormIsVariable(false);
     setFormIsAutoPay(false);
     setFormPaymentMethodId('');
@@ -84,6 +98,7 @@ export const BillsManager = () => {
     setFormAmount(String(bill.amount));
     setFormDueDay(bill.dueDay);
     setFormFrequency(bill.frequency);
+    setFormStartDate(bill.startDate ? getLocalDateString(bill.startDate.toDate()) : '');
     setFormIsVariable(bill.isVariable);
     setFormIsAutoPay(bill.isAutoPay);
     setFormPaymentMethodId(bill.paymentMethodId || '');
@@ -100,11 +115,19 @@ export const BillsManager = () => {
 
     setIsSaving(true);
     try {
+      // Parse start date for quarterly/semi-annual/annual bills
+      let startDate: Timestamp | undefined;
+      if (REQUIRES_START_DATE.includes(formFrequency) && formStartDate) {
+        const [year, month, day] = formStartDate.split('-').map(Number);
+        startDate = Timestamp.fromDate(new Date(year, month - 1, day));
+      }
+
       const billData = {
         name: formName.trim(),
         amount: parseFloat(formAmount) || 0,
         dueDay: formDueDay,
         frequency: formFrequency,
+        ...(startDate && { startDate }),
         isVariable: formIsVariable,
         isAutoPay: formIsAutoPay,
         paymentMethodId: formPaymentMethodId || null,
@@ -317,6 +340,21 @@ export const BillsManager = () => {
               options={paymentMethodOptions}
             />
           </div>
+
+          {/* Start date for quarterly/semi-annual/annual bills */}
+          {REQUIRES_START_DATE.includes(formFrequency) && (
+            <div>
+              <Input
+                label="First Payment Date"
+                type="date"
+                value={formStartDate}
+                onChange={(e) => setFormStartDate(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                When is the first (or next) payment due? This helps show the bill on the correct months in the calendar.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label className="flex items-center gap-2 cursor-pointer">

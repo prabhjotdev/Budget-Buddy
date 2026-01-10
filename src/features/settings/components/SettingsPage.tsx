@@ -10,7 +10,7 @@ import { PaycheckSetup } from '../../paycheck/components';
 import { resetAllData } from '../../../services/firebase/dataReset';
 
 // App version - update this when releasing new versions
-const APP_VERSION = '1.4.4';
+const APP_VERSION = '1.4.5';
 
 // Get all supported timezones
 const getTimezones = (): string[] => {
