@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, ChangeEvent } from 'react';
-import { AlertTriangle, Trash2, Settings as SettingsIcon, Check } from 'lucide-react';
+import { AlertTriangle, Trash2, Settings as SettingsIcon, Check, Moon, Sun } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
 import { clearPaycheckCycles } from '../../paycheck/paycheckCyclesSlice';
@@ -8,9 +8,10 @@ import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
 import { PaycheckSetup } from '../../paycheck/components';
 import { resetAllData } from '../../../services/firebase/dataReset';
+import { useTheme } from '../../../context/ThemeContext';
 
 // App version - update this when releasing new versions
-const APP_VERSION = '1.4.7';
+const APP_VERSION = '1.5.0';
 
 // Get all supported timezones
 const getTimezones = (): string[] => {
@@ -53,6 +54,7 @@ export const SettingsPage = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { data: settings } = useAppSelector((state) => state.settings);
+  const { theme, toggleTheme } = useTheme();
 
   // General settings state
   const [currency, setCurrency] = useState(settings?.currency || 'USD');
@@ -148,12 +150,12 @@ export const SettingsPage = () => {
     <AppLayout title="Settings">
       <div className="max-w-2xl space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-gray-50 to-slate-50 border border-gray-200 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800 dark:to-slate-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
           <div className="flex items-center gap-3">
-            <SettingsIcon className="w-6 h-6 text-gray-600" />
+            <SettingsIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
             <div>
-              <h3 className="font-semibold text-gray-900">App Settings</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">App Settings</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Configure your paycheck schedule, preferences, and account settings.
               </p>
             </div>
@@ -165,7 +167,7 @@ export const SettingsPage = () => {
 
         {/* General Settings */}
         <Card>
-          <CardHeader title="General Settings" subtitle="Currency and timezone preferences" />
+          <CardHeader title="General Settings" subtitle="Currency, timezone, and appearance" />
           <div className="space-y-4">
             <Select
               label="Currency"
@@ -185,10 +187,42 @@ export const SettingsPage = () => {
               onChange={(e) => setTimezone(e.target.value)}
               options={timezoneOptions}
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Detected timezone: {getBrowserTimezone()}
             </p>
-            <div className="flex justify-end items-center gap-3">
+
+            {/* Dark Mode Toggle */}
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {theme === 'dark' ? (
+                    <Moon className="w-5 h-5 text-indigo-500" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-amber-500" />
+                  )}
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Dark Mode</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {theme === 'dark' ? 'Currently using dark theme' : 'Currently using light theme'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={toggleTheme}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end items-center gap-3 pt-2">
               {saveSuccess && (
                 <span className="text-green-600 text-sm flex items-center gap-1">
                   <Check className="w-4 h-4" />
@@ -212,16 +246,16 @@ export const SettingsPage = () => {
         </Card>
 
         {/* Danger Zone */}
-        <Card className="border-red-200">
+        <Card className="border-red-200 dark:border-red-900">
           <CardHeader
             title="Danger Zone"
             subtitle="Irreversible actions - proceed with caution"
           />
-          <div className="p-4 bg-red-50 rounded-lg">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h4 className="font-medium text-red-900">Reset All Data</h4>
-                <p className="text-sm text-red-700 mt-1">
+                <h4 className="font-medium text-red-900 dark:text-red-400">Reset All Data</h4>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                   Delete all your budget data including cycles, transactions, bills, payment methods,
                   tags, and buffer history. This action cannot be undone.
                 </p>
@@ -239,7 +273,7 @@ export const SettingsPage = () => {
         </Card>
 
         {/* Version Footer */}
-        <div className="text-center py-6 text-gray-400 text-sm">
+        <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-sm">
           <p>Budget Buddy v{APP_VERSION}</p>
         </div>
       </div>
