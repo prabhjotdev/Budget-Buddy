@@ -28,7 +28,7 @@ export const Card = ({ children, className, padding = 'md' }: CardProps) => {
 };
 
 interface CardHeaderProps {
-  title: string;
+  title: ReactNode;
   subtitle?: string;
   action?: ReactNode;
 }
