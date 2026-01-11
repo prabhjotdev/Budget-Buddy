@@ -40,6 +40,7 @@ const DATE_RANGE_OPTIONS = [
   { value: '90', label: 'Last 90 Days' },
   { value: '180', label: 'Last 6 Months' },
   { value: '365', label: 'Last Year' },
+  { value: 'custom', label: 'Custom Range' },
 ];
 
 interface MonthData {
@@ -90,6 +91,8 @@ export const SpendingLogsPage = () => {
 
   // Filter state
   const [dateRange, setDateRange] = useState('365');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [selectedTagId, setSelectedTagId] = useState('all');
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState('all');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -122,7 +125,19 @@ export const SpendingLogsPage = () => {
     let filtered = [...allTransactions];
 
     // Date range filter
-    if (dateRange !== 'all') {
+    if (dateRange === 'custom') {
+      // Custom date range
+      if (customStartDate) {
+        const startDate = new Date(customStartDate);
+        startDate.setHours(0, 0, 0, 0);
+        filtered = filtered.filter((tx) => tx.date.toDate() >= startDate);
+      }
+      if (customEndDate) {
+        const endDate = new Date(customEndDate);
+        endDate.setHours(23, 59, 59, 999);
+        filtered = filtered.filter((tx) => tx.date.toDate() <= endDate);
+      }
+    } else if (dateRange !== 'all') {
       const days = parseInt(dateRange, 10);
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
@@ -140,7 +155,7 @@ export const SpendingLogsPage = () => {
     }
 
     return filtered;
-  }, [allTransactions, dateRange, selectedTagId, selectedPaymentMethodId]);
+  }, [allTransactions, dateRange, customStartDate, customEndDate, selectedTagId, selectedPaymentMethodId]);
 
   // Calculate monthly data for chart (past 12 months)
   const chartData = useMemo(() => {
@@ -263,6 +278,8 @@ export const SpendingLogsPage = () => {
 
   const clearFilters = () => {
     setDateRange('365');
+    setCustomStartDate('');
+    setCustomEndDate('');
     setSelectedTagId('all');
     setSelectedPaymentMethodId('all');
   };
@@ -580,6 +597,53 @@ export const SpendingLogsPage = () => {
                   options={paymentMethodOptions}
                 />
               </div>
+
+              {/* Custom Date Range Picker */}
+              {dateRange === 'custom' && (
+                <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Date Range</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={customStartDate}
+                        onChange={(e) => setCustomStartDate(e.target.value)}
+                        max={customEndDate || undefined}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={customEndDate}
+                        onChange={(e) => setCustomEndDate(e.target.value)}
+                        min={customStartDate || undefined}
+                        max={new Date().toISOString().split('T')[0]}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                  {(customStartDate || customEndDate) && (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      {customStartDate && customEndDate
+                        ? `Showing transactions from ${new Date(customStartDate).toLocaleDateString()} to ${new Date(customEndDate).toLocaleDateString()}`
+                        : customStartDate
+                          ? `Showing transactions from ${new Date(customStartDate).toLocaleDateString()} onwards`
+                          : `Showing transactions until ${new Date(customEndDate).toLocaleDateString()}`}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {hasActiveFilters && (
                 <div className="flex justify-end">
                   <Button variant="ghost" size="sm" onClick={clearFilters}>
