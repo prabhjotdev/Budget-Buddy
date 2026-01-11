@@ -74,8 +74,8 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
         />
 
         {bills.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Receipt className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <Receipt className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
             <p>No bills for this cycle</p>
           </div>
         ) : (
@@ -86,34 +86,34 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
                 onClick={() => !bill.isPaid && setSelectedBill(bill)}
                 className={`flex items-center justify-between p-3 rounded-lg ${
                   bill.isPaid
-                    ? 'bg-green-50 opacity-75'
-                    : 'bg-amber-50 cursor-pointer hover:bg-amber-100'
+                    ? 'bg-green-50 dark:bg-green-900/30 opacity-75'
+                    : 'bg-amber-50 dark:bg-amber-900/30 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/50'
                 } transition-colors`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    bill.isPaid ? 'bg-green-100' : 'bg-amber-100'
+                    bill.isPaid ? 'bg-green-100 dark:bg-green-800/50' : 'bg-amber-100 dark:bg-amber-800/50'
                   }`}>
                     {bill.isPaid ? (
-                      <Check className="w-4 h-4 text-green-600" />
+                      <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
                     ) : (
-                      <Clock className="w-4 h-4 text-amber-600" />
+                      <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                     )}
                   </div>
                   <div>
-                    <span className={`font-medium ${bill.isPaid ? 'text-gray-700 line-through' : 'text-gray-900'}`}>
+                    <span className={`font-medium ${bill.isPaid ? 'text-gray-700 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
                       {bill.billName}
                     </span>
                     {bill.isDeferred && (
-                      <span className="ml-2 text-xs text-gray-500">(Deferred)</span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Deferred)</span>
                     )}
-                    <p className={`text-xs ${bill.isPaid ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <p className={`text-xs ${bill.isPaid ? 'text-gray-400 dark:text-gray-500' : 'text-gray-500 dark:text-gray-400'}`}>
                       Due: {bill.dueDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`font-semibold ${bill.isPaid ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                  <span className={`font-semibold ${bill.isPaid ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100'}`}>
                     {formatCurrency(bill.amount)}
                   </span>
                 </div>
@@ -124,13 +124,13 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
 
         {/* Summary */}
         {bills.length > 0 && (
-          <div className="mt-4 pt-4 border-t flex justify-between items-center">
-            <span className="text-sm text-gray-500">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Paid: {formatCurrency(paidAmount)} / {formatCurrency(totalAmount)}
             </span>
-            <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 w-24 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
-                className="h-full bg-green-500 transition-all"
+                className="h-full bg-green-500 dark:bg-green-400 transition-all"
                 style={{ width: `${(paidAmount / totalAmount) * 100}%` }}
               />
             </div>
@@ -147,21 +147,21 @@ export const CycleBillsList = ({ bills }: CycleBillsListProps) => {
       >
         {selectedBill && (
           <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="font-medium text-gray-900">{selectedBill.billName}</span>
-                  <p className="text-xs text-gray-500">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{selectedBill.billName}</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Due: {selectedBill.dueDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                   {formatCurrency(selectedBill.amount)}
                 </span>
               </div>
             </div>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Mark this bill as paid? This helps track your progress through the cycle.
             </p>
 

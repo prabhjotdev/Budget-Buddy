@@ -98,8 +98,8 @@ export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
       />
 
       {transactions.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <ShoppingBag className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <ShoppingBag className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
           <p>No spending logged yet</p>
           <p className="text-sm mt-1">Tap "Log Spending" to add your first transaction</p>
         </div>
@@ -110,17 +110,17 @@ export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
             {transactions.map((tx) => (
               <div
                 key={tx.id}
-                className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <ShoppingBag className="w-5 h-5 text-gray-500" />
+                  <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                    <ShoppingBag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {tx.description || 'Spending'}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <span>{tx.paymentMethodName}</span>
                       {tx.tagNames.length > 0 && (
                         <>
@@ -135,10 +135,10 @@ export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-sm font-semibold text-red-600">
+                  <span className="text-sm font-semibold text-red-600 dark:text-red-400">
                     -{formatCurrency(tx.amount)}
                   </span>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
                     {formatRelativeDate(tx.date.toDate())}
                   </p>
                 </div>
@@ -148,19 +148,19 @@ export const SpendingSummary = ({ cycleId }: SpendingSummaryProps) => {
 
           {/* Spending by Tags */}
           {spendingByTag.length > 0 && (
-            <div className="pt-4 border-t">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                 Spending by Tag
               </h4>
               <div className="space-y-2">
                 {spendingByTag.map((tag) => (
                   <div key={tag.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Tag className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-700">{tag.name}</span>
-                      <span className="text-xs text-gray-400">({tag.count})</span>
+                      <Tag className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{tag.name}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">({tag.count})</span>
                     </div>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {formatCurrency(tag.amount)}
                     </span>
                   </div>

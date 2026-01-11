@@ -191,8 +191,8 @@ export const BillsManager = () => {
 
         {bills.length === 0 ? (
           <div className="text-center py-8">
-            <Receipt className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No bills tracked yet.</p>
+            <Receipt className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No bills tracked yet.</p>
             <Button onClick={handleAdd}>Add Your First Bill</Button>
           </div>
         ) : (
@@ -205,18 +205,18 @@ export const BillsManager = () => {
               return (
                 <div
                   key={bill.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
+                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{bill.name}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{bill.name}</span>
                         {bill.isAutoPay && (
                           <span
-                            className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-1.5 py-0.5 rounded"
+                            className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/50 px-1.5 py-0.5 rounded"
                             title="Auto-pay enabled"
                           >
                             <Zap className="w-3 h-3" />
@@ -224,14 +224,14 @@ export const BillsManager = () => {
                         )}
                         {bill.isVariable && (
                           <span
-                            className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded"
+                            className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/50 px-1.5 py-0.5 rounded"
                             title="Variable amount"
                           >
                             <RotateCcw className="w-3 h-3" />
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                           <CalendarCheck className="w-3 h-3" />
                           Due: {bill.dueDay}
@@ -249,21 +249,21 @@ export const BillsManager = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
                       ${bill.amount.toFixed(2)}
-                      {bill.isVariable && <span className="text-xs text-gray-400"> ~</span>}
+                      {bill.isVariable && <span className="text-xs text-gray-400 dark:text-gray-500"> ~</span>}
                     </span>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEdit(bill)}
-                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteClick(bill)}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -277,11 +277,11 @@ export const BillsManager = () => {
         )}
 
         {bills.length > 0 && (
-          <div className="mt-4 pt-4 border-t flex justify-between items-center">
-            <span className="text-sm text-gray-500">
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {bills.length} bill{bills.length !== 1 ? 's' : ''} tracked
             </span>
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Monthly Total: ${bills.filter((b) => b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0).toFixed(2)}
             </span>
           </div>
@@ -350,7 +350,7 @@ export const BillsManager = () => {
                 value={formStartDate}
                 onChange={(e) => setFormStartDate(e.target.value)}
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 {formFrequency === 'one-time'
                   ? 'When is this payment due?'
                   : 'When is the first (or next) payment due? This helps show the bill on the correct dates in the calendar.'}
@@ -364,18 +364,18 @@ export const BillsManager = () => {
                 type="checkbox"
                 checked={formIsVariable}
                 onChange={(e) => setFormIsVariable(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
               />
-              <span className="text-sm text-gray-700">Variable amount (confirm each cycle)</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Variable amount (confirm each cycle)</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formIsAutoPay}
                 onChange={(e) => setFormIsAutoPay(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
               />
-              <span className="text-sm text-gray-700">Auto-pay enabled</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Auto-pay enabled</span>
             </label>
           </div>
 
@@ -400,9 +400,9 @@ export const BillsManager = () => {
         <div className="space-y-4">
           {billToDelete && (
             <>
-              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700">
+              <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-700 dark:text-red-300">
                   Are you sure you want to delete <strong>{billToDelete.name}</strong>?
                 </p>
               </div>

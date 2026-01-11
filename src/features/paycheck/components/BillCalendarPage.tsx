@@ -398,18 +398,18 @@ export const BillCalendarPage = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigateMonth('prev')}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
-                <h2 className="text-lg font-semibold text-gray-900 min-w-[140px] text-center">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 min-w-[140px] text-center">
                   {format(currentMonth, 'MMMM yyyy')}
                 </h2>
                 <button
                   onClick={() => navigateMonth('next')}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                  <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
               <Button size="sm" variant="secondary" onClick={goToToday}>
@@ -425,13 +425,13 @@ export const BillCalendarPage = () => {
                     key={range.id}
                     className={clsx(
                       'flex items-center gap-1 px-2 py-1 rounded',
-                      range.isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'
+                      range.isActive ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     )}
                   >
                     <div
                       className={clsx(
                         'w-2 h-2 rounded-full',
-                        range.isActive ? 'bg-indigo-500' : 'bg-gray-400'
+                        range.isActive ? 'bg-indigo-500 dark:bg-indigo-400' : 'bg-gray-400 dark:bg-gray-500'
                       )}
                     />
                     Cycle {index + 1}: {format(range.start, 'MMM d')} - {format(range.end, 'MMM d')}
@@ -445,7 +445,7 @@ export const BillCalendarPage = () => {
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                 <div
                   key={day}
-                  className="text-center text-xs font-medium text-gray-500 py-2"
+                  className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2"
                 >
                   <span className="hidden sm:inline">{day}</span>
                   <span className="sm:hidden">{day.charAt(0)}</span>
@@ -454,7 +454,7 @@ export const BillCalendarPage = () => {
             </div>
 
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
               {calendarDates.map((date) => {
                 const dateKey = format(date, 'yyyy-MM-dd');
                 const dayBills = billsByDate.get(dateKey) || [];
@@ -466,9 +466,9 @@ export const BillCalendarPage = () => {
                   <div
                     key={dateKey}
                     className={clsx(
-                      'min-h-[60px] sm:min-h-[80px] md:min-h-[100px] p-1 bg-white',
-                      !isCurrentMonth && 'bg-gray-50',
-                      cycle?.isActive && 'bg-indigo-50/50'
+                      'min-h-[60px] sm:min-h-[80px] md:min-h-[100px] p-1 bg-white dark:bg-gray-800',
+                      !isCurrentMonth && 'bg-gray-50 dark:bg-gray-900',
+                      cycle?.isActive && 'bg-indigo-50/50 dark:bg-indigo-900/20'
                     )}
                   >
                     {/* Date number */}
@@ -477,8 +477,8 @@ export const BillCalendarPage = () => {
                         className={clsx(
                           'text-xs sm:text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full',
                           isTodayDate && 'bg-indigo-600 text-white',
-                          !isTodayDate && isCurrentMonth && 'text-gray-900',
-                          !isTodayDate && !isCurrentMonth && 'text-gray-400'
+                          !isTodayDate && isCurrentMonth && 'text-gray-900 dark:text-gray-100',
+                          !isTodayDate && !isCurrentMonth && 'text-gray-400 dark:text-gray-500'
                         )}
                       >
                         {format(date, 'd')}
@@ -487,7 +487,7 @@ export const BillCalendarPage = () => {
                         <div
                           className={clsx(
                             'w-1.5 h-1.5 rounded-full hidden sm:block',
-                            cycle.isActive ? 'bg-indigo-500' : 'bg-gray-300'
+                            cycle.isActive ? 'bg-indigo-500 dark:bg-indigo-400' : 'bg-gray-300 dark:bg-gray-600'
                           )}
                         />
                       )}
@@ -502,10 +502,10 @@ export const BillCalendarPage = () => {
                           className={clsx(
                             'w-full text-left text-xs px-1 py-0.5 rounded truncate transition-colors',
                             pb.isPaid
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/70'
                               : pb.isInCurrentCycle
-                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-900/70'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                           )}
                         >
                           <span className="hidden sm:inline">{pb.bill.name}</span>
@@ -513,7 +513,7 @@ export const BillCalendarPage = () => {
                         </button>
                       ))}
                       {dayBills.length > 3 && (
-                        <div className="text-xs text-gray-500 px-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 px-1">
                           +{dayBills.length - 3} more
                         </div>
                       )}
@@ -524,17 +524,17 @@ export const BillCalendarPage = () => {
             </div>
 
             {/* Legend */}
-            <div className="flex flex-wrap gap-4 mt-4 text-xs text-gray-600">
+            <div className="flex flex-wrap gap-4 mt-4 text-xs text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-green-100 border border-green-300" />
+                <div className="w-3 h-3 rounded bg-green-100 dark:bg-green-900/50 border border-green-300 dark:border-green-700" />
                 <span>Paid</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-300" />
+                <div className="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/50 border border-yellow-300 dark:border-yellow-700" />
                 <span>Current Cycle</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-gray-100 border border-gray-300" />
+                <div className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600" />
                 <span>Future</span>
               </div>
             </div>
@@ -545,31 +545,31 @@ export const BillCalendarPage = () => {
         <div className="lg:w-80 space-y-4">
           {/* Upcoming Bills */}
           <Card>
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-500" />
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               Upcoming Bills
             </h3>
             {upcomingBills.length === 0 ? (
-              <p className="text-sm text-gray-500">No upcoming bills in the next 14 days</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming bills in the next 14 days</p>
             ) : (
               <div className="space-y-2">
                 {upcomingBills.slice(0, 5).map((pb, idx) => (
                   <button
                     key={`${pb.bill.id}-${idx}`}
                     onClick={() => setSelectedBill(pb)}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
                   >
                     <div>
-                      <p className="font-medium text-sm text-gray-900">{pb.bill.name}</p>
-                      <p className="text-xs text-gray-500">{format(pb.date, 'MMM d, yyyy')}</p>
+                      <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{pb.bill.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{format(pb.date, 'MMM d, yyyy')}</p>
                     </div>
-                    <span className="font-semibold text-gray-700">
+                    <span className="font-semibold text-gray-700 dark:text-gray-300">
                       {formatCurrency(pb.bill.amount)}
                     </span>
                   </button>
                 ))}
                 {upcomingBills.length > 5 && (
-                  <p className="text-xs text-gray-500 text-center pt-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
                     +{upcomingBills.length - 5} more
                   </p>
                 )}
@@ -579,27 +579,27 @@ export const BillCalendarPage = () => {
 
           {/* Monthly Summary */}
           <Card>
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-gray-500" />
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               Monthly Summary
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">{format(currentMonth, 'MMMM')}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{format(currentMonth, 'MMMM')}</span>
                 <div className="text-right">
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                     {formatCurrency(monthlyTotals.currentMonth)}
                   </span>
                   {monthlyTotals.currentMonthPaid > 0 && (
-                    <p className="text-xs text-green-600">
+                    <p className="text-xs text-green-600 dark:text-green-400">
                       {formatCurrency(monthlyTotals.currentMonthPaid)} paid
                     </p>
                   )}
                 </div>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">{format(addMonths(currentMonth, 1), 'MMMM')}</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-400">{format(addMonths(currentMonth, 1), 'MMMM')}</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
                   {formatCurrency(monthlyTotals.nextMonth)}
                 </span>
               </div>
@@ -608,12 +608,12 @@ export const BillCalendarPage = () => {
 
           {/* Heaviest Week Alert */}
           {heaviestWeek && heaviestWeek.total > 0 && (
-            <Card className="border-amber-200 bg-amber-50">
-              <h3 className="font-semibold text-amber-800 mb-2 flex items-center gap-2">
+            <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/30">
+              <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
                 Heaviest Week
               </h3>
-              <p className="text-sm text-amber-700">
+              <p className="text-sm text-amber-700 dark:text-amber-400">
                 Week of {format(heaviestWeek.start, 'MMM d')}:{' '}
                 <span className="font-semibold">{formatCurrency(heaviestWeek.total)}</span> in bills
               </p>
@@ -633,10 +633,10 @@ export const BillCalendarPage = () => {
             {/* Bill Name and Status */}
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {selectedBill.bill.name}
                 </h3>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
                   {formatCurrency(selectedBill.bill.amount)}
                 </p>
               </div>
@@ -667,19 +667,19 @@ export const BillCalendarPage = () => {
 
             {/* Details */}
             <div className="space-y-3 text-sm">
-              <div className="flex items-center gap-3 text-gray-600">
-                <CalendarIcon className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <CalendarIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 <span>Due: {format(selectedBill.date, 'EEEE, MMMM d, yyyy')}</span>
               </div>
 
-              <div className="flex items-center gap-3 text-gray-600">
-                <Clock className="w-4 h-4 text-gray-400" />
+              <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <Clock className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                 <span className="capitalize">{selectedBill.bill.frequency} bill</span>
               </div>
 
               {selectedBill.bill.paymentMethodId && paymentMethodsById[selectedBill.bill.paymentMethodId] && (
-                <div className="flex items-center gap-3 text-gray-600">
-                  <CreditCard className="w-4 h-4 text-gray-400" />
+                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                  <CreditCard className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <span>
                     {paymentMethodsById[selectedBill.bill.paymentMethodId].name}
                   </span>
@@ -687,14 +687,14 @@ export const BillCalendarPage = () => {
               )}
 
               {selectedBill.bill.isAutoPay && (
-                <div className="flex items-center gap-3 text-green-600">
+                <div className="flex items-center gap-3 text-green-600 dark:text-green-400">
                   <Zap className="w-4 h-4" />
                   <span>AutoPay enabled</span>
                 </div>
               )}
 
               {selectedBill.bill.isVariable && (
-                <div className="flex items-center gap-3 text-amber-600">
+                <div className="flex items-center gap-3 text-amber-600 dark:text-amber-400">
                   <AlertCircle className="w-4 h-4" />
                   <span>Variable amount - confirm each cycle</span>
                 </div>
@@ -703,7 +703,7 @@ export const BillCalendarPage = () => {
 
             {/* Cycle Info */}
             {selectedBill.cycleId && activeCycle && selectedBill.cycleId === activeCycle.id && (
-              <div className="p-3 bg-indigo-50 rounded-lg text-sm text-indigo-700">
+              <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-sm text-indigo-700 dark:text-indigo-300">
                 This bill is scheduled for your current pay cycle
                 {!selectedBill.isPaid && (
                   <span>. Go to the Paycheck page to mark it as paid.</span>
