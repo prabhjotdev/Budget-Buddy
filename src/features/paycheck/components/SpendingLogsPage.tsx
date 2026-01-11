@@ -543,10 +543,10 @@ export const SpendingLogsPage = () => {
             className="w-full flex items-center justify-between p-2"
           >
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <span className="font-medium text-gray-700">Filters</span>
+              <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="font-medium text-gray-700 dark:text-gray-300">Filters</span>
               {hasActiveFilters && (
-                <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full">
                   Active
                 </span>
               )}
@@ -601,11 +601,11 @@ export const SpendingLogsPage = () => {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
             </div>
           ) : filteredTransactions.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
               <p className="font-medium">No transactions found</p>
               <p className="text-sm mt-1">
                 {hasActiveFilters
@@ -615,21 +615,21 @@ export const SpendingLogsPage = () => {
             </div>
           ) : (
             <>
-              <div className="divide-y divide-gray-100 -mx-4 md:-mx-6">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700 -mx-4 md:-mx-6">
                 {visibleTransactions.map((tx) => (
                   <div
                     key={tx.id}
                     onClick={() => setEditingTransaction(tx)}
-                    className="px-4 md:px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer group"
+                    className="px-4 md:px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-gray-900 truncate">
+                          <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
                             {tx.description || 'No description'}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5 text-xs md:text-sm text-gray-500">
+                        <div className="flex items-center gap-2 mt-0.5 text-xs md:text-sm text-gray-500 dark:text-gray-400">
                           <span>{formatDate(tx)}</span>
                           <span>•</span>
                           <span>{tx.paymentMethodName}</span>
@@ -642,7 +642,7 @@ export const SpendingLogsPage = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3 ml-4">
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
                           -{formatCurrency(tx.amount)}
                         </p>
                         <Edit2 className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
