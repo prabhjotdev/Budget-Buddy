@@ -121,6 +121,15 @@ export const WishlistPage = () => {
     return allItems.filter((item) => !item.isPurchased);
   }, [allItems, showPurchased]);
 
+  // Separate items by type
+  const needsItems = useMemo(() => {
+    return filteredItems.filter((item) => item.type === 'need');
+  }, [filteredItems]);
+
+  const wantsItems = useMemo(() => {
+    return filteredItems.filter((item) => item.type === 'want');
+  }, [filteredItems]);
+
   // Calculate available funds and emergency floor
   const financialStatus = useMemo(() => {
     const bufferAmount = buffer?.totalAmount || 0;
@@ -290,70 +299,62 @@ export const WishlistPage = () => {
         {/* Financial Overview */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Available Now</p>
-            <p className="text-lg md:text-2xl font-bold text-green-600">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Available Now</p>
+            <p className="text-lg md:text-2xl font-bold text-green-600 dark:text-green-400">
               {formatCurrency(financialStatus.cycleRemaining)}
             </p>
-            <p className="text-xs text-gray-400">This cycle</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">This cycle</p>
           </Card>
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Buffer</p>
-            <p className="text-lg md:text-2xl font-bold text-blue-600">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Buffer</p>
+            <p className="text-lg md:text-2xl font-bold text-blue-600 dark:text-blue-400">
               {formatCurrency(financialStatus.bufferAmount)}
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               {formatCurrency(financialStatus.safeBufferAmount)} above floor
             </p>
           </Card>
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Needs</p>
-            <p className="text-lg md:text-2xl font-bold text-orange-600">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Needs</p>
+            <p className="text-lg md:text-2xl font-bold text-orange-600 dark:text-orange-400">
               {formatCurrency(stats.totalNeeded)}
             </p>
-            <p className="text-xs text-gray-400">{stats.needsCount} items</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{stats.needsCount} items</p>
           </Card>
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Wants</p>
-            <p className="text-lg md:text-2xl font-bold text-purple-600">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Wants</p>
+            <p className="text-lg md:text-2xl font-bold text-purple-600 dark:text-purple-400">
               {formatCurrency(stats.totalWanted)}
             </p>
-            <p className="text-xs text-gray-400">{stats.wantsCount} items</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{stats.wantsCount} items</p>
           </Card>
         </div>
 
-        {/* Wishlist Items */}
-        <Card>
-          <CardHeader
-            title="Your Wishlist"
-            subtitle={`${filteredItems.length} items`}
-            action={
-              <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add Item
-              </Button>
-            }
-          />
+        {/* Controls */}
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showPurchased}
+              onChange={(e) => setShowPurchased(e.target.checked)}
+              className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+            />
+            Show purchased items
+          </label>
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Item
+          </Button>
+        </div>
 
-          {/* Filter toggle */}
-          <div className="mb-4">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={showPurchased}
-                onChange={(e) => setShowPurchased(e.target.checked)}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              Show purchased items
-            </label>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
           </div>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        ) : filteredItems.length === 0 ? (
+          <Card>
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <ShoppingBag className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
               <p className="font-medium">No items in your wishlist</p>
               <p className="text-sm mt-1">Add items you want or need to track</p>
               <Button className="mt-4" onClick={() => setIsAddModalOpen(true)}>
@@ -361,177 +362,239 @@ export const WishlistPage = () => {
                 Add First Item
               </Button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredItems.map((item) => {
-                const { recommendation, reason, saveCycles } = getRecommendation(item);
-                const config = recommendationConfig[recommendation];
-                const isExpanded = expandedItemId === item.id;
-                const RecommendationIcon = config.icon;
+          </Card>
+        ) : (
+          /* Two-Column Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            {/* Needs Column */}
+            <Card>
+              <CardHeader
+                title={
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 text-orange-600" />
+                    <span>Needs</span>
+                  </div>
+                }
+                subtitle={`${needsItems.length} items • ${formatCurrency(stats.totalNeeded)}`}
+              />
+              {needsItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Star className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p className="text-sm">No needs added yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {needsItems.map((item) => {
+                    const { recommendation, reason, saveCycles } = getRecommendation(item);
+                    const config = recommendationConfig[recommendation];
+                    const isExpanded = expandedItemId === item.id;
+                    const RecommendationIcon = config.icon;
 
-                return (
-                  <div
-                    key={item.id}
-                    className={clsx(
-                      'border rounded-lg transition-all',
-                      item.isPurchased
-                        ? 'bg-gray-50 border-gray-200 opacity-60'
-                        : 'bg-white border-gray-200 hover:border-gray-300'
-                    )}
-                  >
-                    {/* Main row */}
-                    <div
-                      className="flex items-center gap-3 p-3 cursor-pointer"
-                      onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
-                    >
-                      {/* Type indicator */}
+                    return (
                       <div
+                        key={item.id}
                         className={clsx(
-                          'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                          item.type === 'need' ? 'bg-orange-100' : 'bg-purple-100'
+                          'border rounded-lg transition-all',
+                          item.isPurchased
+                            ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                         )}
                       >
-                        {item.type === 'need' ? (
-                          <Star className="w-5 h-5 text-orange-600" />
-                        ) : (
-                          <Heart className="w-5 h-5 text-purple-600" />
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={clsx(
-                              'font-medium truncate',
-                              item.isPurchased ? 'text-gray-500 line-through' : 'text-gray-900'
-                            )}
-                          >
-                            {item.name}
-                          </p>
-                          <Badge
-                            variant={
-                              item.priority === 'high'
-                                ? 'danger'
-                                : item.priority === 'medium'
-                                  ? 'warning'
-                                  : 'default'
-                            }
-                          >
-                            {item.priority}
-                          </Badge>
+                        <div
+                          className="flex items-center gap-3 p-3 cursor-pointer"
+                          onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                        >
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
+                            <Star className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={clsx('font-medium truncate', item.isPurchased ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100')}>
+                                {item.name}
+                              </p>
+                              <Badge variant={item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'default'}>
+                                {item.priority}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(item.price)}</span>
+                              {!item.isPurchased && (
+                                <Badge variant={config.variant}>
+                                  <RecommendationIcon className="w-3 h-3 mr-1" />
+                                  {config.label}
+                                </Badge>
+                              )}
+                              {item.isPurchased && (
+                                <Badge variant="success">
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Purchased
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-gray-400">
+                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-sm font-semibold text-gray-700">
-                            {formatCurrency(item.price)}
-                          </span>
-                          {!item.isPurchased && (
-                            <Badge variant={config.variant}>
-                              <RecommendationIcon className="w-3 h-3 mr-1" />
-                              {config.label}
-                            </Badge>
-                          )}
-                          {item.isPurchased && (
-                            <Badge variant="success">
-                              <Check className="w-3 h-3 mr-1" />
-                              Purchased
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expand indicator */}
-                      <div className="text-gray-400">
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Expanded details */}
-                    {isExpanded && (
-                      <div className="px-3 pb-3 border-t border-gray-100 pt-3">
-                        {/* Recommendation reason */}
-                        {!item.isPurchased && (
-                          <div
-                            className={clsx('p-3 rounded-lg mb-3 text-sm', {
-                              'bg-green-50 text-green-700': recommendation === 'safe',
-                              'bg-yellow-50 text-yellow-700': recommendation === 'wait',
-                              'bg-blue-50 text-blue-700': recommendation === 'save',
-                              'bg-red-50 text-red-700': recommendation === 'not-recommended',
-                            })}
-                          >
-                            <div className="flex items-start gap-2">
-                              <RecommendationIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="font-medium">{config.label}</p>
-                                <p className="mt-0.5">{reason}</p>
-                                {saveCycles && (
-                                  <p className="mt-1 font-medium">
-                                    Target: ~{saveCycles} pay cycles
-                                  </p>
-                                )}
+                        {isExpanded && (
+                          <div className="px-3 pb-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                            {!item.isPurchased && (
+                              <div className={clsx('p-3 rounded-lg mb-3 text-sm', {
+                                'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300': recommendation === 'safe',
+                                'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300': recommendation === 'wait',
+                                'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300': recommendation === 'save',
+                                'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300': recommendation === 'not-recommended',
+                              })}>
+                                <div className="flex items-start gap-2">
+                                  <RecommendationIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium">{config.label}</p>
+                                    <p className="mt-0.5">{reason}</p>
+                                    {saveCycles && <p className="mt-1 font-medium">Target: ~{saveCycles} pay cycles</p>}
+                                  </div>
+                                </div>
                               </div>
+                            )}
+                            {item.notes && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3"><span className="font-medium">Notes:</span> {item.notes}</p>}
+                            <div className="flex items-center gap-2">
+                              {!item.isPurchased && (
+                                <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); handleMarkPurchased(item.id); }}>
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Mark Purchased
+                                </Button>
+                              )}
+                              <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); handleEdit(item); }}>
+                                <Edit2 className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); if (confirm('Delete this item?')) { handleDelete(item.id); } }}>
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
                             </div>
                           </div>
                         )}
-
-                        {/* Notes */}
-                        {item.notes && (
-                          <p className="text-sm text-gray-600 mb-3">
-                            <span className="font-medium">Notes:</span> {item.notes}
-                          </p>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2">
-                          {!item.isPurchased && (
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMarkPurchased(item.id);
-                              }}
-                            >
-                              <Check className="w-4 h-4 mr-1" />
-                              Mark Purchased
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(item);
-                            }}
-                          >
-                            <Edit2 className="w-4 h-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (confirm('Delete this item?')) {
-                                handleDelete(item.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </div>
                       </div>
-                    )}
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+
+            {/* Wants Column */}
+            <Card>
+              <CardHeader
+                title={
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-purple-600" />
+                    <span>Wants</span>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+                }
+                subtitle={`${wantsItems.length} items • ${formatCurrency(stats.totalWanted)}`}
+              />
+              {wantsItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <Heart className="w-10 h-10 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
+                  <p className="text-sm">No wants added yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {wantsItems.map((item) => {
+                    const { recommendation, reason, saveCycles } = getRecommendation(item);
+                    const config = recommendationConfig[recommendation];
+                    const isExpanded = expandedItemId === item.id;
+                    const RecommendationIcon = config.icon;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={clsx(
+                          'border rounded-lg transition-all',
+                          item.isPurchased
+                            ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        )}
+                      >
+                        <div
+                          className="flex items-center gap-3 p-3 cursor-pointer"
+                          onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                        >
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-purple-100 dark:bg-purple-900/30">
+                            <Heart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={clsx('font-medium truncate', item.isPurchased ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100')}>
+                                {item.name}
+                              </p>
+                              <Badge variant={item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'default'}>
+                                {item.priority}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(item.price)}</span>
+                              {!item.isPurchased && (
+                                <Badge variant={config.variant}>
+                                  <RecommendationIcon className="w-3 h-3 mr-1" />
+                                  {config.label}
+                                </Badge>
+                              )}
+                              {item.isPurchased && (
+                                <Badge variant="success">
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Purchased
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-gray-400">
+                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                          </div>
+                        </div>
+                        {isExpanded && (
+                          <div className="px-3 pb-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                            {!item.isPurchased && (
+                              <div className={clsx('p-3 rounded-lg mb-3 text-sm', {
+                                'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300': recommendation === 'safe',
+                                'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300': recommendation === 'wait',
+                                'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300': recommendation === 'save',
+                                'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300': recommendation === 'not-recommended',
+                              })}>
+                                <div className="flex items-start gap-2">
+                                  <RecommendationIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                  <div>
+                                    <p className="font-medium">{config.label}</p>
+                                    <p className="mt-0.5">{reason}</p>
+                                    {saveCycles && <p className="mt-1 font-medium">Target: ~{saveCycles} pay cycles</p>}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {item.notes && <p className="text-sm text-gray-600 dark:text-gray-400 mb-3"><span className="font-medium">Notes:</span> {item.notes}</p>}
+                            <div className="flex items-center gap-2">
+                              {!item.isPurchased && (
+                                <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); handleMarkPurchased(item.id); }}>
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Mark Purchased
+                                </Button>
+                              )}
+                              <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); handleEdit(item); }}>
+                                <Edit2 className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); if (confirm('Delete this item?')) { handleDelete(item.id); } }}>
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
 
         {/* Add/Edit Modal */}
         <Modal
@@ -583,8 +646,8 @@ export const WishlistPage = () => {
 
             {/* Preview recommendation */}
             {formData.name && formData.price > 0 && (
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700 mb-1">Preview:</p>
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preview:</p>
                 {(() => {
                   const previewItem = {
                     ...formData,
@@ -600,7 +663,7 @@ export const WishlistPage = () => {
                         <Icon className="w-3 h-3 mr-1" />
                         {config.label}
                       </Badge>
-                      <span className="text-xs text-gray-500">{reason}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{reason}</span>
                     </div>
                   );
                 })()}
