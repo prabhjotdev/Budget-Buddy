@@ -323,24 +323,24 @@ export const SpendingLogsPage = () => {
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Total Spent</p>
-            <p className="text-lg md:text-2xl font-bold text-gray-900">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Total Spent</p>
+            <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">
               {formatCurrency(stats.total)}
             </p>
           </Card>
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Transactions</p>
-            <p className="text-lg md:text-2xl font-bold text-gray-900">{stats.count}</p>
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Transactions</p>
+            <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.count}</p>
           </Card>
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Avg Transaction</p>
-            <p className="text-lg md:text-2xl font-bold text-gray-900">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Avg Transaction</p>
+            <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">
               {formatCurrency(stats.avg)}
             </p>
           </Card>
           <Card padding="sm">
-            <p className="text-xs md:text-sm text-gray-500">Monthly Avg</p>
-            <p className="text-lg md:text-2xl font-bold text-gray-900">
+            <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Monthly Avg</p>
+            <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100">
               {formatCurrency(stats.monthlyAvg)}
             </p>
           </Card>
@@ -413,34 +413,34 @@ export const SpendingLogsPage = () => {
 
           {/* Month Drill-Down Panel */}
           {selectedMonth && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h4 className="font-semibold text-gray-900">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100">
                     {selectedMonth.fullDate.toLocaleDateString('en-US', {
                       month: 'long',
                       year: 'numeric',
                     })}
                   </h4>
                   <div className="flex items-center gap-3 mt-1 text-sm">
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 dark:text-gray-400">
                       {formatCurrency(selectedMonth.amount)} total
                     </span>
-                    <span className="text-gray-400">•</span>
-                    <span className="text-gray-600">
+                    <span className="text-gray-400 dark:text-gray-500">•</span>
+                    <span className="text-gray-600 dark:text-gray-400">
                       {selectedMonthTransactions.length} transactions
                     </span>
                     {previousMonthData && (
                       <>
-                        <span className="text-gray-400">•</span>
+                        <span className="text-gray-400 dark:text-gray-500">•</span>
                         {selectedMonth.amount >= previousMonthData.amount ? (
-                          <span className="flex items-center gap-1 text-red-600">
+                          <span className="flex items-center gap-1 text-red-600 dark:text-red-400">
                             <TrendingUp className="w-3 h-3" />
                             +{formatCurrency(selectedMonth.amount - previousMonthData.amount)} vs prev
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 text-green-600">
+                          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
                             <TrendingDown className="w-3 h-3" />
                             {formatCurrency(selectedMonth.amount - previousMonthData.amount)} vs prev
                           </span>
@@ -451,21 +451,21 @@ export const SpendingLogsPage = () => {
                 </div>
                 <button
                   onClick={() => setSelectedMonth(null)}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {selectedMonthTransactions.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4 text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm py-4 text-center">
                   No spending recorded this month
                 </p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Breakdown by Tag */}
                   <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">By Category</h5>
+                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">By Category</h5>
                     {tagBreakdown.length > 0 ? (
                       <div className="h-32">
                         <ResponsiveContainer width="100%" height="100%">
@@ -504,26 +504,26 @@ export const SpendingLogsPage = () => {
                         </ResponsiveContainer>
                       </div>
                     ) : (
-                      <p className="text-gray-400 text-sm">No category data</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-sm">No category data</p>
                     )}
                   </div>
 
                   {/* Top Transactions */}
                   <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Largest Expenses</h5>
+                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Largest Expenses</h5>
                     <div className="space-y-2">
                       {topTransactions.map((tx, idx) => (
                         <div
                           key={tx.id}
-                          className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg"
+                          className="flex items-center justify-between py-1.5 px-2 bg-gray-50 dark:bg-gray-700 rounded-lg"
                         >
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-xs text-gray-400 w-4">{idx + 1}.</span>
-                            <span className="text-sm text-gray-700 truncate">
+                            <span className="text-xs text-gray-400 dark:text-gray-500 w-4">{idx + 1}.</span>
+                            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
                               {tx.description || 'No description'}
                             </span>
                           </div>
-                          <span className="text-sm font-medium text-gray-900 ml-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 ml-2">
                             {formatCurrency(tx.amount)}
                           </span>
                         </div>
