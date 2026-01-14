@@ -100,8 +100,15 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
     const startDate = cycle.startDate.toDate();
     const endDate = cycle.endDate.toDate();
     const now = new Date();
-    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    const daysElapsed = Math.ceil((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Strip time for accurate day counting (inclusive of both start and end dates)
+    const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const endDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // +1 for inclusive count (e.g., Jan 1-14 = 14 days, not 13)
+    const totalDays = Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const daysElapsed = Math.min(totalDays, Math.round((today.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1);
     const daysRemaining = Math.max(0, totalDays - daysElapsed);
     const percentComplete = Math.min(100, (daysElapsed / totalDays) * 100);
 
