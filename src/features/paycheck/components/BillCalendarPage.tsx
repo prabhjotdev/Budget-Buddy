@@ -275,6 +275,18 @@ export const BillCalendarPage = () => {
     return projectBillsForRange(activeBills, monthStart, nextMonthEnd, cycles);
   }, [activeBills, currentMonth, cycles]);
 
+  // Keep selectedBill in sync with projectedBills when data changes (e.g., bill marked as paid)
+  useEffect(() => {
+    if (selectedBill) {
+      const updatedBill = projectedBills.find(
+        (pb) => pb.bill.id === selectedBill.bill.id && isSameDay(pb.date, selectedBill.date)
+      );
+      if (updatedBill && updatedBill.isPaid !== selectedBill.isPaid) {
+        setSelectedBill(updatedBill);
+      }
+    }
+  }, [projectedBills, selectedBill]);
+
   // Group bills by date for calendar display
   const billsByDate = useMemo(() => {
     const map = new Map<string, ProjectedBill[]>();

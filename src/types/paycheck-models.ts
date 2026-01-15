@@ -136,6 +136,9 @@ export interface PaycheckCycle {
   // Buffer contribution (leftover at end)
   bufferContribution: number;
 
+  // Buffer draw (amount withdrawn from buffer to cover gap)
+  bufferDraw?: number;
+
   // Status
   status: CycleStatus;
 
