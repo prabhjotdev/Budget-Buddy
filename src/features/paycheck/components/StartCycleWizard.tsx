@@ -17,11 +17,11 @@ import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchBills, createBill } from '../billsSlice';
 import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice';
-import { createPaycheckCycle, fetchPaycheckCycles } from '../paycheckCyclesSlice';
+import { createPaycheckCycle, fetchPaycheckCycles, updatePaycheckCycle } from '../paycheckCyclesSlice';
 import { fetchBuffer, withdrawFromBuffer } from '../bufferSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency } from '../../../types';
+import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency, PaycheckCycle } from '../../../types';
 
 type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'buffer-draw' | 'review';
 
@@ -35,7 +35,21 @@ const STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'review', title: 'Review', icon: Check },
 ];
 
-export const StartCycleWizard = () => {
+// Steps for edit mode (skip paymentMethods)
+const EDIT_STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
+  { id: 'paycheck', title: 'Paycheck', icon: Wallet },
+  { id: 'bills', title: 'Bills', icon: Receipt },
+  { id: 'savings', title: 'Savings', icon: PiggyBank },
+  { id: 'review', title: 'Review', icon: Check },
+];
+
+interface StartCycleWizardProps {
+  editingCycle?: PaycheckCycle;
+  onClose?: () => void;
+}
+
+export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProps = {}) => {
+  const isEditMode = !!editingCycle;
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { byId: billsById, allIds: billIds } = useAppSelector((state) => state.bills);
@@ -84,15 +98,46 @@ export const StartCycleWizard = () => {
     }
   }, [dispatch, user]);
 
-  // Calculate default end date (14 days from start for bi-weekly)
+  // Calculate default end date (14 days from start for bi-weekly) - only for new cycles
   useEffect(() => {
-    if (cycleStartDate) {
+    if (cycleStartDate && !isEditMode) {
       const start = parseLocalDate(cycleStartDate);
       const end = new Date(start);
       end.setDate(end.getDate() + 13); // 14 days including start
       setCycleEndDate(formatLocalDate(end));
     }
-  }, [cycleStartDate]);
+  }, [cycleStartDate, isEditMode]);
+
+  // Pre-populate state when editing an existing cycle
+  useEffect(() => {
+    if (editingCycle) {
+      // Set paycheck amount
+      setPaycheckAmount(editingCycle.paycheckAmount.toString());
+
+      // Set dates from existing cycle
+      setCycleStartDate(formatLocalDate(editingCycle.startDate.toDate()));
+      setCycleEndDate(formatLocalDate(editingCycle.endDate.toDate()));
+
+      // Set savings
+      setMinimumSave(editingCycle.minimumSave);
+
+      // Set buffer draw if any
+      if (editingCycle.bufferDraw && editingCycle.bufferDraw > 0) {
+        setBufferDrawOption('custom');
+        setCustomBufferDraw(editingCycle.bufferDraw);
+      }
+
+      // Pre-select bills that were in the cycle
+      const billSelections: Record<string, { selected: boolean; amount: number }> = {};
+      editingCycle.bills.forEach((cycleBill) => {
+        billSelections[cycleBill.billId] = {
+          selected: true,
+          amount: cycleBill.amount,
+        };
+      });
+      setSelectedBills(billSelections);
+    }
+  }, [editingCycle]);
 
   const activePaymentMethods = useMemo(() => {
     return paymentMethodIds.map((id) => paymentMethodsById[id]).filter((m) => m && m.isActive);
@@ -334,6 +379,9 @@ export const StartCycleWizard = () => {
     }
   }, [currentStep, paycheckAmount, cycleStartDate, cycleEndDate, minimumSave, spendingLimit, selectedBufferDraw]);
 
+  // Use appropriate steps based on edit mode
+  const activeSteps = isEditMode ? EDIT_STEPS : STEPS;
+
   const handleNext = () => {
     // Handle conditional buffer-draw step
     if (currentStep === 'savings' && needsBufferDraw) {
@@ -349,9 +397,9 @@ export const StartCycleWizard = () => {
       setCurrentStep('review');
       return;
     }
-    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
-    if (stepIndex < STEPS.length - 1) {
-      setCurrentStep(STEPS[stepIndex + 1].id);
+    const stepIndex = activeSteps.findIndex((s) => s.id === currentStep);
+    if (stepIndex < activeSteps.length - 1) {
+      setCurrentStep(activeSteps[stepIndex + 1].id);
     }
   };
 
@@ -370,9 +418,9 @@ export const StartCycleWizard = () => {
       setCurrentStep('savings');
       return;
     }
-    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
+    const stepIndex = activeSteps.findIndex((s) => s.id === currentStep);
     if (stepIndex > 0) {
-      setCurrentStep(STEPS[stepIndex - 1].id);
+      setCurrentStep(activeSteps[stepIndex - 1].id);
     }
   };
 
@@ -470,59 +518,105 @@ export const StartCycleWizard = () => {
       const startDate = parseLocalDate(cycleStartDate);
       const endDate = parseLocalDate(cycleEndDate);
 
-      // If buffer draw is selected, withdraw from buffer first
-      if (selectedBufferDraw > 0) {
-        await dispatch(
-          withdrawFromBuffer({
-            userId: user.uid,
-            amount: selectedBufferDraw,
-            reason: `Buffer draw for cycle ${cycleStartDate} to ${cycleEndDate}`,
-          })
-        ).unwrap();
-      }
-
-      // Build cycle bills
+      // Build cycle bills - preserve isPaid status for existing bills in edit mode
       const cycleBills: CycleBillEntry[] = Object.entries(selectedBills)
         .filter((entry) => entry[1].selected)
         .map(([billId, { amount }]) => {
           const bill = billsById[billId];
           const dueDay = bill?.dueDay || 1;
           const actualDueDate = calculateBillDueDate(dueDay, startDate, endDate);
+
+          // In edit mode, preserve isPaid status for bills that were already in the cycle
+          const existingBillEntry = editingCycle?.bills.find((b) => b.billId === billId);
+
           return {
             billId,
             billName: bill?.name || 'Unknown',
             amount,
             dueDate: Timestamp.fromDate(actualDueDate),
-            isPaid: false,
-            isDeferred: false,
+            isPaid: existingBillEntry?.isPaid || false,
+            isDeferred: existingBillEntry?.isDeferred || false,
           };
         });
 
-      const cycle = {
-        startDate: Timestamp.fromDate(startDate),
-        endDate: Timestamp.fromDate(endDate),
-        paycheckAmount: parseFloat(paycheckAmount),
-        bills: cycleBills,
-        billsTotal,
-        minimumSave,
-        actualSaved: 0,
-        spendingLimit,
-        totalSpent: 0,
-        remainingToSpend: spendingLimit,
-        bufferContribution: 0,
-        bufferDraw: selectedBufferDraw, // Track how much was drawn from buffer
-        status: 'active' as CycleStatus,
-      };
+      if (isEditMode && editingCycle) {
+        // EDIT MODE: Update existing cycle
+        // Calculate new remaining to spend: new spending limit - existing totalSpent
+        const newRemainingToSpend = spendingLimit - editingCycle.totalSpent;
 
-      await dispatch(createPaycheckCycle({ userId: user.uid, cycle })).unwrap();
+        // Calculate any additional buffer draw needed (if user increased buffer draw)
+        const existingBufferDraw = editingCycle.bufferDraw || 0;
+        const additionalBufferDraw = Math.max(0, selectedBufferDraw - existingBufferDraw);
+
+        if (additionalBufferDraw > 0) {
+          await dispatch(
+            withdrawFromBuffer({
+              userId: user.uid,
+              amount: additionalBufferDraw,
+              reason: `Additional buffer draw for cycle edit ${cycleStartDate} to ${cycleEndDate}`,
+            })
+          ).unwrap();
+        }
+
+        const updates = {
+          paycheckAmount: parseFloat(paycheckAmount),
+          bills: cycleBills,
+          billsTotal,
+          minimumSave,
+          spendingLimit,
+          remainingToSpend: newRemainingToSpend,
+          bufferDraw: selectedBufferDraw,
+        };
+
+        await dispatch(
+          updatePaycheckCycle({
+            userId: user.uid,
+            cycleId: editingCycle.id,
+            updates,
+          })
+        ).unwrap();
+
+        // Close the modal
+        onClose?.();
+      } else {
+        // CREATE MODE: Create new cycle
+        // If buffer draw is selected, withdraw from buffer first
+        if (selectedBufferDraw > 0) {
+          await dispatch(
+            withdrawFromBuffer({
+              userId: user.uid,
+              amount: selectedBufferDraw,
+              reason: `Buffer draw for cycle ${cycleStartDate} to ${cycleEndDate}`,
+            })
+          ).unwrap();
+        }
+
+        const cycle = {
+          startDate: Timestamp.fromDate(startDate),
+          endDate: Timestamp.fromDate(endDate),
+          paycheckAmount: parseFloat(paycheckAmount),
+          bills: cycleBills,
+          billsTotal,
+          minimumSave,
+          actualSaved: 0,
+          spendingLimit,
+          totalSpent: 0,
+          remainingToSpend: spendingLimit,
+          bufferContribution: 0,
+          bufferDraw: selectedBufferDraw,
+          status: 'active' as CycleStatus,
+        };
+
+        await dispatch(createPaycheckCycle({ userId: user.uid, cycle })).unwrap();
+      }
     } catch (error) {
-      console.error('Failed to create cycle:', error);
+      console.error('Failed to save cycle:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
+  const currentStepIndex = activeSteps.findIndex((s) => s.id === currentStep);
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -531,15 +625,19 @@ export const StartCycleWizard = () => {
         <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Calendar className="w-8 h-8 text-indigo-600" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Start a New Paycheck Cycle</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {isEditMode ? 'Edit Cycle' : 'Start a New Paycheck Cycle'}
+        </h1>
         <p className="text-gray-500 mt-2">
-          Set up your budget for the next pay period
+          {isEditMode
+            ? 'Reconfigure your bills, savings, and buffer for this cycle'
+            : 'Set up your budget for the next pay period'}
         </p>
       </div>
 
       {/* Step Indicators */}
       <div className="flex items-center justify-between mb-8">
-        {STEPS.map((step, index) => (
+        {activeSteps.map((step, index) => (
           <div key={step.id} className="flex items-center">
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full ${
@@ -554,7 +652,7 @@ export const StartCycleWizard = () => {
                 <step.icon className="w-5 h-5" />
               )}
             </div>
-            {index < STEPS.length - 1 && (
+            {index < activeSteps.length - 1 && (
               <div
                 className={`w-full h-1 mx-2 ${
                   index < currentStepIndex ? 'bg-indigo-600' : 'bg-gray-200'
@@ -597,14 +695,21 @@ export const StartCycleWizard = () => {
                   type="date"
                   value={cycleStartDate}
                   onChange={(e) => setCycleStartDate(e.target.value)}
+                  disabled={isEditMode}
                 />
                 <Input
                   label="Cycle End Date"
                   type="date"
                   value={cycleEndDate}
                   onChange={(e) => setCycleEndDate(e.target.value)}
+                  disabled={isEditMode}
                 />
               </div>
+              {isEditMode && (
+                <p className="text-sm text-gray-500">
+                  Cycle dates cannot be changed. Transactions recorded during this cycle will be preserved.
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -1260,15 +1365,27 @@ export const StartCycleWizard = () => {
 
         {/* Navigation */}
         <div className="flex justify-between mt-8 pt-6 border-t">
-          <Button
-            variant="secondary"
-            onClick={handleBack}
-            disabled={currentStepIndex === 0}
-            className="flex items-center gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back
-          </Button>
+          <div className="flex gap-2">
+            {isEditMode && currentStepIndex === 0 && (
+              <Button
+                variant="secondary"
+                onClick={onClose}
+                className="flex items-center gap-2"
+              >
+                Cancel
+              </Button>
+            )}
+            {currentStepIndex > 0 && (
+              <Button
+                variant="secondary"
+                onClick={handleBack}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </Button>
+            )}
+          </div>
 
           {currentStep === 'review' ? (
             <Button
@@ -1277,7 +1394,7 @@ export const StartCycleWizard = () => {
               disabled={!canProceed || spendingLimit < 0}
               className="flex items-center gap-2"
             >
-              Start Cycle
+              {isEditMode ? 'Save Changes' : 'Start Cycle'}
               <Check className="w-4 h-4" />
             </Button>
           ) : (

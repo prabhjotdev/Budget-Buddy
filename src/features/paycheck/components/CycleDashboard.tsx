@@ -9,6 +9,7 @@ import {
   Receipt,
   Shield,
   Pencil,
+  Settings,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchActiveCycle } from '../paycheckCyclesSlice';
@@ -27,6 +28,7 @@ import { EndCycleModal } from './EndCycleModal';
 import { MarkBillPaidModal } from './MarkBillPaidModal';
 import { BufferWithdrawModal } from './BufferWithdrawModal';
 import { EditPaycheckModal } from './EditPaycheckModal';
+import { EditCycleModal } from './EditCycleModal';
 import { PaycheckCycle } from '../../../types';
 
 export const CycleDashboard = () => {
@@ -94,6 +96,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
   const [markBillPaidOpen, setMarkBillPaidOpen] = useState(false);
   const [useBufferOpen, setUseBufferOpen] = useState(false);
   const [editPaycheckOpen, setEditPaycheckOpen] = useState(false);
+  const [editCycleOpen, setEditCycleOpen] = useState(false);
 
   // Fetch payment methods and tags for the spending modal
   useEffect(() => {
@@ -295,7 +298,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
       {/* Quick Actions */}
       <Card>
         <CardHeader title="Quick Actions" />
-        <div className="grid grid-cols-2 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
           <Button
             className="flex items-center justify-center gap-2"
             onClick={() => setLogSpendingOpen(true)}
@@ -323,6 +326,14 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
           <Button
             variant="secondary"
             className="flex items-center justify-center gap-2"
+            onClick={() => setEditCycleOpen(true)}
+          >
+            <Settings className="w-4 h-4" />
+            Edit Cycle
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex items-center justify-center gap-2 col-span-2 md:col-span-1"
             onClick={() => setEndCycleOpen(true)}
           >
             <Calendar className="w-4 h-4" />
@@ -406,6 +417,13 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         billsTotal={cycle.billsTotal}
         minimumSave={cycle.minimumSave}
         totalSpent={cycle.totalSpent}
+      />
+
+      {/* Edit Cycle Modal */}
+      <EditCycleModal
+        isOpen={editCycleOpen}
+        onClose={() => setEditCycleOpen(false)}
+        cycle={cycle}
       />
     </div>
   );
