@@ -71,18 +71,6 @@ export const StartCycleWizard = () => {
     }
   }, [dispatch, user]);
 
-  // Initialize selected bills
-  useEffect(() => {
-    const initial: Record<string, { selected: boolean; amount: number }> = {};
-    billIds.forEach((id) => {
-      const bill = billsById[id];
-      if (bill && bill.isActive) {
-        initial[id] = { selected: true, amount: bill.amount };
-      }
-    });
-    setSelectedBills(initial);
-  }, [billIds, billsById]);
-
   // Calculate default end date (14 days from start for bi-weekly)
   useEffect(() => {
     if (cycleStartDate) {
@@ -100,6 +88,55 @@ export const StartCycleWizard = () => {
   const activeBills = useMemo(() => {
     return billIds.map((id) => billsById[id]).filter((b) => b && b.isActive);
   }, [billIds, billsById]);
+
+  // Filter bills to only show those due within the selected cycle dates
+  const billsDueThisCycle = useMemo(() => {
+    if (!cycleStartDate || !cycleEndDate) return activeBills;
+
+    const startDate = parseLocalDate(cycleStartDate);
+    const endDate = parseLocalDate(cycleEndDate);
+
+    return activeBills.filter((bill) => {
+      // For one-time bills, check if the start date is within the cycle
+      if (bill.frequency === 'one-time') {
+        if (bill.startDate) {
+          const billDate = bill.startDate.toDate();
+          return billDate >= startDate && billDate <= endDate;
+        }
+        return false; // One-time bills without a start date shouldn't show
+      }
+
+      // For bi-weekly bills, we need to check if any occurrence falls within the cycle
+      if (bill.frequency === 'bi-weekly') {
+        // For bi-weekly, use the anchor date or start date to project occurrences
+        if (bill.startDate) {
+          let currentDate = bill.startDate.toDate();
+          // Find occurrences within the cycle
+          while (currentDate <= endDate) {
+            if (currentDate >= startDate && currentDate <= endDate) {
+              return true;
+            }
+            currentDate = new Date(currentDate);
+            currentDate.setDate(currentDate.getDate() + 14);
+          }
+        }
+        return false;
+      }
+
+      // For monthly/quarterly/etc bills, check if dueDay falls within cycle
+      const dueDate = calculateBillDueDate(bill.dueDay, startDate, endDate);
+      return dueDate >= startDate && dueDate <= endDate;
+    });
+  }, [activeBills, cycleStartDate, cycleEndDate]);
+
+  // Initialize selected bills based on which bills are due this cycle
+  useEffect(() => {
+    const initial: Record<string, { selected: boolean; amount: number }> = {};
+    billsDueThisCycle.forEach((bill) => {
+      initial[bill.id] = { selected: true, amount: bill.amount };
+    });
+    setSelectedBills(initial);
+  }, [billsDueThisCycle]);
 
   const billsTotal = useMemo(() => {
     return Object.values(selectedBills)
@@ -490,9 +527,9 @@ export const StartCycleWizard = () => {
             />
 
             {/* Existing bills list */}
-            {activeBills.length > 0 && (
+            {billsDueThisCycle.length > 0 && (
               <div className="space-y-3">
-                {activeBills.map((bill) => (
+                {billsDueThisCycle.map((bill) => (
                   <div
                     key={bill.id}
                     className={`p-4 rounded-lg border-2 transition-colors ${
@@ -549,6 +586,17 @@ export const StartCycleWizard = () => {
                   <Plus className="w-4 h-4" />
                   Add Your First Bill
                 </Button>
+              </div>
+            )}
+
+            {/* No bills due this cycle (but user has bills) */}
+            {activeBills.length > 0 && billsDueThisCycle.length === 0 && !showAddBill && (
+              <div className="text-center py-8">
+                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-gray-500 mb-2">No bills due during this cycle</p>
+                <p className="text-sm text-gray-400">
+                  ({cycleStartDate} to {cycleEndDate})
+                </p>
               </div>
             )}
 
@@ -663,7 +711,7 @@ export const StartCycleWizard = () => {
             )}
 
             {/* Add another bill button (when bills exist) */}
-            {activeBills.length > 0 && !showAddBill && (
+            {billsDueThisCycle.length > 0 && !showAddBill && (
               <button
                 onClick={() => setShowAddBill(true)}
                 className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
