@@ -173,6 +173,35 @@ export const StartCycleWizard = () => {
     });
   }, [activeBills, cycleStartDate, cycleEndDate]);
 
+  // Helper to get the actual due date for a bill within the cycle
+  const getBillDueDateInCycle = (bill: typeof activeBills[0]): number => {
+    if (!cycleStartDate || !cycleEndDate) return bill.dueDay;
+
+    const startDate = parseLocalDate(cycleStartDate);
+    const endDate = parseLocalDate(cycleEndDate);
+
+    if (bill.frequency === 'bi-weekly') {
+      const anchorSource = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
+      const currentDate = new Date(
+        anchorSource.getFullYear(),
+        anchorSource.getMonth(),
+        anchorSource.getDate()
+      );
+
+      // Advance to find the occurrence within the cycle
+      while (currentDate < startDate) {
+        currentDate.setDate(currentDate.getDate() + 14);
+      }
+
+      if (currentDate >= startDate && currentDate <= endDate) {
+        return currentDate.getDate();
+      }
+    }
+
+    // For monthly and other frequencies, use dueDay
+    return bill.dueDay;
+  };
+
   // Initialize selected bills based on which bills are due this cycle
   useEffect(() => {
     const initial: Record<string, { selected: boolean; amount: number }> = {};
@@ -728,8 +757,8 @@ export const StartCycleWizard = () => {
                         <div>
                           <span className="font-medium text-gray-900">{bill.name}</span>
                           <span className="text-xs text-gray-500 ml-2">
-                            Due: {bill.dueDay}
-                            {getOrdinalSuffix(bill.dueDay)}
+                            Due: {getBillDueDateInCycle(bill)}
+                            {getOrdinalSuffix(getBillDueDateInCycle(bill))}
                           </span>
                           {bill.paymentMethodId && paymentMethodsById[bill.paymentMethodId] && (
                             <span className="text-xs text-indigo-600 ml-2">

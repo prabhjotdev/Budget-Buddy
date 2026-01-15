@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { PaycheckCycle } from '../../types';
+import { PaycheckCycle, CycleBillEntry } from '../../types';
 import * as paycheckCyclesService from '../../services/firebase/paycheckCycles';
+import { updateBill } from './billsSlice';
 
 interface PaycheckCyclesState {
   byId: Record<string, PaycheckCycle>;
@@ -277,6 +278,27 @@ const paycheckCyclesSlice = createSlice({
           }
           if (state.activeCycleId === cycleId) {
             state.activeCycleId = null;
+          }
+        }
+      })
+      // Listen for bill updates to sync amounts to active cycles
+      .addCase(updateBill.fulfilled, (state, action) => {
+        const { cycleUpdate } = action.payload;
+        if (cycleUpdate && state.byId[cycleUpdate.cycleId]) {
+          const cycle = state.byId[cycleUpdate.cycleId];
+          const updates = cycleUpdate.updates;
+
+          if (updates.bills) {
+            cycle.bills = updates.bills as CycleBillEntry[];
+          }
+          if (updates.billsTotal !== undefined) {
+            cycle.billsTotal = updates.billsTotal;
+          }
+          if (updates.spendingLimit !== undefined) {
+            cycle.spendingLimit = updates.spendingLimit;
+          }
+          if (updates.remainingToSpend !== undefined) {
+            cycle.remainingToSpend = updates.remainingToSpend;
           }
         }
       });
