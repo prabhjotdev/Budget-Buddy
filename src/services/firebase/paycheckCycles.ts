@@ -124,3 +124,50 @@ export const markCycleBillPaid = async (
     updatedAt: serverTimestamp(),
   });
 };
+
+// Sync bill amount changes to active cycles
+export const syncBillAmountToActiveCycles = async (
+  userId: string,
+  billId: string,
+  newAmount: number,
+  newName?: string
+): Promise<{ cycleId: string; updates: Partial<PaycheckCycle> } | null> => {
+  // Get the active cycle
+  const activeCycle = await getActiveCycle(userId);
+  if (!activeCycle) return null;
+
+  // Check if this bill is in the active cycle
+  const billIndex = activeCycle.bills.findIndex((b) => b.billId === billId);
+  if (billIndex === -1) return null;
+
+  const oldAmount = activeCycle.bills[billIndex].amount;
+  const amountDiff = newAmount - oldAmount;
+
+  // Update the bill in the bills array
+  const updatedBills = activeCycle.bills.map((b) =>
+    b.billId === billId
+      ? { ...b, amount: newAmount, billName: newName || b.billName }
+      : b
+  );
+
+  // Recalculate totals
+  const newBillsTotal = activeCycle.billsTotal + amountDiff;
+  const newSpendingLimit = activeCycle.spendingLimit - amountDiff;
+  const newRemainingToSpend = activeCycle.remainingToSpend - amountDiff;
+
+  const updates: Partial<PaycheckCycle> = {
+    bills: updatedBills,
+    billsTotal: newBillsTotal,
+    spendingLimit: newSpendingLimit,
+    remainingToSpend: newRemainingToSpend,
+  };
+
+  // Update in Firebase
+  const cycleRef = doc(db, `users/${userId}/paycheckCycles/${activeCycle.id}`);
+  await updateDoc(cycleRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+
+  return { cycleId: activeCycle.id, updates };
+};

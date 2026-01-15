@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Bill } from '../../types';
+import { Bill, PaycheckCycle } from '../../types';
 import * as billsService from '../../services/firebase/bills';
+import * as paycheckCyclesService from '../../services/firebase/paycheckCycles';
 
 interface BillsState {
   byId: Record<string, Bill>;
@@ -71,7 +72,19 @@ export const updateBill = createAsyncThunk(
   ) => {
     try {
       await billsService.updateBill(userId, billId, updates);
-      return { billId, updates };
+
+      // If amount or name changed, sync to active cycles
+      let cycleUpdate: { cycleId: string; updates: Partial<PaycheckCycle> } | null = null;
+      if (updates.amount !== undefined || updates.name !== undefined) {
+        cycleUpdate = await paycheckCyclesService.syncBillAmountToActiveCycles(
+          userId,
+          billId,
+          updates.amount!,
+          updates.name
+        );
+      }
+
+      return { billId, updates, cycleUpdate };
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
