@@ -136,9 +136,35 @@ export const StartCycleWizard = () => {
         return false;
       }
 
-      // For monthly/quarterly/etc bills, check if dueDay falls within cycle
-      const dueDate = calculateBillDueDate(bill.dueDay, startDate, endDate);
-      return dueDate >= startDate && dueDate <= endDate;
+      // For monthly/quarterly/etc bills, check if dueDay falls within the cycle
+      // We need to check each month that the cycle spans
+      const dueDay = bill.dueDay;
+
+      // Check in the start month
+      const startMonth = startDate.getMonth();
+      const startYear = startDate.getFullYear();
+      const lastDayOfStartMonth = new Date(startYear, startMonth + 1, 0).getDate();
+      const effectiveDueDayStart = Math.min(dueDay, lastDayOfStartMonth);
+      const dueDateInStartMonth = new Date(startYear, startMonth, effectiveDueDayStart);
+
+      if (dueDateInStartMonth >= startDate && dueDateInStartMonth <= endDate) {
+        return true;
+      }
+
+      // If cycle spans to a different month, check that month too
+      const endMonth = endDate.getMonth();
+      const endYear = endDate.getFullYear();
+      if (endMonth !== startMonth || endYear !== startYear) {
+        const lastDayOfEndMonth = new Date(endYear, endMonth + 1, 0).getDate();
+        const effectiveDueDayEnd = Math.min(dueDay, lastDayOfEndMonth);
+        const dueDateInEndMonth = new Date(endYear, endMonth, effectiveDueDayEnd);
+
+        if (dueDateInEndMonth >= startDate && dueDateInEndMonth <= endDate) {
+          return true;
+        }
+      }
+
+      return false;
     });
   }, [activeBills, cycleStartDate, cycleEndDate]);
 
