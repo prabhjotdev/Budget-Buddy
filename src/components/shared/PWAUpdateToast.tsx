@@ -16,8 +16,17 @@ export const PWAUpdateToast = () => {
     },
   });
 
-  const handleUpdate = () => {
-    updateServiceWorker(true);
+  const handleUpdate = async () => {
+    try {
+      await updateServiceWorker(true);
+      // Force reload after a short delay if updateServiceWorker doesn't trigger it
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch {
+      // Fallback: just reload the page
+      window.location.reload();
+    }
   };
 
   const handleDismiss = () => {
