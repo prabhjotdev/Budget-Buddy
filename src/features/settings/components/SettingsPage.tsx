@@ -11,7 +11,7 @@ import { resetAllData } from '../../../services/firebase/dataReset';
 import { useTheme } from '../../../context/ThemeContext';
 
 // App version - update this when releasing new versions
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 
 // Get all supported timezones
 const getTimezones = (): string[] => {
