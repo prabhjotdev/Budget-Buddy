@@ -49,7 +49,23 @@ export const createBill = createAsyncThunk(
   ) => {
     try {
       const id = await billsService.createBill(userId, bill);
-      return { id, ...bill };
+
+      // Try to add new bill to active cycle if it falls within cycle dates
+      let cycleUpdate: { cycleId: string; updates: Partial<PaycheckCycle> } | null = null;
+      if (bill.isActive) {
+        const startDate = bill.startDate ? bill.startDate.toDate() : undefined;
+        cycleUpdate = await paycheckCyclesService.addBillToActiveCycle(
+          userId,
+          id,
+          bill.name,
+          bill.amount,
+          bill.dueDay,
+          bill.frequency,
+          startDate
+        );
+      }
+
+      return { id, ...bill, cycleUpdate };
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -170,7 +186,9 @@ const billsSlice = createSlice({
         state.activeIds = activeIds;
       })
       .addCase(createBill.fulfilled, (state, action) => {
-        const bill = action.payload as Bill;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cycleUpdate, ...billData } = action.payload;
+        const bill = billData as unknown as Bill;
         state.byId[bill.id] = bill;
         state.allIds.push(bill.id);
         if (bill.isActive) {

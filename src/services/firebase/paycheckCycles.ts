@@ -10,6 +10,7 @@ import {
   where,
   limit,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
 import { PaycheckCycle, CycleStatus } from '../../types';
@@ -194,6 +195,104 @@ export const removeBillFromActiveCycles = async (
   const newBillsTotal = activeCycle.billsTotal - billAmount;
   const newSpendingLimit = activeCycle.spendingLimit + billAmount;
   const newRemainingToSpend = activeCycle.remainingToSpend + billAmount;
+
+  const updates: Partial<PaycheckCycle> = {
+    bills: updatedBills,
+    billsTotal: newBillsTotal,
+    spendingLimit: newSpendingLimit,
+    remainingToSpend: newRemainingToSpend,
+  };
+
+  // Update in Firebase
+  const cycleRef = doc(db, `users/${userId}/paycheckCycles/${activeCycle.id}`);
+  await updateDoc(cycleRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+
+  return { cycleId: activeCycle.id, updates };
+};
+
+// Add a new bill to active cycle if it falls within the cycle dates
+export const addBillToActiveCycle = async (
+  userId: string,
+  billId: string,
+  billName: string,
+  amount: number,
+  dueDay: number,
+  frequency: string,
+  startDate?: Date
+): Promise<{ cycleId: string; updates: Partial<PaycheckCycle> } | null> => {
+  // Get the active cycle
+  const activeCycle = await getActiveCycle(userId);
+  if (!activeCycle) return null;
+
+  const cycleStart = activeCycle.startDate.toDate();
+  const cycleEnd = activeCycle.endDate.toDate();
+
+  // Check if bill is already in the cycle
+  if (activeCycle.bills.some((b) => b.billId === billId)) {
+    return null;
+  }
+
+  // Calculate if this bill falls within the cycle
+  let dueDate: Date | null = null;
+
+  if (frequency === 'one-time' && startDate) {
+    // One-time bills use their start date
+    if (startDate >= cycleStart && startDate <= cycleEnd) {
+      dueDate = startDate;
+    }
+  } else if (frequency === 'bi-weekly' && startDate) {
+    // Bi-weekly: find occurrence within cycle
+    const currentDate = new Date(startDate);
+    while (currentDate < cycleStart) {
+      currentDate.setDate(currentDate.getDate() + 14);
+    }
+    if (currentDate >= cycleStart && currentDate <= cycleEnd) {
+      dueDate = new Date(currentDate);
+    }
+  } else {
+    // Monthly and other frequencies: check if dueDay falls within cycle
+    const startMonth = cycleStart.getMonth();
+    const startYear = cycleStart.getFullYear();
+    const lastDayOfStartMonth = new Date(startYear, startMonth + 1, 0).getDate();
+    const effectiveDueDay = Math.min(dueDay, lastDayOfStartMonth);
+    const dueDateInStartMonth = new Date(startYear, startMonth, effectiveDueDay);
+
+    if (dueDateInStartMonth >= cycleStart && dueDateInStartMonth <= cycleEnd) {
+      dueDate = dueDateInStartMonth;
+    } else if (cycleStart.getMonth() !== cycleEnd.getMonth()) {
+      // Cycle spans two months, check end month too
+      const endMonth = cycleEnd.getMonth();
+      const endYear = cycleEnd.getFullYear();
+      const lastDayOfEndMonth = new Date(endYear, endMonth + 1, 0).getDate();
+      const effectiveDueDayEnd = Math.min(dueDay, lastDayOfEndMonth);
+      const dueDateInEndMonth = new Date(endYear, endMonth, effectiveDueDayEnd);
+
+      if (dueDateInEndMonth >= cycleStart && dueDateInEndMonth <= cycleEnd) {
+        dueDate = dueDateInEndMonth;
+      }
+    }
+  }
+
+  // If no due date found within cycle, don't add
+  if (!dueDate) return null;
+
+  // Add bill to cycle
+  const newBillEntry = {
+    billId,
+    billName,
+    amount,
+    dueDate: Timestamp.fromDate(dueDate),
+    isPaid: false,
+    isDeferred: false,
+  };
+
+  const updatedBills = [...activeCycle.bills, newBillEntry];
+  const newBillsTotal = activeCycle.billsTotal + amount;
+  const newSpendingLimit = activeCycle.spendingLimit - amount;
+  const newRemainingToSpend = activeCycle.remainingToSpend - amount;
 
   const updates: Partial<PaycheckCycle> = {
     bills: updatedBills,
