@@ -32,36 +32,44 @@ import { PaycheckCycle } from '../../../types';
 export const CycleDashboard = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { byId: cyclesById, activeCycleId, isLoading } = useAppSelector(
+  const { byId: cyclesById, activeCycleId } = useAppSelector(
     (state) => state.paycheckCycles
   );
   const { buffer } = useAppSelector((state) => state.buffer);
+
+  // Track whether we've done the initial check for active cycle
+  const [hasCheckedForCycle, setHasCheckedForCycle] = useState(false);
 
   const activeCycle = activeCycleId ? cyclesById[activeCycleId] : null;
 
   useEffect(() => {
     if (user) {
-      dispatch(fetchActiveCycle(user.uid));
-      dispatch(fetchBuffer(user.uid));
-      dispatch(fetchSpendingTransactions(user.uid));
+      Promise.all([
+        dispatch(fetchActiveCycle(user.uid)),
+        dispatch(fetchBuffer(user.uid)),
+        dispatch(fetchSpendingTransactions(user.uid)),
+      ]).finally(() => {
+        setHasCheckedForCycle(true);
+      });
     }
   }, [dispatch, user]);
 
-  // If no active cycle, show the start wizard
-  if (!activeCycle && !isLoading) {
-    return (
-      <AppLayout title="Paycheck Budget">
-        <StartCycleWizard />
-      </AppLayout>
-    );
-  }
-
-  if (isLoading || !activeCycle) {
+  // Show loading until we've checked for an active cycle
+  if (!hasCheckedForCycle) {
     return (
       <AppLayout title="Paycheck Budget">
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
+      </AppLayout>
+    );
+  }
+
+  // If no active cycle after checking, show the start wizard
+  if (!activeCycle) {
+    return (
+      <AppLayout title="Paycheck Budget">
+        <StartCycleWizard />
       </AppLayout>
     );
   }
