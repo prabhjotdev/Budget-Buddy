@@ -10,17 +10,22 @@ import {
   AlertCircle,
   Plus,
   CreditCard,
+  TrendingDown,
+  Info,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchBills, createBill } from '../billsSlice';
 import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice';
-import { createPaycheckCycle } from '../paycheckCyclesSlice';
+import { createPaycheckCycle, fetchPaycheckCycles } from '../paycheckCyclesSlice';
+import { fetchBuffer, withdrawFromBuffer } from '../bufferSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency } from '../../../types';
 
-type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'review';
+type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'buffer-draw' | 'review';
+
+type BufferDrawOption = 'none' | 'minimum' | 'moderate' | 'comfortable' | 'custom';
 
 const STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'paycheck', title: 'Paycheck', icon: Wallet },
@@ -35,6 +40,8 @@ export const StartCycleWizard = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { byId: billsById, allIds: billIds } = useAppSelector((state) => state.bills);
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector((state) => state.paymentMethods);
+  const { buffer } = useAppSelector((state) => state.buffer);
+  const { byId: cyclesById, allIds: cycleIds } = useAppSelector((state) => state.paycheckCycles);
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('paycheck');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +52,10 @@ export const StartCycleWizard = () => {
   const [cycleEndDate, setCycleEndDate] = useState('');
   const [selectedBills, setSelectedBills] = useState<Record<string, { selected: boolean; amount: number }>>({});
   const [minimumSave, setMinimumSave] = useState(50);
+
+  // Buffer draw state
+  const [bufferDrawOption, setBufferDrawOption] = useState<BufferDrawOption>('none');
+  const [customBufferDraw, setCustomBufferDraw] = useState(0);
 
   // Inline payment method creation state
   const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
@@ -63,11 +74,13 @@ export const StartCycleWizard = () => {
   const [newBillIsAutoPay, setNewBillIsAutoPay] = useState(false);
   const [isAddingBill, setIsAddingBill] = useState(false);
 
-  // Load payment methods and bills
+  // Load payment methods, bills, buffer, and historical cycles
   useEffect(() => {
     if (user) {
       dispatch(fetchPaymentMethods(user.uid));
       dispatch(fetchBills(user.uid));
+      dispatch(fetchBuffer(user.uid));
+      dispatch(fetchPaycheckCycles(user.uid));
     }
   }, [dispatch, user]);
 
@@ -144,10 +157,103 @@ export const StartCycleWizard = () => {
       .reduce((sum, { amount }) => sum + amount, 0);
   }, [selectedBills]);
 
-  const spendingLimit = useMemo(() => {
+  // Raw spending limit before buffer draw
+  const rawSpendingLimit = useMemo(() => {
     const paycheck = parseFloat(paycheckAmount) || 0;
-    return Math.max(0, paycheck - billsTotal - minimumSave);
+    return paycheck - billsTotal - minimumSave;
   }, [paycheckAmount, billsTotal, minimumSave]);
+
+  // Calculate the gap (how much we're short by)
+  const spendingGap = useMemo(() => {
+    return rawSpendingLimit < 0 ? Math.abs(rawSpendingLimit) : 0;
+  }, [rawSpendingLimit]);
+
+  // Calculate cycle days for average spending calculation
+  const cycleDays = useMemo(() => {
+    if (!cycleStartDate || !cycleEndDate) return 14;
+    const start = parseLocalDate(cycleStartDate);
+    const end = parseLocalDate(cycleEndDate);
+    return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  }, [cycleStartDate, cycleEndDate]);
+
+  // Calculate historical average daily spending from completed cycles
+  const historicalSpending = useMemo(() => {
+    const completedCycles = cycleIds
+      .map((id) => cyclesById[id])
+      .filter((cycle) => cycle && cycle.status === 'completed' && cycle.totalSpent > 0)
+      .slice(0, 5); // Use last 5 completed cycles
+
+    if (completedCycles.length === 0) {
+      return { avgDailySpending: 50, totalCycles: 0, hasHistory: false }; // Default fallback
+    }
+
+    let totalDays = 0;
+    let totalSpent = 0;
+
+    completedCycles.forEach((cycle) => {
+      const start = cycle.startDate.toDate();
+      const end = cycle.endDate.toDate();
+      const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      totalDays += days;
+      totalSpent += cycle.totalSpent;
+    });
+
+    const avgDailySpending = totalDays > 0 ? totalSpent / totalDays : 50;
+
+    return {
+      avgDailySpending: Math.round(avgDailySpending * 100) / 100,
+      totalCycles: completedCycles.length,
+      hasHistory: true,
+    };
+  }, [cycleIds, cyclesById]);
+
+  // Buffer availability
+  const bufferBalance = buffer?.totalAmount || 0;
+
+  // Calculate tiered buffer draw options
+  const bufferDrawOptions = useMemo(() => {
+    const estimatedSpending = historicalSpending.avgDailySpending * cycleDays;
+
+    // Minimum: Just cover the bill gap (bring to $0)
+    const minimum = spendingGap;
+
+    // Moderate: Gap + 50% of estimated spending
+    const moderate = spendingGap + (estimatedSpending * 0.5);
+
+    // Comfortable: Gap + 100% of estimated spending
+    const comfortable = spendingGap + estimatedSpending;
+
+    return {
+      minimum: Math.round(minimum * 100) / 100,
+      moderate: Math.round(moderate * 100) / 100,
+      comfortable: Math.round(comfortable * 100) / 100,
+      estimatedSpending: Math.round(estimatedSpending * 100) / 100,
+    };
+  }, [spendingGap, historicalSpending.avgDailySpending, cycleDays]);
+
+  // Get the actual buffer draw amount based on selection
+  const selectedBufferDraw = useMemo(() => {
+    switch (bufferDrawOption) {
+      case 'minimum':
+        return Math.min(bufferDrawOptions.minimum, bufferBalance);
+      case 'moderate':
+        return Math.min(bufferDrawOptions.moderate, bufferBalance);
+      case 'comfortable':
+        return Math.min(bufferDrawOptions.comfortable, bufferBalance);
+      case 'custom':
+        return Math.min(customBufferDraw, bufferBalance);
+      default:
+        return 0;
+    }
+  }, [bufferDrawOption, bufferDrawOptions, customBufferDraw, bufferBalance]);
+
+  // Final spending limit (after buffer draw)
+  const spendingLimit = useMemo(() => {
+    return Math.max(0, rawSpendingLimit + selectedBufferDraw);
+  }, [rawSpendingLimit, selectedBufferDraw]);
+
+  // Check if buffer draw step is needed
+  const needsBufferDraw = rawSpendingLimit <= 0 && bufferBalance > 0;
 
   const canProceed = useMemo(() => {
     switch (currentStep) {
@@ -159,14 +265,30 @@ export const StartCycleWizard = () => {
         return true; // Can skip bills
       case 'savings':
         return minimumSave >= 0;
+      case 'buffer-draw':
+        return true; // Can proceed with any buffer draw option (including none)
       case 'review':
-        return spendingLimit >= 0;
+        return spendingLimit >= 0 || selectedBufferDraw > 0;
       default:
         return false;
     }
-  }, [currentStep, paycheckAmount, cycleStartDate, cycleEndDate, minimumSave, spendingLimit]);
+  }, [currentStep, paycheckAmount, cycleStartDate, cycleEndDate, minimumSave, spendingLimit, selectedBufferDraw]);
 
   const handleNext = () => {
+    // Handle conditional buffer-draw step
+    if (currentStep === 'savings' && needsBufferDraw) {
+      setCurrentStep('buffer-draw');
+      return;
+    }
+    if (currentStep === 'buffer-draw') {
+      setCurrentStep('review');
+      return;
+    }
+    // Skip buffer-draw if not needed
+    if (currentStep === 'savings' && !needsBufferDraw) {
+      setCurrentStep('review');
+      return;
+    }
     const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
     if (stepIndex < STEPS.length - 1) {
       setCurrentStep(STEPS[stepIndex + 1].id);
@@ -174,6 +296,20 @@ export const StartCycleWizard = () => {
   };
 
   const handleBack = () => {
+    // Handle conditional buffer-draw step
+    if (currentStep === 'review' && needsBufferDraw) {
+      setCurrentStep('buffer-draw');
+      return;
+    }
+    if (currentStep === 'buffer-draw') {
+      setCurrentStep('savings');
+      return;
+    }
+    // Skip buffer-draw if going back from review
+    if (currentStep === 'review' && !needsBufferDraw) {
+      setCurrentStep('savings');
+      return;
+    }
     const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
     if (stepIndex > 0) {
       setCurrentStep(STEPS[stepIndex - 1].id);
@@ -274,6 +410,17 @@ export const StartCycleWizard = () => {
       const startDate = parseLocalDate(cycleStartDate);
       const endDate = parseLocalDate(cycleEndDate);
 
+      // If buffer draw is selected, withdraw from buffer first
+      if (selectedBufferDraw > 0) {
+        await dispatch(
+          withdrawFromBuffer({
+            userId: user.uid,
+            amount: selectedBufferDraw,
+            reason: `Buffer draw for cycle ${cycleStartDate} to ${cycleEndDate}`,
+          })
+        ).unwrap();
+      }
+
       // Build cycle bills
       const cycleBills: CycleBillEntry[] = Object.entries(selectedBills)
         .filter((entry) => entry[1].selected)
@@ -303,6 +450,7 @@ export const StartCycleWizard = () => {
         totalSpent: 0,
         remainingToSpend: spendingLimit,
         bufferContribution: 0,
+        bufferDraw: selectedBufferDraw, // Track how much was drawn from buffer
         status: 'active' as CycleStatus,
       };
 
@@ -769,6 +917,221 @@ export const StartCycleWizard = () => {
           </div>
         )}
 
+        {currentStep === 'buffer-draw' && (
+          <div className="space-y-6">
+            <CardHeader
+              title="Draw from Buffer"
+              subtitle="Your bills exceed your paycheck. Choose how much to draw from your buffer."
+            />
+
+            {/* Warning about the gap */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+              <TrendingDown className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-amber-800">Budget Gap Detected</p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Your bills ({formatCurrency(billsTotal)}) + savings ({formatCurrency(minimumSave)}) exceed your paycheck ({formatCurrency(parseFloat(paycheckAmount) || 0)}) by <strong>{formatCurrency(spendingGap)}</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Buffer balance info */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <PiggyBank className="w-5 h-5 text-blue-600" />
+                  <span className="font-medium text-blue-800">Available Buffer</span>
+                </div>
+                <span className="text-xl font-bold text-blue-600">{formatCurrency(bufferBalance)}</span>
+              </div>
+            </div>
+
+            {/* Historical spending info */}
+            <div className="p-3 bg-gray-50 rounded-lg flex items-start gap-2">
+              <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-gray-600">
+                {historicalSpending.hasHistory ? (
+                  <>
+                    Based on your last {historicalSpending.totalCycles} cycle{historicalSpending.totalCycles > 1 ? 's' : ''}, you spend an average of <strong>{formatCurrency(historicalSpending.avgDailySpending)}/day</strong> on non-bill expenses.
+                    For this {cycleDays}-day cycle, that's approximately <strong>{formatCurrency(bufferDrawOptions.estimatedSpending)}</strong>.
+                  </>
+                ) : (
+                  <>
+                    No spending history available yet. Estimates are based on a default of $50/day.
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Tiered options */}
+            <div className="space-y-3">
+              <p className="font-medium text-gray-900">Choose a buffer draw option:</p>
+
+              {/* Option: None (skip) */}
+              <button
+                onClick={() => setBufferDrawOption('none')}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  bufferDrawOption === 'none'
+                    ? 'border-gray-500 bg-gray-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Skip Buffer Draw</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Start with $0 spending limit (reduce bills or savings first)
+                    </p>
+                  </div>
+                  <span className="text-lg font-semibold text-gray-500">$0</span>
+                </div>
+              </button>
+
+              {/* Option: Minimum */}
+              <button
+                onClick={() => setBufferDrawOption('minimum')}
+                disabled={bufferDrawOptions.minimum > bufferBalance}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  bufferDrawOption === 'minimum'
+                    ? 'border-orange-500 bg-orange-50'
+                    : bufferDrawOptions.minimum > bufferBalance
+                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 hover:border-orange-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">Minimum</p>
+                      <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">Cover Gap Only</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Just cover the bill gap, bringing spending limit to $0
+                    </p>
+                  </div>
+                  <span className={`text-lg font-semibold ${bufferDrawOptions.minimum > bufferBalance ? 'text-gray-400' : 'text-orange-600'}`}>
+                    {formatCurrency(bufferDrawOptions.minimum)}
+                  </span>
+                </div>
+                {bufferDrawOptions.minimum > bufferBalance && (
+                  <p className="text-xs text-red-500 mt-2">Insufficient buffer balance</p>
+                )}
+              </button>
+
+              {/* Option: Moderate */}
+              <button
+                onClick={() => setBufferDrawOption('moderate')}
+                disabled={bufferDrawOptions.moderate > bufferBalance}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  bufferDrawOption === 'moderate'
+                    ? 'border-blue-500 bg-blue-50'
+                    : bufferDrawOptions.moderate > bufferBalance
+                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">Moderate</p>
+                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Recommended</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Gap + 50% of your typical spending ({formatCurrency(bufferDrawOptions.estimatedSpending * 0.5)})
+                    </p>
+                  </div>
+                  <span className={`text-lg font-semibold ${bufferDrawOptions.moderate > bufferBalance ? 'text-gray-400' : 'text-blue-600'}`}>
+                    {formatCurrency(bufferDrawOptions.moderate)}
+                  </span>
+                </div>
+                {bufferDrawOptions.moderate > bufferBalance && (
+                  <p className="text-xs text-red-500 mt-2">Insufficient buffer balance</p>
+                )}
+              </button>
+
+              {/* Option: Comfortable */}
+              <button
+                onClick={() => setBufferDrawOption('comfortable')}
+                disabled={bufferDrawOptions.comfortable > bufferBalance}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  bufferDrawOption === 'comfortable'
+                    ? 'border-green-500 bg-green-50'
+                    : bufferDrawOptions.comfortable > bufferBalance
+                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 hover:border-green-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-gray-900">Comfortable</p>
+                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Full Coverage</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Gap + 100% of your typical spending ({formatCurrency(bufferDrawOptions.estimatedSpending)})
+                    </p>
+                  </div>
+                  <span className={`text-lg font-semibold ${bufferDrawOptions.comfortable > bufferBalance ? 'text-gray-400' : 'text-green-600'}`}>
+                    {formatCurrency(bufferDrawOptions.comfortable)}
+                  </span>
+                </div>
+                {bufferDrawOptions.comfortable > bufferBalance && (
+                  <p className="text-xs text-red-500 mt-2">Insufficient buffer balance</p>
+                )}
+              </button>
+
+              {/* Option: Custom */}
+              <button
+                onClick={() => setBufferDrawOption('custom')}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  bufferDrawOption === 'custom'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Custom Amount</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Enter your own amount to draw
+                    </p>
+                  </div>
+                  {bufferDrawOption === 'custom' ? (
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                      <input
+                        type="number"
+                        value={customBufferDraw || ''}
+                        onChange={(e) => setCustomBufferDraw(parseFloat(e.target.value) || 0)}
+                        min="0"
+                        max={bufferBalance}
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-lg font-semibold text-purple-600">Custom</span>
+                  )}
+                </div>
+              </button>
+            </div>
+
+            {/* Preview of result */}
+            {bufferDrawOption !== 'none' && selectedBufferDraw > 0 && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-green-800">Resulting Spending Limit:</span>
+                  <span className="text-xl font-bold text-green-600">
+                    {formatCurrency(Math.max(0, rawSpendingLimit + selectedBufferDraw))}
+                  </span>
+                </div>
+                <p className="text-sm text-green-700 mt-1">
+                  Buffer remaining after draw: {formatCurrency(bufferBalance - selectedBufferDraw)}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {currentStep === 'review' && (
           <div className="space-y-6">
             <CardHeader
@@ -803,6 +1166,12 @@ export const StartCycleWizard = () => {
                 <span>− Savings</span>
                 <span>−{formatCurrency(minimumSave)}</span>
               </div>
+              {selectedBufferDraw > 0 && (
+                <div className="flex justify-between items-center text-purple-600">
+                  <span>+ Buffer Draw</span>
+                  <span>+{formatCurrency(selectedBufferDraw)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center pt-4 border-t border-gray-300">
                 <span className="font-semibold text-gray-900">= Your Spending Limit</span>
                 <span
@@ -814,6 +1183,13 @@ export const StartCycleWizard = () => {
                 </span>
               </div>
             </div>
+
+            {selectedBufferDraw > 0 && (
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
+                <strong>Note:</strong> {formatCurrency(selectedBufferDraw)} will be withdrawn from your buffer when you start this cycle.
+                Buffer balance after: {formatCurrency(bufferBalance - selectedBufferDraw)}
+              </div>
+            )}
 
             <div className="text-sm text-gray-500 text-center">
               Cycle: {parseLocalDate(cycleStartDate).toLocaleDateString()} -{' '}
