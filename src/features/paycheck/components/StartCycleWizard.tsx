@@ -121,17 +121,22 @@ export const StartCycleWizard = () => {
 
       // For bi-weekly bills, we need to check if any occurrence falls within the cycle
       if (bill.frequency === 'bi-weekly') {
-        // For bi-weekly, use the anchor date or start date to project occurrences
-        if (bill.startDate) {
-          let currentDate = bill.startDate.toDate();
-          // Find occurrences within the cycle
-          while (currentDate <= endDate) {
-            if (currentDate >= startDate && currentDate <= endDate) {
-              return true;
-            }
-            currentDate = new Date(currentDate);
-            currentDate.setDate(currentDate.getDate() + 14);
-          }
+        // Use startDate if available, otherwise fall back to createdAt (same as BillCalendarPage)
+        const anchorSource = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
+        let currentDate = new Date(
+          anchorSource.getFullYear(),
+          anchorSource.getMonth(),
+          anchorSource.getDate()
+        );
+
+        // If anchor is before the cycle, advance by 2 weeks until we reach or pass the start
+        while (currentDate < startDate) {
+          currentDate.setDate(currentDate.getDate() + 14);
+        }
+
+        // Check if this occurrence falls within the cycle
+        if (currentDate >= startDate && currentDate <= endDate) {
+          return true;
         }
         return false;
       }
