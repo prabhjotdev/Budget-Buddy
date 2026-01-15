@@ -123,7 +123,7 @@ export const StartCycleWizard = () => {
       if (bill.frequency === 'bi-weekly') {
         // Use startDate if available, otherwise fall back to createdAt (same as BillCalendarPage)
         const anchorSource = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
-        let currentDate = new Date(
+        const currentDate = new Date(
           anchorSource.getFullYear(),
           anchorSource.getMonth(),
           anchorSource.getDate()
