@@ -171,3 +171,43 @@ export const syncBillAmountToActiveCycles = async (
 
   return { cycleId: activeCycle.id, updates };
 };
+
+// Remove a bill from active cycles (when bill is deleted)
+export const removeBillFromActiveCycles = async (
+  userId: string,
+  billId: string
+): Promise<{ cycleId: string; updates: Partial<PaycheckCycle> } | null> => {
+  // Get the active cycle
+  const activeCycle = await getActiveCycle(userId);
+  if (!activeCycle) return null;
+
+  // Check if this bill is in the active cycle
+  const billEntry = activeCycle.bills.find((b) => b.billId === billId);
+  if (!billEntry) return null;
+
+  const billAmount = billEntry.amount;
+
+  // Remove the bill from the bills array
+  const updatedBills = activeCycle.bills.filter((b) => b.billId !== billId);
+
+  // Recalculate totals (bill removed = more spending money)
+  const newBillsTotal = activeCycle.billsTotal - billAmount;
+  const newSpendingLimit = activeCycle.spendingLimit + billAmount;
+  const newRemainingToSpend = activeCycle.remainingToSpend + billAmount;
+
+  const updates: Partial<PaycheckCycle> = {
+    bills: updatedBills,
+    billsTotal: newBillsTotal,
+    spendingLimit: newSpendingLimit,
+    remainingToSpend: newRemainingToSpend,
+  };
+
+  // Update in Firebase
+  const cycleRef = doc(db, `users/${userId}/paycheckCycles/${activeCycle.id}`);
+  await updateDoc(cycleRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+
+  return { cycleId: activeCycle.id, updates };
+};

@@ -95,8 +95,13 @@ export const deleteBill = createAsyncThunk(
   'bills/delete',
   async ({ userId, billId }: { userId: string; billId: string }, { rejectWithValue }) => {
     try {
+      // First remove from active cycles (before deleting the bill)
+      const cycleUpdate = await paycheckCyclesService.removeBillFromActiveCycles(userId, billId);
+
+      // Then delete the bill
       await billsService.deleteBill(userId, billId);
-      return billId;
+
+      return { billId, cycleUpdate };
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -199,7 +204,7 @@ const billsSlice = createSlice({
         }
       })
       .addCase(deleteBill.fulfilled, (state, action) => {
-        const billId = action.payload;
+        const { billId } = action.payload;
         if (state.byId[billId]) {
           delete state.byId[billId];
           state.allIds = state.allIds.filter((id) => id !== billId);
