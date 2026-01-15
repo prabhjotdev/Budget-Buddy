@@ -233,7 +233,8 @@ export const BillCalendarPage = () => {
   const { byId: paymentMethodsById } = useAppSelector((state) => state.paymentMethods);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedBill, setSelectedBill] = useState<ProjectedBill | null>(null);
+  // Store only the identifier to avoid stale state issues
+  const [selectedBillKey, setSelectedBillKey] = useState<{ billId: string; dateKey: string } | null>(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -275,17 +276,22 @@ export const BillCalendarPage = () => {
     return projectBillsForRange(activeBills, monthStart, nextMonthEnd, cycles);
   }, [activeBills, currentMonth, cycles]);
 
-  // Keep selectedBill in sync with projectedBills when data changes (e.g., bill marked as paid)
-  useEffect(() => {
-    if (selectedBill) {
-      const updatedBill = projectedBills.find(
-        (pb) => pb.bill.id === selectedBill.bill.id && isSameDay(pb.date, selectedBill.date)
-      );
-      if (updatedBill && updatedBill.isPaid !== selectedBill.isPaid) {
-        setSelectedBill(updatedBill);
-      }
+  // Derive selectedBill from projectedBills based on the key (automatically stays in sync)
+  const selectedBill = useMemo(() => {
+    if (!selectedBillKey) return null;
+    return projectedBills.find(
+      (pb) => pb.bill.id === selectedBillKey.billId && format(pb.date, 'yyyy-MM-dd') === selectedBillKey.dateKey
+    ) || null;
+  }, [projectedBills, selectedBillKey]);
+
+  // Helper to set selected bill by ProjectedBill object
+  const setSelectedBill = (bill: ProjectedBill | null) => {
+    if (bill) {
+      setSelectedBillKey({ billId: bill.bill.id, dateKey: format(bill.date, 'yyyy-MM-dd') });
+    } else {
+      setSelectedBillKey(null);
     }
-  }, [projectedBills, selectedBill]);
+  };
 
   // Group bills by date for calendar display
   const billsByDate = useMemo(() => {
