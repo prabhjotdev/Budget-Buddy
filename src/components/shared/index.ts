@@ -10,3 +10,4 @@ export { Spinner, FullPageSpinner } from './Spinner';
 export { CurrencyInput } from './CurrencyInput';
 export { IconButton } from './IconButton';
 export { CategoryIcon, CategoryBadge } from './CategoryIcon';
+export { PWAUpdateToast } from './PWAUpdateToast';
