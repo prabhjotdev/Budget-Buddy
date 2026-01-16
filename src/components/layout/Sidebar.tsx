@@ -70,8 +70,14 @@ export const Sidebar = () => {
       >
       <div className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
+        <div className={clsx(
+          'flex items-center h-16 px-4 border-b border-gray-200 dark:border-gray-700',
+          {
+            'justify-between': !sidebarCollapsed,
+            'md:justify-center md:px-2': sidebarCollapsed,
+          }
+        )}>
+          <div className={clsx('flex items-center gap-3', { 'md:hidden': sidebarCollapsed })}>
             <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
               <Wallet className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             </div>

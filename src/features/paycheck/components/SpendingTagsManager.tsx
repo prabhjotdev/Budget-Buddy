@@ -110,26 +110,26 @@ export const SpendingTagsManager = () => {
   };
 
   const TagItem = ({ tag, showActions = true }: { tag: SpendingTag; showActions?: boolean }) => (
-    <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+    <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
       <div className="flex items-center gap-2">
-        <Tag className="w-4 h-4 text-gray-400" />
-        <span className="text-sm font-medium text-gray-700">{tag.name}</span>
+        <Tag className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{tag.name}</span>
         {tag.usageCount > 0 && (
-          <span className="text-xs text-gray-400">({tag.usageCount})</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">({tag.usageCount})</span>
         )}
       </div>
       {showActions && (
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleEdit(tag)}
-            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+            className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
             title="Edit"
           >
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => handleDeleteClick(tag)}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -155,8 +155,8 @@ export const SpendingTagsManager = () => {
 
         {spendingTags.length === 0 ? (
           <div className="text-center py-8">
-            <Tag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No spending tags yet.</p>
+            <Tag className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No spending tags yet.</p>
             <div className="flex justify-center gap-3">
               <Button variant="secondary" onClick={handleCreateDefaults}>
                 <Sparkles className="w-4 h-4 mr-2" />
@@ -170,7 +170,7 @@ export const SpendingTagsManager = () => {
             {/* Default Tags */}
             {defaultTags.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Suggested Tags
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -184,7 +184,7 @@ export const SpendingTagsManager = () => {
             {/* Custom Tags */}
             {customTags.length > 0 && (
               <div>
-                <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Your Tags
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -207,7 +207,7 @@ export const SpendingTagsManager = () => {
           </div>
         )}
 
-        <p className="mt-4 text-xs text-gray-500">
+        <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
           Tags are optional and help you see spending patterns. Common tags: groceries, gas, dining, entertainment.
         </p>
       </Card>
@@ -226,7 +226,7 @@ export const SpendingTagsManager = () => {
             value={formName}
             onChange={(e) => setFormName(e.target.value.toLowerCase())}
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Keep tag names short and simple for quick selection.
           </p>
 
@@ -251,9 +251,9 @@ export const SpendingTagsManager = () => {
         <div className="space-y-4">
           {tagToDelete && (
             <>
-              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700">
+              <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-700 dark:text-red-300">
                   Are you sure you want to delete the tag <strong>{tagToDelete.name}</strong>?
                 </p>
               </div>

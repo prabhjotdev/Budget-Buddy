@@ -25,9 +25,9 @@ export const ManagePage = () => {
     <AppLayout title="Manage">
       <div className="max-w-2xl space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4">
-          <h3 className="font-semibold text-blue-900 mb-1">Manage Your Budget Items</h3>
-          <p className="text-sm text-blue-700">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-100 dark:border-blue-800 rounded-xl p-4">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Manage Your Budget Items</h3>
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             Set up your payment methods, recurring bills, and spending tags to streamline your budgeting.
           </p>
         </div>
@@ -78,11 +78,11 @@ const QuickStat = ({ icon: Icon, label, color }: QuickStatProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center p-4 bg-white rounded-lg border border-gray-200">
+    <div className="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${colorClasses[color]}`}>
         <Icon className="w-5 h-5" />
       </div>
-      <span className="text-sm text-gray-600 mt-2">{label}</span>
+      <span className="text-sm text-gray-600 dark:text-gray-400 mt-2">{label}</span>
     </div>
   );
 };

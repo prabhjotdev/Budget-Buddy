@@ -26,6 +26,7 @@ import { fetchSpendingTransactions } from '../spendingTransactionsSlice';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
+import { useTheme } from '../../../context/ThemeContext';
 import { Card, CardHeader, Button, Select } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { SpendingTransaction } from '../../../types';
@@ -58,8 +59,9 @@ const CustomDot = (props: {
   payload?: MonthData;
   selectedMonth?: MonthData | null;
   onClick?: (data: MonthData) => void;
+  isDarkMode?: boolean;
 }) => {
-  const { cx, cy, payload, selectedMonth, onClick } = props;
+  const { cx, cy, payload, selectedMonth, onClick, isDarkMode } = props;
   if (!cx || !cy || !payload) return null;
 
   const isSelected =
@@ -72,7 +74,7 @@ const CustomDot = (props: {
       cy={cy}
       r={isSelected ? 6 : 4}
       fill={isSelected ? '#4f46e5' : '#6366f1'}
-      stroke={isSelected ? '#4f46e5' : 'white'}
+      stroke={isSelected ? '#4f46e5' : isDarkMode ? '#1f2937' : 'white'}
       strokeWidth={2}
       style={{ cursor: 'pointer' }}
       onClick={() => onClick?.(payload)}
@@ -82,12 +84,25 @@ const CustomDot = (props: {
 
 export const SpendingLogsPage = () => {
   const dispatch = useAppDispatch();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const { user } = useAppSelector((state) => state.auth);
   const { byId, allIds, isLoading } = useAppSelector((state) => state.spendingTransactions);
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector(
     (state) => state.paymentMethods
   );
   const { byId: tagsById, allIds: tagIds } = useAppSelector((state) => state.spendingTags);
+
+  // Chart colors based on theme
+  const chartColors = {
+    grid: isDarkMode ? '#374151' : '#f0f0f0', // gray-700 vs light gray
+    gridOpacity: isDarkMode ? 0.5 : 1,
+    tickText: isDarkMode ? '#9ca3af' : '#6b7280', // gray-400 vs gray-500
+    axisLine: isDarkMode ? '#4b5563' : '#e5e7eb', // gray-600 vs gray-200
+    tooltipBg: isDarkMode ? '#1f2937' : 'white', // gray-800 vs white
+    tooltipBorder: isDarkMode ? '#374151' : '#e5e7eb', // gray-700 vs gray-200
+    tooltipText: isDarkMode ? '#f3f4f6' : '#111827', // gray-100 vs gray-900
+  };
 
   // Filter state
   const [dateRange, setDateRange] = useState('365');
@@ -386,28 +401,36 @@ export const SpendingLogsPage = () => {
                 }}
                 style={{ cursor: 'pointer' }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke={chartColors.grid}
+                  strokeOpacity={chartColors.gridOpacity}
+                />
                 <XAxis
                   dataKey="month"
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tick={{ fontSize: 12, fill: chartColors.tickText }}
                   tickLine={false}
-                  axisLine={{ stroke: '#e5e7eb' }}
+                  axisLine={{ stroke: chartColors.axisLine }}
                 />
                 <YAxis
-                  tick={{ fontSize: 12, fill: '#6b7280' }}
+                  tick={{ fontSize: 12, fill: chartColors.tickText }}
                   tickLine={false}
-                  axisLine={{ stroke: '#e5e7eb' }}
+                  axisLine={{ stroke: chartColors.axisLine }}
                   tickFormatter={(value) => `$${value}`}
                   width={50}
                 />
                 <Tooltip
                   formatter={(value: number) => [formatCurrency(value), 'Spent']}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
+                    backgroundColor: chartColors.tooltipBg,
+                    border: `1px solid ${chartColors.tooltipBorder}`,
                     borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    boxShadow: isDarkMode
+                      ? '0 2px 8px rgba(0,0,0,0.3)'
+                      : '0 2px 4px rgba(0,0,0,0.1)',
+                    color: chartColors.tooltipText,
                   }}
+                  labelStyle={{ color: chartColors.tooltipText }}
                   labelFormatter={(label) => `${label} - Click for details`}
                 />
                 <Line
@@ -420,6 +443,7 @@ export const SpendingLogsPage = () => {
                       {...props}
                       selectedMonth={selectedMonth}
                       onClick={handleChartClick}
+                      isDarkMode={isDarkMode}
                     />
                   )}
                   activeDot={{ r: 6, fill: '#4f46e5', cursor: 'pointer' }}
@@ -495,7 +519,7 @@ export const SpendingLogsPage = () => {
                             <YAxis
                               type="category"
                               dataKey="name"
-                              tick={{ fontSize: 11, fill: '#6b7280' }}
+                              tick={{ fontSize: 11, fill: chartColors.tickText }}
                               tickLine={false}
                               axisLine={false}
                               width={80}
@@ -503,17 +527,19 @@ export const SpendingLogsPage = () => {
                             <Tooltip
                               formatter={(value: number) => [formatCurrency(value), 'Spent']}
                               contentStyle={{
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
+                                backgroundColor: chartColors.tooltipBg,
+                                border: `1px solid ${chartColors.tooltipBorder}`,
                                 borderRadius: '6px',
                                 fontSize: '12px',
+                                color: chartColors.tooltipText,
                               }}
+                              labelStyle={{ color: chartColors.tooltipText }}
                             />
                             <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
                               {tagBreakdown.map((_, index) => (
                                 <Cell
                                   key={`cell-${index}`}
-                                  fill={index === 0 ? '#6366f1' : '#a5b4fc'}
+                                  fill={index === 0 ? '#6366f1' : isDarkMode ? '#818cf8' : '#a5b4fc'}
                                 />
                               ))}
                             </Bar>
