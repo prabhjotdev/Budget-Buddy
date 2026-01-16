@@ -107,25 +107,25 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
             onClick={() => setScheduleType('semi-monthly')}
             className={`p-4 rounded-lg border-2 transition-all text-left ${
               scheduleType === 'semi-monthly'
-                ? 'border-indigo-500 bg-indigo-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <CalendarDays
                 className={`w-5 h-5 ${
-                  scheduleType === 'semi-monthly' ? 'text-indigo-600' : 'text-gray-400'
+                  scheduleType === 'semi-monthly' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'
                 }`}
               />
               <span
                 className={`font-medium ${
-                  scheduleType === 'semi-monthly' ? 'text-indigo-900' : 'text-gray-700'
+                  scheduleType === 'semi-monthly' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Semi-Monthly
               </span>
             </div>
-            <p className="text-xs text-gray-500">Same dates each month (e.g., 1st & 15th)</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Same dates each month (e.g., 1st & 15th)</p>
           </button>
 
           <button
@@ -133,32 +133,32 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
             onClick={() => setScheduleType('bi-weekly')}
             className={`p-4 rounded-lg border-2 transition-all text-left ${
               scheduleType === 'bi-weekly'
-                ? 'border-indigo-500 bg-indigo-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <Calendar
                 className={`w-5 h-5 ${
-                  scheduleType === 'bi-weekly' ? 'text-indigo-600' : 'text-gray-400'
+                  scheduleType === 'bi-weekly' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'
                 }`}
               />
               <span
                 className={`font-medium ${
-                  scheduleType === 'bi-weekly' ? 'text-indigo-900' : 'text-gray-700'
+                  scheduleType === 'bi-weekly' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Bi-Weekly
               </span>
             </div>
-            <p className="text-xs text-gray-500">Every 14 days (26 paychecks/year)</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Every 14 days (26 paychecks/year)</p>
           </button>
         </div>
 
         {/* Semi-Monthly Configuration */}
         {scheduleType === 'semi-monthly' && (
-          <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-2">
               <Info className="w-4 h-4" />
               <span>Select the two days of the month when you get paid</span>
             </div>
@@ -181,8 +181,8 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
 
         {/* Bi-Weekly Configuration */}
         {scheduleType === 'bi-weekly' && (
-          <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 mb-2">
               <Info className="w-4 h-4" />
               <span>Enter a recent or upcoming pay date to anchor your 14-day cycles</span>
             </div>
@@ -192,32 +192,32 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
               value={biWeeklyAnchorDate}
               onChange={(e) => setBiWeeklyAnchorDate(e.target.value)}
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Your pay cycles will be calculated from this date in 14-day intervals.
             </p>
           </div>
         )}
 
         {/* Default Minimum Save */}
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2 mb-3">
-            <DollarSign className="w-5 h-5 text-green-600" />
-            <span className="font-medium text-gray-900">Default Minimum Savings</span>
+            <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <span className="font-medium text-gray-900 dark:text-gray-100">Default Minimum Savings</span>
           </div>
-          <p className="text-sm text-gray-500 mb-3">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
             Set a default amount to save each paycheck. You can adjust this per cycle.
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-gray-500">$</span>
+            <span className="text-gray-500 dark:text-gray-400">$</span>
             <input
               type="number"
               min="0"
               step="10"
               value={defaultMinimumSave}
               onChange={(e) => setDefaultMinimumSave(Number(e.target.value))}
-              className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <span className="text-sm text-gray-500">per paycheck</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">per paycheck</span>
           </div>
         </div>
 

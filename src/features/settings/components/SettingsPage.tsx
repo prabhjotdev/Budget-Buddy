@@ -293,14 +293,14 @@ export const SettingsPage = () => {
         <div className="space-y-6">
           {!resetResult ? (
             <>
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+              <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0" />
                 <div>
-                  <h4 className="font-medium text-red-900">Warning: This action is irreversible</h4>
-                  <p className="text-sm text-red-700 mt-1">
+                  <h4 className="font-medium text-red-900 dark:text-red-300">Warning: This action is irreversible</h4>
+                  <p className="text-sm text-red-700 dark:text-red-400 mt-1">
                     This will permanently delete:
                   </p>
-                  <ul className="text-sm text-red-700 mt-2 list-disc list-inside space-y-1">
+                  <ul className="text-sm text-red-700 dark:text-red-400 mt-2 list-disc list-inside space-y-1">
                     <li>All paycheck cycles and spending transactions</li>
                     <li>All payment methods, bills, and spending tags</li>
                     <li>Your entire buffer history</li>
@@ -310,8 +310,8 @@ export const SettingsPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Type <span className="font-bold text-red-600">DELETE</span> to confirm
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Type <span className="font-bold text-red-600 dark:text-red-400">DELETE</span> to confirm
                 </label>
                 <Input
                   value={resetConfirmText}
@@ -345,26 +345,26 @@ export const SettingsPage = () => {
             <div
               className={`p-4 rounded-lg ${
                 resetResult.success
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
+                  ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
               }`}
             >
               <p
                 className={`font-medium ${
-                  resetResult.success ? 'text-green-900' : 'text-red-900'
+                  resetResult.success ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'
                 }`}
               >
                 {resetResult.success ? 'Data Reset Complete' : 'Reset Failed'}
               </p>
               <p
                 className={`text-sm mt-1 ${
-                  resetResult.success ? 'text-green-700' : 'text-red-700'
+                  resetResult.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
                 }`}
               >
                 {resetResult.message}
               </p>
               {resetResult.success && (
-                <p className="text-sm text-green-600 mt-2">Reloading page...</p>
+                <p className="text-sm text-green-600 dark:text-green-400 mt-2">Reloading page...</p>
               )}
             </div>
           )}
