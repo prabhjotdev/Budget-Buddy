@@ -5,6 +5,7 @@ export const ROUTES = {
   SPENDING: '/spending',
   WISHLIST: '/wishlist',
   CALENDAR: '/calendar',
+  HISTORY: '/history',
   BUFFER: '/buffer',
   MANAGE: '/manage',
   SETTINGS: '/settings',

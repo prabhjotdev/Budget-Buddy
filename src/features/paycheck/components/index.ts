@@ -18,3 +18,4 @@ export { ManagePage } from './ManagePage';
 export { SpendingLogsPage } from './SpendingLogsPage';
 export { WishlistPage } from './WishlistPage';
 export { BillCalendarPage } from './BillCalendarPage';
+export { CycleHistoryPage } from './CycleHistoryPage';

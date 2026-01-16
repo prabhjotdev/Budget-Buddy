@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from '../constants';
 import { LoginPage, AuthGuard } from '../features/auth';
-import { CycleDashboard, BufferManager, ManagePage, SpendingLogsPage, WishlistPage, BillCalendarPage } from '../features/paycheck/components';
+import { CycleDashboard, BufferManager, ManagePage, SpendingLogsPage, WishlistPage, BillCalendarPage, CycleHistoryPage } from '../features/paycheck/components';
 import { SettingsPage } from '../features/settings';
 
 export const AppRouter = () => {
@@ -38,6 +38,14 @@ export const AppRouter = () => {
           element={
             <AuthGuard>
               <BillCalendarPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path={ROUTES.HISTORY}
+          element={
+            <AuthGuard>
+              <CycleHistoryPage />
             </AuthGuard>
           }
         />
