@@ -383,61 +383,77 @@ export const WishlistPage = () => {
                   <p className="text-sm">No needs added yet</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {needsItems.map((item) => {
                     const { recommendation, reason, saveCycles } = getRecommendation(item);
                     const config = recommendationConfig[recommendation];
                     const isExpanded = expandedItemId === item.id;
                     const RecommendationIcon = config.icon;
 
+                    // Priority border colors
+                    const priorityBorderColor = item.priority === 'high'
+                      ? 'border-l-rose-500'
+                      : item.priority === 'medium'
+                        ? 'border-l-amber-500'
+                        : 'border-l-gray-300 dark:border-l-gray-600';
+
                     return (
                       <div
                         key={item.id}
                         className={clsx(
-                          'border rounded-lg transition-all',
-                          item.isPurchased
-                            ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60'
-                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          'border-l-4 transition-all',
+                          priorityBorderColor,
+                          item.isPurchased && 'opacity-50'
                         )}
                       >
                         <div
-                          className="flex items-center gap-3 p-3 cursor-pointer"
+                          className="flex items-center justify-between py-4 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
                           onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
                         >
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-orange-100 dark:bg-orange-900/30">
-                            <Star className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className={clsx('font-medium truncate', item.isPurchased ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100')}>
-                                {item.name}
-                              </p>
-                              <Badge variant={item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'default'}>
-                                {item.priority}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(item.price)}</span>
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className={clsx(
+                              'font-medium text-base truncate',
+                              item.isPurchased ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-100'
+                            )}>
+                              {item.name}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <span className={clsx(
+                                'text-sm font-semibold',
+                                item.isPurchased ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'
+                              )}>
+                                {formatCurrency(item.price)}
+                              </span>
                               {!item.isPurchased && (
-                                <Badge variant={config.variant}>
+                                <Badge variant={config.variant} size="sm">
                                   <RecommendationIcon className="w-3 h-3 mr-1" />
                                   {config.label}
                                 </Badge>
                               )}
                               {item.isPurchased && (
-                                <Badge variant="success">
+                                <Badge variant="success" size="sm">
                                   <Check className="w-3 h-3 mr-1" />
                                   Purchased
                                 </Badge>
                               )}
                             </div>
                           </div>
-                          <div className="text-gray-400">
-                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                          <div className="flex items-center gap-2">
+                            <span className={clsx(
+                              'text-xs px-2 py-0.5 rounded',
+                              item.priority === 'high' && 'text-rose-600 dark:text-rose-400',
+                              item.priority === 'medium' && 'text-amber-600 dark:text-amber-400',
+                              item.priority === 'low' && 'text-gray-500 dark:text-gray-400'
+                            )}>
+                              {item.priority}
+                            </span>
+                            <div className="text-gray-400">
+                              {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                            </div>
                           </div>
                         </div>
                         {isExpanded && (
-                          <div className="px-3 pb-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                          <div className="px-3 pb-4 pt-2 bg-gray-50 dark:bg-gray-800/50">
                             {!item.isPurchased && (
                               <div className={clsx('p-3 rounded-lg mb-3 text-sm', {
                                 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300': recommendation === 'safe',
@@ -497,61 +513,77 @@ export const WishlistPage = () => {
                   <p className="text-sm">No wants added yet</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {wantsItems.map((item) => {
                     const { recommendation, reason, saveCycles } = getRecommendation(item);
                     const config = recommendationConfig[recommendation];
                     const isExpanded = expandedItemId === item.id;
                     const RecommendationIcon = config.icon;
 
+                    // Priority border colors
+                    const priorityBorderColor = item.priority === 'high'
+                      ? 'border-l-rose-500'
+                      : item.priority === 'medium'
+                        ? 'border-l-amber-500'
+                        : 'border-l-gray-300 dark:border-l-gray-600';
+
                     return (
                       <div
                         key={item.id}
                         className={clsx(
-                          'border rounded-lg transition-all',
-                          item.isPurchased
-                            ? 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60'
-                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                          'border-l-4 transition-all',
+                          priorityBorderColor,
+                          item.isPurchased && 'opacity-50'
                         )}
                       >
                         <div
-                          className="flex items-center gap-3 p-3 cursor-pointer"
+                          className="flex items-center justify-between py-4 px-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"
                           onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
                         >
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-purple-100 dark:bg-purple-900/30">
-                            <Heart className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className={clsx('font-medium truncate', item.isPurchased ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-gray-100')}>
-                                {item.name}
-                              </p>
-                              <Badge variant={item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'default'}>
-                                {item.priority}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{formatCurrency(item.price)}</span>
+                          <div className="flex-1 min-w-0 pr-3">
+                            <p className={clsx(
+                              'font-medium text-base truncate',
+                              item.isPurchased ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-900 dark:text-gray-100'
+                            )}>
+                              {item.name}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <span className={clsx(
+                                'text-sm font-semibold',
+                                item.isPurchased ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'
+                              )}>
+                                {formatCurrency(item.price)}
+                              </span>
                               {!item.isPurchased && (
-                                <Badge variant={config.variant}>
+                                <Badge variant={config.variant} size="sm">
                                   <RecommendationIcon className="w-3 h-3 mr-1" />
                                   {config.label}
                                 </Badge>
                               )}
                               {item.isPurchased && (
-                                <Badge variant="success">
+                                <Badge variant="success" size="sm">
                                   <Check className="w-3 h-3 mr-1" />
                                   Purchased
                                 </Badge>
                               )}
                             </div>
                           </div>
-                          <div className="text-gray-400">
-                            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                          <div className="flex items-center gap-2">
+                            <span className={clsx(
+                              'text-xs px-2 py-0.5 rounded',
+                              item.priority === 'high' && 'text-rose-600 dark:text-rose-400',
+                              item.priority === 'medium' && 'text-amber-600 dark:text-amber-400',
+                              item.priority === 'low' && 'text-gray-500 dark:text-gray-400'
+                            )}>
+                              {item.priority}
+                            </span>
+                            <div className="text-gray-400">
+                              {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                            </div>
                           </div>
                         </div>
                         {isExpanded && (
-                          <div className="px-3 pb-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                          <div className="px-3 pb-4 pt-2 bg-gray-50 dark:bg-gray-800/50">
                             {!item.isPurchased && (
                               <div className={clsx('p-3 rounded-lg mb-3 text-sm', {
                                 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300': recommendation === 'safe',
