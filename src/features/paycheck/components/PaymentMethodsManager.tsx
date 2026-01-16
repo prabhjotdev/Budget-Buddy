@@ -144,8 +144,8 @@ export const PaymentMethodsManager = () => {
 
         {paymentMethods.length === 0 ? (
           <div className="text-center py-8">
-            <Wallet className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-4">No payment methods yet.</p>
+            <Wallet className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400 mb-4">No payment methods yet.</p>
             <div className="flex justify-center gap-3">
               <Button variant="secondary" onClick={handleCreateDefaults}>
                 Add Defaults
@@ -162,7 +162,7 @@ export const PaymentMethodsManager = () => {
               return (
                 <div
                   key={method.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-lg ${colorClass}`}>
@@ -170,25 +170,25 @@ export const PaymentMethodsManager = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{method.name}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{method.name}</span>
                         {method.isDefault && (
                           <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                         )}
                       </div>
-                      <span className="text-xs text-gray-500 capitalize">{method.type}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{method.type}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(method)}
-                      className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                       title="Edit"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(method)}
-                      className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -232,9 +232,9 @@ export const PaymentMethodsManager = () => {
               type="checkbox"
               checked={formIsDefault}
               onChange={(e) => setFormIsDefault(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
             />
-            <span className="text-sm text-gray-700">Set as default payment method</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Set as default payment method</span>
           </label>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -258,9 +258,9 @@ export const PaymentMethodsManager = () => {
         <div className="space-y-4">
           {methodToDelete && (
             <>
-              <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700">
+              <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-700 dark:text-red-300">
                   Are you sure you want to delete <strong>{methodToDelete.name}</strong>?
                 </p>
               </div>
