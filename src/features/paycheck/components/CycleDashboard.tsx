@@ -156,14 +156,14 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
       )}
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
         {/* Remaining to Spend */}
         <Card className={spendingProgress.isOverBudget ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}>
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Remaining to Spend</p>
               <p
-                className={`text-xl md:text-3xl lg:text-2xl font-bold truncate ${
+                className={`text-xl md:text-3xl font-bold truncate ${
                   spendingProgress.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
                 }`}
               >
@@ -194,7 +194,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Spent This Cycle</p>
-              <p className="text-lg md:text-2xl lg:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
+              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                 {formatCurrency(cycle.totalSpent)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden md:block">
@@ -212,7 +212,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Bills Reserved</p>
-              <p className="text-lg md:text-2xl lg:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
+              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                 {formatCurrency(cycle.billsTotal)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -230,7 +230,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Saving This Cycle</p>
-              <p className="text-lg md:text-2xl lg:text-xl font-bold text-gray-900 dark:text-gray-100 truncate">
+              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                 {formatCurrency(cycle.minimumSave)}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden md:block">
