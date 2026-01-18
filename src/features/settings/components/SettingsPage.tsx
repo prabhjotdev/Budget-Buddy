@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, ChangeEvent } from 'react';
-import { AlertTriangle, Trash2, Settings as SettingsIcon, Check, Moon, Sun } from 'lucide-react';
+import { useState, useMemo, useEffect, ChangeEvent, useRef } from 'react';
+import { AlertTriangle, Trash2, Settings as SettingsIcon, Check, Moon, Sun, Download, Upload } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
 import { clearPaycheckCycles } from '../../paycheck/paycheckCyclesSlice';
@@ -8,6 +8,7 @@ import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
 import { PaycheckSetup } from '../../paycheck/components';
 import { resetAllData } from '../../../services/firebase/dataReset';
+import { exportAllData, importAllData, downloadDataAsJson, readJsonFile } from '../../../services/firebase/dataExportImport';
 import { useTheme } from '../../../context/ThemeContext';
 
 // App version - update this when releasing new versions
@@ -67,6 +68,14 @@ export const SettingsPage = () => {
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [resetResult, setResetResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Export/Import state
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [overwriteData, setOverwriteData] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state with loaded settings
   useEffect(() => {
@@ -143,6 +152,65 @@ export const SettingsPage = () => {
       });
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    if (!user) return;
+
+    setIsExporting(true);
+    try {
+      const data = await exportAllData(user.uid);
+      downloadDataAsJson(data);
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      alert('Failed to export data. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+    setImportModalOpen(true);
+
+    try {
+      const data = await readJsonFile(file);
+
+      // Import the data
+      const result = await importAllData(user.uid, data, overwriteData);
+
+      setImportResult({
+        success: result.success,
+        message: result.message,
+      });
+
+      if (result.success) {
+        // Reload the page after a delay to refresh all state
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to import data:', error);
+      setImportResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to import data. Please try again.',
+      });
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -245,6 +313,63 @@ export const SettingsPage = () => {
           </div>
         </Card>
 
+        {/* Data Management */}
+        <Card>
+          <CardHeader title="Data Management" subtitle="Export and import your budget data" />
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="space-y-4">
+                {/* Export Data */}
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h4 className="font-medium text-blue-900 dark:text-blue-400">Export Data</h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                      Download all your budget data as a JSON file for backup or transfer to another device.
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={handleExportData}
+                    isLoading={isExporting}
+                    className="flex-shrink-0"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+
+                {/* Import Data */}
+                <div className="pt-4 border-t border-blue-200 dark:border-blue-800">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h4 className="font-medium text-blue-900 dark:text-blue-400">Import Data</h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        Restore your budget data from a previously exported JSON file.
+                      </p>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      onClick={handleImportClick}
+                      disabled={isImporting}
+                      className="flex-shrink-0"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Import
+                    </Button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Danger Zone */}
         <Card className="border-red-200 dark:border-red-900">
           <CardHeader
@@ -277,6 +402,52 @@ export const SettingsPage = () => {
           <p>Budget Buddy v{APP_VERSION}</p>
         </div>
       </div>
+
+      {/* Import Data Modal */}
+      <Modal
+        isOpen={importModalOpen}
+        onClose={() => {
+          if (!isImporting) {
+            setImportModalOpen(false);
+            setImportResult(null);
+          }
+        }}
+        title="Import Data"
+      >
+        <div className="space-y-4">
+          {isImporting ? (
+            <div className="p-4 text-center">
+              <p className="text-gray-700 dark:text-gray-300">Importing data...</p>
+            </div>
+          ) : importResult ? (
+            <div
+              className={`p-4 rounded-lg ${
+                importResult.success
+                  ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
+              }`}
+            >
+              <p
+                className={`font-medium ${
+                  importResult.success ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'
+                }`}
+              >
+                {importResult.success ? 'Import Complete' : 'Import Failed'}
+              </p>
+              <p
+                className={`text-sm mt-1 ${
+                  importResult.success ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
+                }`}
+              >
+                {importResult.message}
+              </p>
+              {importResult.success && (
+                <p className="text-sm text-green-600 dark:text-green-400 mt-2">Reloading page...</p>
+              )}
+            </div>
+          ) : null}
+        </div>
+      </Modal>
 
       {/* Reset Confirmation Modal */}
       <Modal
