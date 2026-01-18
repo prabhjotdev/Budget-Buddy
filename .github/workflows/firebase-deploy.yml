@@ -64,13 +64,6 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy Firestore Rules
-        run: |
-          npm install -g firebase-tools
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/firebase-service-account.json
-          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-service-account.json
-          firebase deploy --only firestore:rules --project ${{ secrets.VITE_FIREBASE_PROJECT_ID }} --non-interactive
-
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
