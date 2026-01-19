@@ -106,6 +106,7 @@ export const importAllData = async (
 
       for (const docData of documents) {
         const { id, ...dataWithoutId } = docData;
+        if (typeof id !== 'string') continue; // Skip invalid documents
         const docRef = doc(collRef, id);
 
         currentBatch.push({ ref: docRef, data: dataWithoutId });
