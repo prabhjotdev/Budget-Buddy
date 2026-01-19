@@ -13,10 +13,10 @@ export interface ExportData {
   exportDate: string;
   userId: string;
   collections: {
-    [key: string]: any[];
+    [key: string]: Record<string, unknown>[];
   };
   documents: {
-    [key: string]: any;
+    [key: string]: Record<string, unknown>;
   };
 }
 
@@ -100,8 +100,8 @@ export const importAllData = async (
       const collRef = collection(db, `users/${userId}/${collName}`);
 
       // Use batched writes for efficiency (max 500 per batch)
-      const batches: any[][] = [];
-      let currentBatch: any[] = [];
+      const batches: Array<Array<{ ref: any; data: Record<string, unknown> }>> = [];
+      let currentBatch: Array<{ ref: any; data: Record<string, unknown> }> = [];
 
       for (const docData of documents) {
         const { id, ...dataWithoutId } = docData;
@@ -190,7 +190,7 @@ export const readJsonFile = (file: File): Promise<ExportData> => {
       try {
         const data = JSON.parse(event.target?.result as string);
         resolve(data);
-      } catch (error) {
+      } catch {
         reject(new Error('Invalid JSON file'));
       }
     };
