@@ -74,7 +74,6 @@ export const SettingsPage = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [overwriteData, setOverwriteData] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state with loaded settings
@@ -185,8 +184,8 @@ export const SettingsPage = () => {
     try {
       const data = await readJsonFile(file);
 
-      // Import the data
-      const result = await importAllData(user.uid, data, overwriteData);
+      // Import the data (merge by default)
+      const result = await importAllData(user.uid, data, false);
 
       setImportResult({
         success: result.success,
