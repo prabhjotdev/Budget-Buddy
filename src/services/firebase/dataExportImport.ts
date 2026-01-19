@@ -5,6 +5,7 @@ import {
   getDoc,
   writeBatch,
   setDoc,
+  DocumentReference,
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -100,8 +101,8 @@ export const importAllData = async (
       const collRef = collection(db, `users/${userId}/${collName}`);
 
       // Use batched writes for efficiency (max 500 per batch)
-      const batches: Array<Array<{ ref: any; data: Record<string, unknown> }>> = [];
-      let currentBatch: Array<{ ref: any; data: Record<string, unknown> }> = [];
+      const batches: Array<Array<{ ref: DocumentReference; data: Record<string, unknown> }>> = [];
+      let currentBatch: Array<{ ref: DocumentReference; data: Record<string, unknown> }> = [];
 
       for (const docData of documents) {
         const { id, ...dataWithoutId } = docData;
