@@ -165,9 +165,9 @@ export const LogSpendingModal = ({
       <div className="space-y-5">
         {/* Amount Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xl">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-xl">
               $
             </span>
             <input
@@ -178,7 +178,7 @@ export const LogSpendingModal = ({
               step="0.01"
               min="0"
               autoFocus
-              className="w-full pl-10 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-3 text-2xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
             />
           </div>
 
@@ -186,7 +186,7 @@ export const LogSpendingModal = ({
           {parsedAmount > 0 && (
             <div
               className={`mt-2 p-3 rounded-lg ${
-                isOverBudget ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+                isOverBudget ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
               }`}
             >
               <div className="flex justify-between text-sm">
@@ -206,7 +206,7 @@ export const LogSpendingModal = ({
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description (optional)
           </label>
           <Input
@@ -218,7 +218,7 @@ export const LogSpendingModal = ({
 
         {/* Payment Method */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
           <div className="flex flex-wrap gap-2">
             {paymentMethods.map((method) => (
               <button
@@ -227,8 +227,8 @@ export const LogSpendingModal = ({
                 onClick={() => setPaymentMethodId(method.id)}
                 className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
                   paymentMethodId === method.id
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-500'
                 }`}
               >
                 <CreditCard className="w-4 h-4 inline mr-2" />
@@ -237,7 +237,7 @@ export const LogSpendingModal = ({
             ))}
           </div>
           {paymentMethods.length === 0 && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               No payment methods set up. Add them in Settings.
             </p>
           )}
@@ -245,7 +245,7 @@ export const LogSpendingModal = ({
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags (optional)</label>
           <div className="flex flex-wrap gap-2">
             {tags.slice(0, 10).map((tag) => (
               <button
@@ -254,8 +254,8 @@ export const LogSpendingModal = ({
                 onClick={() => handleTagToggle(tag.id)}
                 className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                   selectedTagIds.includes(tag.id)
-                    ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300'
-                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
+                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-2 border-indigo-300 dark:border-indigo-600'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-2 border-transparent hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 <Tag className="w-3 h-3 inline mr-1" />
@@ -266,7 +266,7 @@ export const LogSpendingModal = ({
               <button
                 type="button"
                 onClick={() => setShowNewTagInput(true)}
-                className="px-3 py-1.5 rounded-full text-sm bg-gray-50 text-gray-500 border-2 border-dashed border-gray-300 hover:bg-gray-100"
+                className="px-3 py-1.5 rounded-full text-sm bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <Plus className="w-3 h-3 inline mr-1" />
                 Add tag
@@ -282,7 +282,7 @@ export const LogSpendingModal = ({
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value.toLowerCase())}
                 placeholder="New tag name"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -299,7 +299,7 @@ export const LogSpendingModal = ({
                   setShowNewTagInput(false);
                   setNewTagName('');
                 }}
-                className="p-2 text-gray-400 hover:text-gray-600"
+                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -309,7 +309,7 @@ export const LogSpendingModal = ({
 
         {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
           <Input
             type="date"
             value={date}
