@@ -66,13 +66,21 @@ export const GoalModal = ({
     setIsSubmitting(true);
     try {
       if (goalType === 'none') {
-        await onSubmit({});
+        // Remove goal entirely - clear all goal-related fields
+        await onSubmit({
+          goalAmount: undefined,
+          goalType: undefined,
+          goalMonths: undefined,
+        });
       } else if (goalType === 'fixed') {
+        // Fixed goal - clear goalMonths
         await onSubmit({
           goalAmount: calculatedGoal,
           goalType: 'fixed',
+          goalMonths: undefined,
         });
       } else {
+        // Months-based goal
         await onSubmit({
           goalAmount: calculatedGoal,
           goalType: 'months',

@@ -10,6 +10,7 @@ import {
   Timestamp,
   updateDoc,
   deleteDoc,
+  deleteField,
 } from 'firebase/firestore';
 import { db } from './config';
 import { EmergencyFund, EmergencyFundTransaction } from '../../types/emergencyFund';
@@ -34,12 +35,45 @@ export const saveEmergencyFund = async (
   const now = Timestamp.now();
 
   const existingFund = await getDoc(fundRef);
-  const fundData = existingFund.exists()
-    ? { ...existingFund.data(), ...fund, updatedAt: now }
-    : { currentBalance: 0, ...fund, createdAt: now, updatedAt: now };
 
-  await setDoc(fundRef, fundData);
-  return { id: 'main', ...fundData } as EmergencyFund;
+  // Process the fund data - convert undefined to deleteField() for proper removal
+  const processedFund: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(fund)) {
+    if (value === undefined) {
+      processedFund[key] = deleteField();
+    } else {
+      processedFund[key] = value;
+    }
+  }
+
+  if (existingFund.exists()) {
+    // Update existing fund
+    await updateDoc(fundRef, {
+      ...processedFund,
+      updatedAt: now,
+    });
+
+    // Fetch the updated document
+    const updatedFund = await getDoc(fundRef);
+    return { id: 'main', ...updatedFund.data() } as EmergencyFund;
+  } else {
+    // Create new fund - filter out deleteField() markers for new documents
+    const newFundData: Record<string, unknown> = {
+      currentBalance: 0,
+    };
+
+    for (const [key, value] of Object.entries(processedFund)) {
+      if (value !== deleteField()) {
+        newFundData[key] = value;
+      }
+    }
+
+    newFundData.createdAt = now;
+    newFundData.updatedAt = now;
+
+    await setDoc(fundRef, newFundData);
+    return { id: 'main', ...newFundData } as EmergencyFund;
+  }
 };
 
 // Get all transactions
