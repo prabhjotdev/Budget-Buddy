@@ -335,7 +335,7 @@ const EmergencyFundContent = () => {
       <GoalModal
         isOpen={goalModalOpen}
         onClose={() => setGoalModalOpen(false)}
-        currentGoal={fund}
+        currentGoal={fund || undefined}
         averageMonthlySpending={averageMonthlySpending}
         onSubmit={handleUpdateGoal}
       />
