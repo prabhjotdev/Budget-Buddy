@@ -65,10 +65,6 @@ export const TransactionModal = ({
   const Icon = type === 'deposit' ? PlusCircle : MinusCircle;
   const title = type === 'deposit' ? 'Add to Emergency Fund' : 'Withdraw from Emergency Fund';
   const buttonText = type === 'deposit' ? 'Add Money' : 'Withdraw';
-  const colorClass =
-    type === 'deposit'
-      ? 'text-green-600 dark:text-green-400'
-      : 'text-orange-600 dark:text-orange-400';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="md">
