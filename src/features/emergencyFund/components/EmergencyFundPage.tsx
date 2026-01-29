@@ -226,8 +226,16 @@ const EmergencyFundContent = () => {
                     Set a savings goal
                   </h4>
                   <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                    Track your progress toward 3-6 months of expenses or a custom amount
+                    {cycleIds.length >= 7
+                      ? 'Track your progress toward 3-6 months of expenses or a custom amount'
+                      : 'Set a custom dollar amount to save'}
                   </p>
+                  {cycleIds.length > 0 && cycleIds.length < 7 && (
+                    <p className="text-xs text-green-600 dark:text-green-500 mt-2">
+                      💡 Complete {7 - cycleIds.length} more cycle{7 - cycleIds.length !== 1 ? 's' : ''} to
+                      unlock months-based goals
+                    </p>
+                  )}
                 </div>
               </div>
               <Button
@@ -337,6 +345,7 @@ const EmergencyFundContent = () => {
         onClose={() => setGoalModalOpen(false)}
         currentGoal={fund || undefined}
         averageMonthlySpending={averageMonthlySpending}
+        cycleCount={cycleIds.length}
         onSubmit={handleUpdateGoal}
       />
     </div>
