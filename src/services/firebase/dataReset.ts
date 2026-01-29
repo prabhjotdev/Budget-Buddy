@@ -47,6 +47,7 @@ export const resetPaycheckData = async (userId: string): Promise<ResetResult> =>
     'spendingTags',
     'spendingTransactions',
     'bufferTransactions',
+    'emergencyFundTransactions',
   ];
 
   let totalDeleted = 0;
@@ -60,9 +61,12 @@ export const resetPaycheckData = async (userId: string): Promise<ResetResult> =>
     }
   }
 
-  // Also delete the buffer document
+  // Also delete single documents
   await deleteDocument(userId, 'buffer/main');
   cleared.push('buffer');
+
+  await deleteDocument(userId, 'emergencyFund/main');
+  cleared.push('emergencyFund');
 
   return {
     collectionsCleared: cleared,

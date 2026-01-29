@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { updateSettings } from '../settingsSlice';
 import { clearPaycheckCycles } from '../../paycheck/paycheckCyclesSlice';
 import { clearBuffer } from '../../paycheck/bufferSlice';
+import { clearEmergencyFund } from '../../emergencyFund/emergencyFundSlice';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
 import { PaycheckSetup } from '../../paycheck/components';
@@ -129,6 +130,7 @@ export const SettingsPage = () => {
       // Clear Redux state
       dispatch(clearPaycheckCycles());
       dispatch(clearBuffer());
+      dispatch(clearEmergencyFund());
 
       setResetResult({
         success: true,

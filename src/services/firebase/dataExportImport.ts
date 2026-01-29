@@ -37,6 +37,7 @@ export const exportAllData = async (userId: string): Promise<ExportData> => {
     'spendingTags',
     'spendingTransactions',
     'bufferTransactions',
+    'emergencyFundTransactions',
     'budgetPeriods',
     'categories',
     'transactions',
@@ -66,10 +67,11 @@ export const exportAllData = async (userId: string): Promise<ExportData> => {
     }
   }
 
-  // Export single documents (buffer, settings)
+  // Export single documents (buffer, settings, emergencyFund)
   const documentsToExport = [
     { path: 'buffer/main', key: 'buffer' },
     { path: 'settings/main', key: 'settings' },
+    { path: 'emergencyFund/main', key: 'emergencyFund' },
   ];
 
   for (const { path, key } of documentsToExport) {
@@ -141,6 +143,7 @@ export const importAllData = async (
       const pathMap: { [key: string]: string } = {
         buffer: 'buffer/main',
         settings: 'settings/main',
+        emergencyFund: 'emergencyFund/main',
       };
 
       const path = pathMap[key];

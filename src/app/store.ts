@@ -20,6 +20,9 @@ import {
   wishlistReducer,
 } from '../features/paycheck';
 
+// Emergency fund reducer
+import emergencyFundReducer from '../features/emergencyFund/emergencyFundSlice';
+
 export const store = configureStore({
   reducer: {
     // Legacy system
@@ -41,6 +44,7 @@ export const store = configureStore({
     spendingTransactions: spendingTransactionsReducer,
     buffer: bufferReducer,
     wishlist: wishlistReducer,
+    emergencyFund: emergencyFundReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -78,6 +82,12 @@ export const store = configureStore({
           'wishlist/create/fulfilled',
           'wishlist/update/fulfilled',
           'wishlist/markPurchased/fulfilled',
+          // Emergency fund actions with Timestamps
+          'emergencyFund/fetch/fulfilled',
+          'emergencyFund/fetchTransactions/fulfilled',
+          'emergencyFund/updateGoal/fulfilled',
+          'emergencyFund/addDeposit/fulfilled',
+          'emergencyFund/addWithdrawal/fulfilled',
         ],
         ignoredPaths: [
           'budgetPeriods.byId',
@@ -95,6 +105,9 @@ export const store = configureStore({
           'bills.byId',
           'spendingTags.byId',
           'wishlist.byId',
+          // Emergency fund paths with Timestamps
+          'emergencyFund.fund',
+          'emergencyFund.transactions',
         ],
       },
     }),

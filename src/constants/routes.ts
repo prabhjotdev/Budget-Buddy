@@ -7,6 +7,7 @@ export const ROUTES = {
   CALENDAR: '/calendar',
   HISTORY: '/history',
   BUFFER: '/buffer',
+  EMERGENCY_FUND: '/emergency-fund',
   MANAGE: '/manage',
   SETTINGS: '/settings',
 } as const;

@@ -26,6 +26,7 @@ const navItems = [
   { to: ROUTES.CALENDAR, icon: CalendarDays, label: 'Bill Calendar' },
   { to: ROUTES.HISTORY, icon: History, label: 'History' },
   { to: ROUTES.BUFFER, icon: ShieldCheck, label: 'Buffer' },
+  { to: ROUTES.EMERGENCY_FUND, icon: ShieldCheck, label: 'Emergency Fund' },
   { to: ROUTES.MANAGE, icon: ClipboardList, label: 'Manage' },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings' },
 ];
