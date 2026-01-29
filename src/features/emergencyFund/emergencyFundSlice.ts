@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Timestamp } from 'firebase/firestore';
-import { EmergencyFund, EmergencyFundTransaction, EmergencyFundState } from '../../types/emergencyFund';
+import type { EmergencyFundState } from '../../types/emergencyFund';
 import * as emergencyFundService from '../../services/firebase/emergencyFund';
 
 const initialState: EmergencyFundState = {
