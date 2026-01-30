@@ -208,15 +208,29 @@ export const BillsManager = () => {
               return (
                 <div
                   key={bill.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+                    bill.isActive === false ? 'opacity-60' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
+                    <div className={`p-2 rounded-lg ${
+                      bill.isActive === false
+                        ? 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500'
+                        : 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+                    }`}>
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900 dark:text-gray-100">{bill.name}</span>
+                        {bill.isActive === false && (
+                          <span
+                            className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded"
+                            title="Inactive - excluded from calendar and totals"
+                          >
+                            Inactive
+                          </span>
+                        )}
                         {bill.isAutoPay && (
                           <span
                             className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/50 px-1.5 py-0.5 rounded"
