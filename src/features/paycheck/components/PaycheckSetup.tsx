@@ -14,6 +14,12 @@ const formatLocalDate = (d: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+// Helper to parse YYYY-MM-DD string as local time instead of UTC
+const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
 interface PaycheckSetupProps {
   onSetupComplete?: () => void;
 }
@@ -76,7 +82,7 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
           updates: {
             scheduleType,
             semiMonthlyDays: [semiMonthlyDay1, semiMonthlyDay2] as [number, number],
-            biWeeklyAnchorDate: Timestamp.fromDate(new Date(biWeeklyAnchorDate)),
+            biWeeklyAnchorDate: Timestamp.fromDate(parseLocalDate(biWeeklyAnchorDate)),
             defaultMinimumSave,
           },
         })
