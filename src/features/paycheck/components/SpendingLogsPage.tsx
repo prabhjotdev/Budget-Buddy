@@ -143,12 +143,12 @@ export const SpendingLogsPage = () => {
     if (dateRange === 'custom') {
       // Custom date range
       if (customStartDate) {
-        const startDate = new Date(customStartDate);
+        const startDate = parseLocalDate(customStartDate);
         startDate.setHours(0, 0, 0, 0);
         filtered = filtered.filter((tx) => tx.date.toDate() >= startDate);
       }
       if (customEndDate) {
-        const endDate = new Date(customEndDate);
+        const endDate = parseLocalDate(customEndDate);
         endDate.setHours(23, 59, 59, 999);
         filtered = filtered.filter((tx) => tx.date.toDate() <= endDate);
       }
@@ -661,10 +661,10 @@ export const SpendingLogsPage = () => {
                   {(customStartDate || customEndDate) && (
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       {customStartDate && customEndDate
-                        ? `Showing transactions from ${new Date(customStartDate).toLocaleDateString()} to ${new Date(customEndDate).toLocaleDateString()}`
+                        ? `Showing transactions from ${parseLocalDate(customStartDate).toLocaleDateString()} to ${parseLocalDate(customEndDate).toLocaleDateString()}`
                         : customStartDate
-                          ? `Showing transactions from ${new Date(customStartDate).toLocaleDateString()} onwards`
-                          : `Showing transactions until ${new Date(customEndDate).toLocaleDateString()}`}
+                          ? `Showing transactions from ${parseLocalDate(customStartDate).toLocaleDateString()} onwards`
+                          : `Showing transactions until ${parseLocalDate(customEndDate).toLocaleDateString()}`}
                     </p>
                   )}
                 </div>
@@ -768,3 +768,9 @@ export const SpendingLogsPage = () => {
     </AppLayout>
   );
 };
+
+// Parse a YYYY-MM-DD string as local time instead of UTC
+function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
