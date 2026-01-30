@@ -58,6 +58,7 @@ export const BillsManager = () => {
   const [formIsVariable, setFormIsVariable] = useState(false);
   const [formIsAutoPay, setFormIsAutoPay] = useState(false);
   const [formPaymentMethodId, setFormPaymentMethodId] = useState<string>('');
+  const [formIsActive, setFormIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const bills = useMemo(() => {
@@ -89,6 +90,7 @@ export const BillsManager = () => {
     setFormIsVariable(false);
     setFormIsAutoPay(false);
     setFormPaymentMethodId('');
+    setFormIsActive(true);
     setModalOpen(true);
   };
 
@@ -102,6 +104,7 @@ export const BillsManager = () => {
     setFormIsVariable(bill.isVariable);
     setFormIsAutoPay(bill.isAutoPay);
     setFormPaymentMethodId(bill.paymentMethodId || '');
+    setFormIsActive(bill.isActive !== false); // Default to true for backwards compatibility
     setModalOpen(true);
   };
 
@@ -131,7 +134,7 @@ export const BillsManager = () => {
         isVariable: formIsVariable,
         isAutoPay: formIsAutoPay,
         paymentMethodId: formPaymentMethodId || null,
-        isActive: true,
+        isActive: formIsActive,
       };
 
       if (editingBill) {
@@ -205,15 +208,29 @@ export const BillsManager = () => {
               return (
                 <div
                   key={bill.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
+                    bill.isActive === false ? 'opacity-60' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
+                    <div className={`p-2 rounded-lg ${
+                      bill.isActive === false
+                        ? 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500'
+                        : 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
+                    }`}>
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-gray-900 dark:text-gray-100">{bill.name}</span>
+                        {bill.isActive === false && (
+                          <span
+                            className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded"
+                            title="Inactive - excluded from calendar and totals"
+                          >
+                            Inactive
+                          </span>
+                        )}
                         {bill.isAutoPay && (
                           <span
                             className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/50 px-1.5 py-0.5 rounded"
@@ -280,11 +297,16 @@ export const BillsManager = () => {
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {bills.length} bill{bills.length !== 1 ? 's' : ''} tracked
+              {bills.filter((b) => b.isActive === false).length > 0 && (
+                <span className="ml-1 text-xs">
+                  ({bills.filter((b) => b.isActive !== false).length} active)
+                </span>
+              )}
             </span>
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Monthly Total: ${(
-                bills.filter((b) => b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0) +
-                bills.filter((b) => b.frequency === 'bi-weekly').reduce((sum, b) => sum + b.amount * 2, 0)
+                bills.filter((b) => b.isActive !== false && b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0) +
+                bills.filter((b) => b.isActive !== false && b.frequency === 'bi-weekly').reduce((sum, b) => sum + b.amount * 2, 0)
               ).toFixed(2)}
             </span>
           </div>
@@ -379,6 +401,18 @@ export const BillsManager = () => {
                 className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Auto-pay enabled</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formIsActive}
+                onChange={(e) => setFormIsActive(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Uncheck to hide from calendar and cycle totals</p>
+              </div>
             </label>
           </div>
 

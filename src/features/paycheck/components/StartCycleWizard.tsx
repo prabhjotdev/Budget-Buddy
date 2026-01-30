@@ -674,17 +674,17 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             />
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Paycheck Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                   <input
                     type="number"
                     value={paycheckAmount}
                     onChange={(e) => setPaycheckAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-8 pr-4 py-3 text-2xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
               </div>
@@ -847,8 +847,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                     key={bill.id}
                     className={`p-4 rounded-lg border-2 transition-colors ${
                       selectedBills[bill.id]?.selected
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-400'
+                        : 'border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -860,20 +860,20 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                           className="w-5 h-5 text-indigo-600 rounded"
                         />
                         <div>
-                          <span className="font-medium text-gray-900">{bill.name}</span>
-                          <span className="text-xs text-gray-500 ml-2">
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{bill.name}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
                             Due: {getBillDueDateInCycle(bill)}
                             {getOrdinalSuffix(getBillDueDateInCycle(bill))}
                           </span>
                           {bill.paymentMethodId && paymentMethodsById[bill.paymentMethodId] && (
-                            <span className="text-xs text-indigo-600 ml-2">
+                            <span className="text-xs text-indigo-600 dark:text-indigo-400 ml-2">
                               via {paymentMethodsById[bill.paymentMethodId].name}
                             </span>
                           )}
                         </div>
                       </label>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-500">$</span>
+                        <span className="text-gray-500 dark:text-gray-400">$</span>
                         <input
                           type="number"
                           value={selectedBills[bill.id]?.amount || bill.amount}
@@ -881,7 +881,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                             handleBillAmountChange(bill.id, parseFloat(e.target.value) || 0)
                           }
                           disabled={!selectedBills[bill.id]?.selected}
-                          className="w-24 px-3 py-1 text-right border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                          className="w-24 px-3 py-1 text-right border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                         />
                       </div>
                     </div>
@@ -893,8 +893,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             {/* Empty state / Add bill prompt */}
             {activeBills.length === 0 && !showAddBill && (
               <div className="text-center py-8">
-                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500 mb-4">No bills set up yet.</p>
+                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400 mb-4">No bills set up yet.</p>
                 <Button onClick={() => setShowAddBill(true)} className="inline-flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Add Your First Bill
@@ -905,9 +905,9 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             {/* No bills due this cycle (but user has bills) */}
             {activeBills.length > 0 && billsDueThisCycle.length === 0 && !showAddBill && (
               <div className="text-center py-8">
-                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500 mb-2">No bills due during this cycle</p>
-                <p className="text-sm text-gray-400">
+                <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">No bills due during this cycle</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">
                   ({cycleStartDate} to {cycleEndDate})
                 </p>
               </div>
@@ -915,8 +915,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
 
             {/* Add bill form */}
             {showAddBill && (
-              <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                <h4 className="font-medium text-gray-900 mb-4">Add a Bill</h4>
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Add a Bill</h4>
                 <div className="space-y-4">
                   <Input
                     label="Bill Name"
@@ -926,26 +926,26 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                   />
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Amount{newBillIsVariable ? ' (Estimated)' : ''}
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                         <input
                           type="number"
                           placeholder="0.00"
                           value={newBillAmount}
                           onChange={(e) => setNewBillAmount(e.target.value)}
-                          className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Due Day</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Day</label>
                       <select
                         value={newBillDueDay}
                         onChange={(e) => setNewBillDueDay(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                           <option key={day} value={day}>
@@ -957,11 +957,11 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
                       <select
                         value={newBillFrequency}
                         onChange={(e) => setNewBillFrequency(e.target.value as BillFrequency)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="monthly">Monthly</option>
                         <option value="bi-weekly">Bi-Weekly</option>
@@ -972,11 +972,11 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Paid With</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Paid With</label>
                       <select
                         value={newBillPaymentMethodId || ''}
                         onChange={(e) => setNewBillPaymentMethodId(e.target.value || null)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="">None</option>
                         {activePaymentMethods.map((method) => (
@@ -995,7 +995,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         onChange={(e) => setNewBillIsVariable(e.target.checked)}
                         className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-gray-700">Variable amount (confirm each cycle)</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Variable amount (confirm each cycle)</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -1004,7 +1004,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         onChange={(e) => setNewBillIsAutoPay(e.target.checked)}
                         className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-gray-700">Auto-pay enabled</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Auto-pay enabled</span>
                     </label>
                   </div>
                   <div className="flex gap-3">
@@ -1027,16 +1027,16 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             {billsDueThisCycle.length > 0 && !showAddBill && (
               <button
                 onClick={() => setShowAddBill(true)}
-                className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+                className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition-colors flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add Another Bill
               </button>
             )}
 
-            <div className="pt-4 border-t flex justify-between items-center">
-              <span className="text-gray-600">Total Bills Reserved</span>
-              <span className="text-xl font-bold text-gray-900">
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">Total Bills Reserved</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(billsTotal)}
               </span>
             </div>
@@ -1050,32 +1050,32 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
               subtitle="How much do you want to save this cycle?"
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Minimum to Save
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                 <input
                   type="number"
                   value={minimumSave}
                   onChange={(e) => setMinimumSave(parseFloat(e.target.value) || 0)}
                   min="0"
                   step="10"
-                  className="w-full pl-8 pr-4 py-3 text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-8 pr-4 py-3 text-xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 This amount will be set aside before calculating your spending limit.
                 You can set it to $0 if needed.
               </p>
             </div>
 
-            <div className="p-4 bg-emerald-50 rounded-lg">
-              <div className="flex items-center gap-2 text-emerald-800">
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+              <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300">
                 <PiggyBank className="w-5 h-5" />
                 <span className="font-medium">Savings Tip</span>
               </div>
-              <p className="text-sm text-emerald-700 mt-1">
+              <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1">
                 Even saving $25 per paycheck adds up to $650/year!
               </p>
             </div>
@@ -1090,31 +1090,31 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             />
 
             {/* Warning about the gap */}
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
-              <TrendingDown className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
+              <TrendingDown className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium text-amber-800">Budget Gap Detected</p>
-                <p className="text-sm text-amber-700 mt-1">
+                <p className="font-medium text-amber-800 dark:text-amber-300">Budget Gap Detected</p>
+                <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
                   Your bills ({formatCurrency(billsTotal)}) + savings ({formatCurrency(minimumSave)}) exceed your paycheck ({formatCurrency(parseFloat(paycheckAmount) || 0)}) by <strong>{formatCurrency(spendingGap)}</strong>.
                 </p>
               </div>
             </div>
 
             {/* Buffer balance info */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <PiggyBank className="w-5 h-5 text-blue-600" />
-                  <span className="font-medium text-blue-800">Available Buffer</span>
+                  <PiggyBank className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <span className="font-medium text-blue-800 dark:text-blue-300">Available Buffer</span>
                 </div>
-                <span className="text-xl font-bold text-blue-600">{formatCurrency(bufferBalance)}</span>
+                <span className="text-xl font-bold text-blue-600 dark:text-blue-400">{formatCurrency(bufferBalance)}</span>
               </div>
             </div>
 
             {/* Historical spending info */}
-            <div className="p-3 bg-gray-50 rounded-lg flex items-start gap-2">
-              <Info className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-gray-600">
+            <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg flex items-start gap-2">
+              <Info className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 {historicalSpending.hasHistory ? (
                   <>
                     Based on your last {historicalSpending.totalCycles} cycle{historicalSpending.totalCycles > 1 ? 's' : ''}, you spend an average of <strong>{formatCurrency(historicalSpending.avgDailySpending)}/day</strong> on non-bill expenses.
@@ -1130,25 +1130,25 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
 
             {/* Tiered options */}
             <div className="space-y-3">
-              <p className="font-medium text-gray-900">Choose a buffer draw option:</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">Choose a buffer draw option:</p>
 
               {/* Option: None (skip) */}
               <button
                 onClick={() => setBufferDrawOption('none')}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
                   bufferDrawOption === 'none'
-                    ? 'border-gray-500 bg-gray-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-gray-500 dark:border-gray-400 bg-gray-50 dark:bg-gray-800/50'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">Skip Buffer Draw</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Skip Buffer Draw</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Start with $0 spending limit (reduce bills or savings first)
                     </p>
                   </div>
-                  <span className="text-lg font-semibold text-gray-500">$0</span>
+                  <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">$0</span>
                 </div>
               </button>
 
@@ -1158,28 +1158,28 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 disabled={bufferDrawOptions.minimum > bufferBalance}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
                   bufferDrawOption === 'minimum'
-                    ? 'border-orange-500 bg-orange-50'
+                    ? 'border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/30'
                     : bufferDrawOptions.minimum > bufferBalance
-                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
-                    : 'border-gray-200 hover:border-orange-300'
+                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900">Minimum</p>
-                      <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">Cover Gap Only</span>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">Minimum</p>
+                      <span className="text-xs px-2 py-0.5 bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded">Cover Gap Only</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Just cover the bill gap, bringing spending limit to $0
                     </p>
                   </div>
-                  <span className={`text-lg font-semibold ${bufferDrawOptions.minimum > bufferBalance ? 'text-gray-400' : 'text-orange-600'}`}>
+                  <span className={`text-lg font-semibold ${bufferDrawOptions.minimum > bufferBalance ? 'text-gray-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     {formatCurrency(bufferDrawOptions.minimum)}
                   </span>
                 </div>
                 {bufferDrawOptions.minimum > bufferBalance && (
-                  <p className="text-xs text-red-500 mt-2">Insufficient buffer balance</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-2">Insufficient buffer balance</p>
                 )}
               </button>
 
@@ -1189,28 +1189,28 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 disabled={bufferDrawOptions.moderate > bufferBalance}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
                   bufferDrawOption === 'moderate'
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30'
                     : bufferDrawOptions.moderate > bufferBalance
-                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900">Moderate</p>
-                      <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Recommended</span>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">Moderate</p>
+                      <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded">Recommended</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Gap + 50% of your typical spending ({formatCurrency(bufferDrawOptions.estimatedSpending * 0.5)})
                     </p>
                   </div>
-                  <span className={`text-lg font-semibold ${bufferDrawOptions.moderate > bufferBalance ? 'text-gray-400' : 'text-blue-600'}`}>
+                  <span className={`text-lg font-semibold ${bufferDrawOptions.moderate > bufferBalance ? 'text-gray-400' : 'text-blue-600 dark:text-blue-400'}`}>
                     {formatCurrency(bufferDrawOptions.moderate)}
                   </span>
                 </div>
                 {bufferDrawOptions.moderate > bufferBalance && (
-                  <p className="text-xs text-red-500 mt-2">Insufficient buffer balance</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-2">Insufficient buffer balance</p>
                 )}
               </button>
 
@@ -1220,28 +1220,28 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 disabled={bufferDrawOptions.comfortable > bufferBalance}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
                   bufferDrawOption === 'comfortable'
-                    ? 'border-green-500 bg-green-50'
+                    ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-900/30'
                     : bufferDrawOptions.comfortable > bufferBalance
-                    ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
-                    : 'border-gray-200 hover:border-green-300'
+                    ? 'border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-gray-900">Comfortable</p>
-                      <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Full Coverage</span>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">Comfortable</p>
+                      <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded">Full Coverage</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Gap + 100% of your typical spending ({formatCurrency(bufferDrawOptions.estimatedSpending)})
                     </p>
                   </div>
-                  <span className={`text-lg font-semibold ${bufferDrawOptions.comfortable > bufferBalance ? 'text-gray-400' : 'text-green-600'}`}>
+                  <span className={`text-lg font-semibold ${bufferDrawOptions.comfortable > bufferBalance ? 'text-gray-400' : 'text-green-600 dark:text-green-400'}`}>
                     {formatCurrency(bufferDrawOptions.comfortable)}
                   </span>
                 </div>
                 {bufferDrawOptions.comfortable > bufferBalance && (
-                  <p className="text-xs text-red-500 mt-2">Insufficient buffer balance</p>
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-2">Insufficient buffer balance</p>
                 )}
               </button>
 
@@ -1250,31 +1250,31 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 onClick={() => setBufferDrawOption('custom')}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
                   bufferDrawOption === 'custom'
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-purple-300'
+                    ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">Custom Amount</p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Custom Amount</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Enter your own amount to draw
                     </p>
                   </div>
                   {bufferDrawOption === 'custom' ? (
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                       <input
                         type="number"
                         value={customBufferDraw || ''}
                         onChange={(e) => setCustomBufferDraw(parseFloat(e.target.value) || 0)}
                         min="0"
                         max={bufferBalance}
-                        className="w-28 pl-7 pr-3 py-2 text-right border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-purple-300 dark:border-purple-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                     </div>
                   ) : (
-                    <span className="text-lg font-semibold text-purple-600">Custom</span>
+                    <span className="text-lg font-semibold text-purple-600 dark:text-purple-400">Custom</span>
                   )}
                 </div>
               </button>
@@ -1282,14 +1282,14 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
 
             {/* Preview of result */}
             {bufferDrawOption !== 'none' && selectedBufferDraw > 0 && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-green-800">Resulting Spending Limit:</span>
-                  <span className="text-xl font-bold text-green-600">
+                  <span className="font-medium text-green-800 dark:text-green-300">Resulting Spending Limit:</span>
+                  <span className="text-xl font-bold text-green-600 dark:text-green-400">
                     {formatCurrency(Math.max(0, rawSpendingLimit + selectedBufferDraw))}
                   </span>
                 </div>
-                <p className="text-sm text-green-700 mt-1">
+                <p className="text-sm text-green-700 dark:text-green-400 mt-1">
                   Buffer remaining after draw: {formatCurrency(bufferBalance - selectedBufferDraw)}
                 </p>
               </div>
@@ -1305,43 +1305,43 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             />
 
             {spendingLimit < 0 && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-red-800">Spending limit is negative!</p>
-                  <p className="text-sm text-red-600">
+                  <p className="font-medium text-red-800 dark:text-red-300">Spending limit is negative!</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">
                     Your bills and savings exceed your paycheck. Go back and adjust.
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Paycheck</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-gray-600 dark:text-gray-400">Paycheck</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
                   {formatCurrency(parseFloat(paycheckAmount) || 0)}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-red-600">
+              <div className="flex justify-between items-center text-red-600 dark:text-red-400">
                 <span>− Bills Reserved ({Object.values(selectedBills).filter((b) => b.selected).length})</span>
                 <span>−{formatCurrency(billsTotal)}</span>
               </div>
-              <div className="flex justify-between items-center text-blue-600">
+              <div className="flex justify-between items-center text-blue-600 dark:text-blue-400">
                 <span>− Savings</span>
                 <span>−{formatCurrency(minimumSave)}</span>
               </div>
               {selectedBufferDraw > 0 && (
-                <div className="flex justify-between items-center text-purple-600">
+                <div className="flex justify-between items-center text-purple-600 dark:text-purple-400">
                   <span>+ Buffer Draw</span>
                   <span>+{formatCurrency(selectedBufferDraw)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center pt-4 border-t border-gray-300">
-                <span className="font-semibold text-gray-900">= Your Spending Limit</span>
+              <div className="flex justify-between items-center pt-4 border-t border-gray-300 dark:border-gray-600">
+                <span className="font-semibold text-gray-900 dark:text-gray-100">= Your Spending Limit</span>
                 <span
                   className={`text-2xl font-bold ${
-                    spendingLimit >= 0 ? 'text-green-600' : 'text-red-600'
+                    spendingLimit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}
                 >
                   {formatCurrency(spendingLimit)}
@@ -1350,13 +1350,13 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             </div>
 
             {selectedBufferDraw > 0 && (
-              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg text-sm text-purple-700 dark:text-purple-300">
                 <strong>Note:</strong> {formatCurrency(selectedBufferDraw)} will be withdrawn from your buffer when you start this cycle.
                 Buffer balance after: {formatCurrency(bufferBalance - selectedBufferDraw)}
               </div>
             )}
 
-            <div className="text-sm text-gray-500 text-center">
+            <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
               Cycle: {parseLocalDate(cycleStartDate).toLocaleDateString()} -{' '}
               {parseLocalDate(cycleEndDate).toLocaleDateString()}
             </div>
