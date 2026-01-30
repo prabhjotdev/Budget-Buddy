@@ -235,6 +235,7 @@ export const BillCalendarPage = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   // Store only the identifier to avoid stale state issues
   const [selectedBillKey, setSelectedBillKey] = useState<{ billId: string; dateKey: string } | null>(null);
+  const [showAllUpcoming, setShowAllUpcoming] = useState(false);
 
   // Fetch data on mount
   useEffect(() => {
@@ -571,7 +572,7 @@ export const BillCalendarPage = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400">No upcoming bills in the next 14 days</p>
             ) : (
               <div className="space-y-2">
-                {upcomingBills.slice(0, 5).map((pb, idx) => (
+                {upcomingBills.slice(0, showAllUpcoming ? undefined : 5).map((pb, idx) => (
                   <button
                     key={`${pb.bill.id}-${idx}`}
                     onClick={() => setSelectedBill(pb)}
@@ -587,9 +588,12 @@ export const BillCalendarPage = () => {
                   </button>
                 ))}
                 {upcomingBills.length > 5 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center pt-2">
-                    +{upcomingBills.length - 5} more
-                  </p>
+                  <button
+                    onClick={() => setShowAllUpcoming(!showAllUpcoming)}
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-center pt-2 w-full transition-colors"
+                  >
+                    {showAllUpcoming ? 'Show less' : `+${upcomingBills.length - 5} more`}
+                  </button>
                 )}
               </div>
             )}
