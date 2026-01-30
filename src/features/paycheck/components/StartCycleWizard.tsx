@@ -674,17 +674,17 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             />
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Paycheck Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
                   <input
                     type="number"
                     value={paycheckAmount}
                     onChange={(e) => setPaycheckAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full pl-8 pr-4 py-3 text-2xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                   />
                 </div>
               </div>
