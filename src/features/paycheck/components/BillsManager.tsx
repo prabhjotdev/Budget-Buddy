@@ -58,6 +58,7 @@ export const BillsManager = () => {
   const [formIsVariable, setFormIsVariable] = useState(false);
   const [formIsAutoPay, setFormIsAutoPay] = useState(false);
   const [formPaymentMethodId, setFormPaymentMethodId] = useState<string>('');
+  const [formIsActive, setFormIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const bills = useMemo(() => {
@@ -89,6 +90,7 @@ export const BillsManager = () => {
     setFormIsVariable(false);
     setFormIsAutoPay(false);
     setFormPaymentMethodId('');
+    setFormIsActive(true);
     setModalOpen(true);
   };
 
@@ -102,6 +104,7 @@ export const BillsManager = () => {
     setFormIsVariable(bill.isVariable);
     setFormIsAutoPay(bill.isAutoPay);
     setFormPaymentMethodId(bill.paymentMethodId || '');
+    setFormIsActive(bill.isActive !== false); // Default to true for backwards compatibility
     setModalOpen(true);
   };
 
@@ -131,7 +134,7 @@ export const BillsManager = () => {
         isVariable: formIsVariable,
         isAutoPay: formIsAutoPay,
         paymentMethodId: formPaymentMethodId || null,
-        isActive: true,
+        isActive: formIsActive,
       };
 
       if (editingBill) {
@@ -379,6 +382,18 @@ export const BillsManager = () => {
                 className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Auto-pay enabled</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formIsActive}
+                onChange={(e) => setFormIsActive(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Uncheck to hide from calendar and cycle totals</p>
+              </div>
             </label>
           </div>
 
