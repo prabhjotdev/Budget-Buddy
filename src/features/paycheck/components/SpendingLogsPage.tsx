@@ -686,7 +686,9 @@ export const SpendingLogsPage = () => {
         <Card>
           <CardHeader
             title="Transaction Log"
-            subtitle={`${filteredTransactions.length} transactions`}
+            subtitle={`${filteredTransactions.length} transaction${
+              filteredTransactions.length !== 1 ? 's' : ''
+            } • Total: ${formatCurrency(stats.total)}`}
           />
 
           {isLoading ? (
