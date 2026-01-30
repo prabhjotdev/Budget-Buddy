@@ -621,14 +621,14 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   return (
     <div className="max-w-2xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Calendar className="w-8 h-8 text-indigo-600" />
+      <div className="text-center mb-6 md:mb-8">
+        <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+          <Calendar className="w-6 h-6 md:w-8 md:h-8 text-indigo-600 dark:text-indigo-400" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
           {isEditMode ? 'Edit Cycle' : 'Start a New Paycheck Cycle'}
         </h1>
-        <p className="text-gray-500 mt-2">
+        <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-2">
           {isEditMode
             ? 'Reconfigure your bills, savings, and buffer for this cycle'
             : 'Set up your budget for the next pay period'}
@@ -636,28 +636,28 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       </div>
 
       {/* Step Indicators */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 px-2">
         {activeSteps.map((step, index) => (
           <div key={step.id} className="flex items-center">
             <div
-              className={`flex items-center justify-center w-10 h-10 rounded-full ${
+              className={`flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full ${
                 index <= currentStepIndex
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-400'
+                  ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                  : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
               }`}
             >
               {index < currentStepIndex ? (
-                <Check className="w-5 h-5" />
+                <Check className="w-4 h-4 md:w-5 md:h-5" />
               ) : (
-                <step.icon className="w-5 h-5" />
+                <step.icon className="w-4 h-4 md:w-5 md:h-5" />
               )}
             </div>
             {index < activeSteps.length - 1 && (
               <div
-                className={`w-full h-1 mx-2 ${
-                  index < currentStepIndex ? 'bg-indigo-600' : 'bg-gray-200'
+                className={`h-0.5 md:h-1 mx-1 md:mx-2 ${
+                  index < currentStepIndex ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-gray-200 dark:bg-gray-700'
                 }`}
-                style={{ width: '60px' }}
+                style={{ width: '24px', minWidth: '24px' }}
               />
             )}
           </div>
