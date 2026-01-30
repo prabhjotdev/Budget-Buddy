@@ -283,11 +283,16 @@ export const BillsManager = () => {
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {bills.length} bill{bills.length !== 1 ? 's' : ''} tracked
+              {bills.filter((b) => b.isActive === false).length > 0 && (
+                <span className="ml-1 text-xs">
+                  ({bills.filter((b) => b.isActive !== false).length} active)
+                </span>
+              )}
             </span>
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Monthly Total: ${(
-                bills.filter((b) => b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0) +
-                bills.filter((b) => b.frequency === 'bi-weekly').reduce((sum, b) => sum + b.amount * 2, 0)
+                bills.filter((b) => b.isActive !== false && b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0) +
+                bills.filter((b) => b.isActive !== false && b.frequency === 'bi-weekly').reduce((sum, b) => sum + b.amount * 2, 0)
               ).toFixed(2)}
             </span>
           </div>
