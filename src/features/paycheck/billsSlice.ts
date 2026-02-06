@@ -84,14 +84,44 @@ export const updateBill = createAsyncThunk(
       billId: string;
       updates: Partial<Omit<Bill, 'id' | 'createdAt' | 'updatedAt'>>;
     },
-    { rejectWithValue }
+    { rejectWithValue, getState }
   ) => {
     try {
+      // Get the current bill state to check for isActive changes
+      const state = getState() as { bills: BillsState };
+      const currentBill = state.bills.byId[billId];
+
       await billsService.updateBill(userId, billId, updates);
 
-      // If amount or name changed, sync to active cycles
       let cycleUpdate: { cycleId: string; updates: Partial<PaycheckCycle> } | null = null;
-      if (updates.amount !== undefined || updates.name !== undefined) {
+
+      // Handle isActive status changes
+      if (updates.isActive !== undefined && currentBill) {
+        const wasActive = currentBill.isActive;
+        const nowActive = updates.isActive;
+
+        if (!wasActive && nowActive) {
+          // Bill was reactivated - add to active cycle
+          const updatedBill = { ...currentBill, ...updates };
+          const startDate = updatedBill.startDate ? updatedBill.startDate.toDate() : undefined;
+          cycleUpdate = await paycheckCyclesService.addBillToActiveCycle(
+            userId,
+            billId,
+            updatedBill.name,
+            updatedBill.amount,
+            updatedBill.dueDay,
+            updatedBill.frequency,
+            startDate
+          );
+        } else if (wasActive && !nowActive) {
+          // Bill was deactivated - remove from active cycles
+          cycleUpdate = await paycheckCyclesService.removeBillFromActiveCycles(userId, billId);
+        }
+      }
+
+      // If amount or name changed (and bill is active), sync to active cycles
+      // Only do this if we didn't already handle isActive change above
+      if (!cycleUpdate && (updates.amount !== undefined || updates.name !== undefined)) {
         cycleUpdate = await paycheckCyclesService.syncBillAmountToActiveCycles(
           userId,
           billId,
