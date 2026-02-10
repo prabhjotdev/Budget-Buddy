@@ -247,7 +247,7 @@ export const LogSpendingModal = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags (optional)</label>
           <div className="flex flex-wrap gap-2">
-            {tags.slice(0, 10).map((tag) => (
+            {tags.map((tag) => (
               <button
                 key={tag.id}
                 type="button"
