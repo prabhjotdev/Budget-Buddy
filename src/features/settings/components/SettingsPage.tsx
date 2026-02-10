@@ -13,7 +13,7 @@ import { exportAllData, importAllData, downloadDataAsJson, readJsonFile } from '
 import { useTheme } from '../../../context/ThemeContext';
 
 // App version - update this when releasing new versions
-const APP_VERSION = '1.13.2';
+const APP_VERSION = '1.13.3';
 
 // Get all supported timezones
 const getTimezones = (): string[] => {
