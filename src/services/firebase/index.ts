@@ -16,3 +16,4 @@ export * from './paycheckCycles';
 export * from './spendingTransactions';
 export * from './buffer';
 export * from './wishlistItems';
+export * from './savingsGoals';

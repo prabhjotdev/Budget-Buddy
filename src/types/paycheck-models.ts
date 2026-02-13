@@ -139,6 +139,13 @@ export interface PaycheckCycle {
   // Buffer draw (amount withdrawn from buffer to cover gap)
   bufferDraw?: number;
 
+  // Savings allocations (where minimumSave was deposited)
+  savingsAllocations?: {
+    buffer: number;
+    emergencyFund: number;
+    goals: { goalId: string; goalName: string; amount: number }[];
+  };
+
   // Status
   status: CycleStatus;
 

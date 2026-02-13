@@ -12,6 +12,7 @@ import {
   Heart,
   X,
   History,
+  Target,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -27,6 +28,7 @@ const navItems = [
   { to: ROUTES.HISTORY, icon: History, label: 'History' },
   { to: ROUTES.BUFFER, icon: ShieldCheck, label: 'Buffer' },
   { to: ROUTES.EMERGENCY_FUND, icon: ShieldCheck, label: 'Emergency Fund' },
+  { to: ROUTES.SAVINGS_GOALS, icon: Target, label: 'Savings Goals' },
   { to: ROUTES.MANAGE, icon: ClipboardList, label: 'Manage' },
   { to: ROUTES.SETTINGS, icon: Settings, label: 'Settings' },
 ];
