@@ -23,6 +23,9 @@ import {
 // Emergency fund reducer
 import emergencyFundReducer from '../features/emergencyFund/emergencyFundSlice';
 
+// Savings goals reducer
+import savingsGoalsReducer from '../features/savingsGoals/savingsGoalsSlice';
+
 export const store = configureStore({
   reducer: {
     // Legacy system
@@ -45,6 +48,7 @@ export const store = configureStore({
     buffer: bufferReducer,
     wishlist: wishlistReducer,
     emergencyFund: emergencyFundReducer,
+    savingsGoals: savingsGoalsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -88,6 +92,13 @@ export const store = configureStore({
           'emergencyFund/updateGoal/fulfilled',
           'emergencyFund/addDeposit/fulfilled',
           'emergencyFund/addWithdrawal/fulfilled',
+          // Savings goals actions with Timestamps
+          'savingsGoals/fetch/fulfilled',
+          'savingsGoals/create/fulfilled',
+          'savingsGoals/update/fulfilled',
+          'savingsGoals/deposit/fulfilled',
+          'savingsGoals/withdraw/fulfilled',
+          'savingsGoals/fetchTransactions/fulfilled',
         ],
         ignoredPaths: [
           'budgetPeriods.byId',
@@ -108,6 +119,9 @@ export const store = configureStore({
           // Emergency fund paths with Timestamps
           'emergencyFund.fund',
           'emergencyFund.transactions',
+          // Savings goals paths with Timestamps
+          'savingsGoals.goals',
+          'savingsGoals.transactions',
         ],
       },
     }),

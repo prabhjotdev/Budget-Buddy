@@ -12,18 +12,22 @@ import {
   CreditCard,
   TrendingDown,
   Info,
+  Target,
+  ShieldCheck,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchBills, createBill } from '../billsSlice';
 import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice';
 import { createPaycheckCycle, fetchPaycheckCycles, updatePaycheckCycle } from '../paycheckCyclesSlice';
-import { fetchBuffer, withdrawFromBuffer } from '../bufferSlice';
+import { fetchBuffer, withdrawFromBuffer, addToBuffer } from '../bufferSlice';
+import { fetchSavingsGoals, depositToSavingsGoal, withdrawFromSavingsGoal } from '../../savingsGoals/savingsGoalsSlice';
+import { addDeposit as addEmergencyDeposit, addWithdrawal as addEmergencyWithdrawal } from '../../emergencyFund/emergencyFundSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency, PaycheckCycle } from '../../../types';
 
-type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'buffer-draw' | 'review';
+type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'allocate' | 'buffer-draw' | 'review';
 
 type BufferDrawOption = 'none' | 'minimum' | 'moderate' | 'comfortable' | 'custom';
 
@@ -32,6 +36,7 @@ const STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'paymentMethods', title: 'Accounts', icon: CreditCard },
   { id: 'bills', title: 'Bills', icon: Receipt },
   { id: 'savings', title: 'Savings', icon: PiggyBank },
+  { id: 'allocate', title: 'Allocate', icon: Target },
   { id: 'review', title: 'Review', icon: Check },
 ];
 
@@ -40,6 +45,7 @@ const EDIT_STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'paycheck', title: 'Paycheck', icon: Wallet },
   { id: 'bills', title: 'Bills', icon: Receipt },
   { id: 'savings', title: 'Savings', icon: PiggyBank },
+  { id: 'allocate', title: 'Allocate', icon: Target },
   { id: 'review', title: 'Review', icon: Check },
 ];
 
@@ -56,6 +62,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector((state) => state.paymentMethods);
   const { buffer } = useAppSelector((state) => state.buffer);
   const { byId: cyclesById, allIds: cycleIds } = useAppSelector((state) => state.paycheckCycles);
+  const { goals: savingsGoalsState } = useAppSelector((state) => state.savingsGoals);
+  const { fund: emergencyFund } = useAppSelector((state) => state.emergencyFund);
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('paycheck');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +78,11 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   // Buffer draw state
   const [bufferDrawOption, setBufferDrawOption] = useState<BufferDrawOption>('none');
   const [customBufferDraw, setCustomBufferDraw] = useState(0);
+
+  // Savings allocation state
+  const [bufferAllocation, setBufferAllocation] = useState(0);
+  const [emergencyFundAllocation, setEmergencyFundAllocation] = useState(0);
+  const [goalAllocations, setGoalAllocations] = useState<Record<string, number>>({});
 
   // Inline payment method creation state
   const [showAddPaymentMethod, setShowAddPaymentMethod] = useState(false);
@@ -88,13 +101,14 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   const [newBillIsAutoPay, setNewBillIsAutoPay] = useState(false);
   const [isAddingBill, setIsAddingBill] = useState(false);
 
-  // Load payment methods, bills, buffer, and historical cycles
+  // Load payment methods, bills, buffer, historical cycles, and savings goals
   useEffect(() => {
     if (user) {
       dispatch(fetchPaymentMethods(user.uid));
       dispatch(fetchBills(user.uid));
       dispatch(fetchBuffer(user.uid));
       dispatch(fetchPaycheckCycles(user.uid));
+      dispatch(fetchSavingsGoals(user.uid));
     }
   }, [dispatch, user]);
 
@@ -136,6 +150,17 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
         };
       });
       setSelectedBills(billSelections);
+
+      // Pre-populate savings allocations from existing cycle
+      if (editingCycle.savingsAllocations) {
+        setBufferAllocation(editingCycle.savingsAllocations.buffer);
+        setEmergencyFundAllocation(editingCycle.savingsAllocations.emergencyFund);
+        const ga: Record<string, number> = {};
+        editingCycle.savingsAllocations.goals.forEach((g) => {
+          ga[g.goalId] = g.amount;
+        });
+        setGoalAllocations(ga);
+      }
     }
   }, [editingCycle]);
 
@@ -315,6 +340,19 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   // Buffer availability
   const bufferBalance = buffer?.totalAmount || 0;
 
+  // Active savings goals
+  const activeSavingsGoals = useMemo(() => {
+    return savingsGoalsState.allIds
+      .map((id) => savingsGoalsState.byId[id])
+      .filter((g) => g && g.isActive);
+  }, [savingsGoalsState]);
+
+  // Total allocated savings
+  const totalAllocated = useMemo(() => {
+    const goalsTotal = Object.values(goalAllocations).reduce((sum, amt) => sum + amt, 0);
+    return bufferAllocation + emergencyFundAllocation + goalsTotal;
+  }, [bufferAllocation, emergencyFundAllocation, goalAllocations]);
+
   // Calculate tiered buffer draw options
   const bufferDrawOptions = useMemo(() => {
     const estimatedSpending = historicalSpending.avgDailySpending * cycleDays;
@@ -370,6 +408,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
         return true; // Can skip bills
       case 'savings':
         return minimumSave >= 0;
+      case 'allocate':
+        return totalAllocated <= minimumSave;
       case 'buffer-draw':
         return true; // Can proceed with any buffer draw option (including none)
       case 'review':
@@ -377,14 +417,14 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       default:
         return false;
     }
-  }, [currentStep, paycheckAmount, cycleStartDate, cycleEndDate, minimumSave, spendingLimit, selectedBufferDraw]);
+  }, [currentStep, paycheckAmount, cycleStartDate, cycleEndDate, minimumSave, spendingLimit, selectedBufferDraw, totalAllocated]);
 
   // Use appropriate steps based on edit mode
   const activeSteps = isEditMode ? EDIT_STEPS : STEPS;
 
   const handleNext = () => {
-    // Handle conditional buffer-draw step
-    if (currentStep === 'savings' && needsBufferDraw) {
+    // allocate → buffer-draw (if needed) → review
+    if (currentStep === 'allocate' && needsBufferDraw) {
       setCurrentStep('buffer-draw');
       return;
     }
@@ -393,7 +433,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       return;
     }
     // Skip buffer-draw if not needed
-    if (currentStep === 'savings' && !needsBufferDraw) {
+    if (currentStep === 'allocate' && !needsBufferDraw) {
       setCurrentStep('review');
       return;
     }
@@ -404,18 +444,18 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   };
 
   const handleBack = () => {
-    // Handle conditional buffer-draw step
+    // review → buffer-draw (if needed) → allocate
     if (currentStep === 'review' && needsBufferDraw) {
       setCurrentStep('buffer-draw');
       return;
     }
     if (currentStep === 'buffer-draw') {
-      setCurrentStep('savings');
+      setCurrentStep('allocate');
       return;
     }
     // Skip buffer-draw if going back from review
     if (currentStep === 'review' && !needsBufferDraw) {
-      setCurrentStep('savings');
+      setCurrentStep('allocate');
       return;
     }
     const stepIndex = activeSteps.findIndex((s) => s.id === currentStep);
@@ -539,9 +579,21 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           };
         });
 
+      // Build savings allocations object
+      const savingsAllocations = {
+        buffer: bufferAllocation,
+        emergencyFund: emergencyFundAllocation,
+        goals: activeSavingsGoals
+          .filter((g) => (goalAllocations[g.id] || 0) > 0)
+          .map((g) => ({
+            goalId: g.id,
+            goalName: g.name,
+            amount: goalAllocations[g.id],
+          })),
+      };
+
       if (isEditMode && editingCycle) {
         // EDIT MODE: Update existing cycle
-        // Calculate new remaining to spend: new spending limit - existing totalSpent
         const newRemainingToSpend = spendingLimit - editingCycle.totalSpent;
 
         // Calculate any additional buffer draw needed (if user increased buffer draw)
@@ -558,6 +610,53 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           ).unwrap();
         }
 
+        // Reverse previous allocations and apply new ones
+        const prev = editingCycle.savingsAllocations;
+        if (prev) {
+          // Reverse old buffer allocation, apply new
+          const bufferDiff = bufferAllocation - prev.buffer;
+          if (bufferDiff > 0) {
+            await dispatch(addToBuffer({ userId: user.uid, amount: bufferDiff, reason: `Cycle edit savings allocation`, cycleId: editingCycle.id })).unwrap();
+          } else if (bufferDiff < 0) {
+            await dispatch(withdrawFromBuffer({ userId: user.uid, amount: Math.abs(bufferDiff), reason: `Cycle edit savings reallocation` })).unwrap();
+          }
+
+          // Reverse old emergency fund, apply new
+          const efDiff = emergencyFundAllocation - prev.emergencyFund;
+          if (efDiff > 0) {
+            await dispatch(addEmergencyDeposit({ userId: user.uid, amount: efDiff, description: `Cycle edit savings allocation`, date: Timestamp.now() })).unwrap();
+          } else if (efDiff < 0) {
+            await dispatch(addEmergencyWithdrawal({ userId: user.uid, amount: Math.abs(efDiff), description: `Cycle edit savings reallocation`, date: Timestamp.now() })).unwrap();
+          }
+
+          // Reverse old goal allocations, apply new
+          const allGoalIds = new Set([
+            ...prev.goals.map((g) => g.goalId),
+            ...Object.keys(goalAllocations),
+          ]);
+          for (const goalId of allGoalIds) {
+            const oldAmt = prev.goals.find((g) => g.goalId === goalId)?.amount || 0;
+            const newAmt = goalAllocations[goalId] || 0;
+            const diff = newAmt - oldAmt;
+            if (diff > 0) {
+              await dispatch(depositToSavingsGoal({ userId: user.uid, goalId, amount: diff, description: `Cycle edit savings allocation`, cycleId: editingCycle.id })).unwrap();
+            } else if (diff < 0) {
+              await dispatch(withdrawFromSavingsGoal({ userId: user.uid, goalId, amount: Math.abs(diff), description: `Cycle edit savings reallocation`, cycleId: editingCycle.id })).unwrap();
+            }
+          }
+        } else {
+          // No previous allocations — just deposit new ones
+          if (bufferAllocation > 0) {
+            await dispatch(addToBuffer({ userId: user.uid, amount: bufferAllocation, reason: `Savings allocation for cycle`, cycleId: editingCycle.id })).unwrap();
+          }
+          if (emergencyFundAllocation > 0) {
+            await dispatch(addEmergencyDeposit({ userId: user.uid, amount: emergencyFundAllocation, description: `Savings allocation for cycle`, date: Timestamp.now() })).unwrap();
+          }
+          for (const goal of savingsAllocations.goals) {
+            await dispatch(depositToSavingsGoal({ userId: user.uid, goalId: goal.goalId, amount: goal.amount, description: `Savings allocation for cycle`, cycleId: editingCycle.id })).unwrap();
+          }
+        }
+
         const updates = {
           paycheckAmount: parseFloat(paycheckAmount),
           bills: cycleBills,
@@ -566,6 +665,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           spendingLimit,
           remainingToSpend: newRemainingToSpend,
           bufferDraw: selectedBufferDraw,
+          savingsAllocations,
         };
 
         await dispatch(
@@ -604,10 +704,24 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           remainingToSpend: spendingLimit,
           bufferContribution: 0,
           bufferDraw: selectedBufferDraw,
+          savingsAllocations,
           status: 'active' as CycleStatus,
         };
 
-        await dispatch(createPaycheckCycle({ userId: user.uid, cycle })).unwrap();
+        const createdCycle = await dispatch(createPaycheckCycle({ userId: user.uid, cycle })).unwrap();
+
+        // Execute savings deposits after cycle creation
+        const cycleId = createdCycle.id;
+
+        if (bufferAllocation > 0) {
+          await dispatch(addToBuffer({ userId: user.uid, amount: bufferAllocation, reason: `Savings allocation for cycle`, cycleId })).unwrap();
+        }
+        if (emergencyFundAllocation > 0) {
+          await dispatch(addEmergencyDeposit({ userId: user.uid, amount: emergencyFundAllocation, description: `Savings allocation for cycle`, date: Timestamp.now() })).unwrap();
+        }
+        for (const goal of savingsAllocations.goals) {
+          await dispatch(depositToSavingsGoal({ userId: user.uid, goalId: goal.goalId, amount: goal.amount, description: `Savings allocation for cycle`, cycleId })).unwrap();
+        }
       }
     } catch (error) {
       console.error('Failed to save cycle:', error);
@@ -1082,6 +1196,160 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           </div>
         )}
 
+        {currentStep === 'allocate' && (
+          <div className="space-y-6">
+            <CardHeader
+              title="Allocate Savings"
+              subtitle={`Where should your ${formatCurrency(minimumSave)} savings go?`}
+            />
+
+            {minimumSave === 0 ? (
+              <div className="text-center py-6">
+                <PiggyBank className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">
+                  No savings to allocate this cycle. You can continue to the next step.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Buffer allocation */}
+                <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                        <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Buffer</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Balance: {formatCurrency(bufferBalance)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                      <input
+                        type="number"
+                        value={bufferAllocation || ''}
+                        onChange={(e) => setBufferAllocation(parseFloat(e.target.value) || 0)}
+                        min="0"
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Emergency Fund allocation */}
+                <div className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                        <ShieldCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">Emergency Fund</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Balance: {formatCurrency(emergencyFund?.currentBalance || 0)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                      <input
+                        type="number"
+                        value={emergencyFundAllocation || ''}
+                        onChange={(e) => setEmergencyFundAllocation(parseFloat(e.target.value) || 0)}
+                        min="0"
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Savings Goals allocations */}
+                {activeSavingsGoals.map((goal) => (
+                  <div key={goal.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
+                          <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{goal.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Balance: {formatCurrency(goal.currentBalance)}
+                            {goal.targetAmount ? ` / ${formatCurrency(goal.targetAmount)}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                        <input
+                          type="number"
+                          value={goalAllocations[goal.id] || ''}
+                          onChange={(e) =>
+                            setGoalAllocations((prev) => ({
+                              ...prev,
+                              [goal.id]: parseFloat(e.target.value) || 0,
+                            }))
+                          }
+                          min="0"
+                          className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {activeSavingsGoals.length === 0 && (
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg text-sm text-gray-500 dark:text-gray-400 text-center">
+                    No savings goals yet. Create goals from the Savings Goals page to allocate to them here.
+                  </div>
+                )}
+
+                {/* Allocation summary */}
+                <div className={`p-4 rounded-lg border ${
+                  totalAllocated === minimumSave
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : totalAllocated > minimumSave
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                    : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`font-medium ${
+                      totalAllocated === minimumSave
+                        ? 'text-green-800 dark:text-green-300'
+                        : totalAllocated > minimumSave
+                        ? 'text-red-800 dark:text-red-300'
+                        : 'text-amber-800 dark:text-amber-300'
+                    }`}>
+                      Allocated: {formatCurrency(totalAllocated)} / {formatCurrency(minimumSave)}
+                    </span>
+                    {totalAllocated === minimumSave && (
+                      <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    )}
+                  </div>
+                  {totalAllocated > minimumSave && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                      Over-allocated by {formatCurrency(totalAllocated - minimumSave)}. Reduce allocations to continue.
+                    </p>
+                  )}
+                  {totalAllocated < minimumSave && totalAllocated > 0 && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                      {formatCurrency(minimumSave - totalAllocated)} unallocated (will not be deposited anywhere)
+                    </p>
+                  )}
+                  {totalAllocated === 0 && minimumSave > 0 && (
+                    <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                      Savings won't be deposited anywhere. Allocate above or skip to continue.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {currentStep === 'buffer-draw' && (
           <div className="space-y-6">
             <CardHeader
@@ -1331,6 +1599,36 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 <span>− Savings</span>
                 <span>−{formatCurrency(minimumSave)}</span>
               </div>
+              {totalAllocated > 0 && (
+                <div className="ml-4 space-y-1 text-sm">
+                  {bufferAllocation > 0 && (
+                    <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                      <span>→ Buffer</span>
+                      <span>{formatCurrency(bufferAllocation)}</span>
+                    </div>
+                  )}
+                  {emergencyFundAllocation > 0 && (
+                    <div className="flex justify-between text-gray-500 dark:text-gray-400">
+                      <span>→ Emergency Fund</span>
+                      <span>{formatCurrency(emergencyFundAllocation)}</span>
+                    </div>
+                  )}
+                  {activeSavingsGoals.map((goal) =>
+                    goalAllocations[goal.id] > 0 ? (
+                      <div key={goal.id} className="flex justify-between text-gray-500 dark:text-gray-400">
+                        <span>→ {goal.name}</span>
+                        <span>{formatCurrency(goalAllocations[goal.id])}</span>
+                      </div>
+                    ) : null
+                  )}
+                  {totalAllocated < minimumSave && (
+                    <div className="flex justify-between text-gray-400 dark:text-gray-500 italic">
+                      <span>→ Unallocated</span>
+                      <span>{formatCurrency(minimumSave - totalAllocated)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
               {selectedBufferDraw > 0 && (
                 <div className="flex justify-between items-center text-purple-600 dark:text-purple-400">
                   <span>+ Buffer Draw</span>

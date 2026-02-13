@@ -8,6 +8,7 @@ export const ROUTES = {
   HISTORY: '/history',
   BUFFER: '/buffer',
   EMERGENCY_FUND: '/emergency-fund',
+  SAVINGS_GOALS: '/savings-goals',
   MANAGE: '/manage',
   SETTINGS: '/settings',
 } as const;
