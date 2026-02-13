@@ -10,8 +10,6 @@ import {
   orderBy,
   where,
   Timestamp,
-  serverTimestamp,
-  setDoc,
 } from 'firebase/firestore';
 import { db } from './config';
 import { SavingsGoal, SavingsGoalTransaction } from '../../types/savingsGoals';
