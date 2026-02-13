@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, Spinner, ProgressBar } from '../../../components/shared';
+import { Card, Button, Spinner } from '../../../components/shared';
 import {
   fetchSavingsGoals,
   createSavingsGoal,
@@ -19,7 +19,6 @@ import {
   Minus,
   TrendingUp,
   Trash2,
-  Calendar,
 } from 'lucide-react';
 
 export const SavingsGoalsPage = () => {
