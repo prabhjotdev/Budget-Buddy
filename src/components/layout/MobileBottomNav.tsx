@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar,
   Receipt,
@@ -36,12 +36,13 @@ const moreItems = [
 ];
 
 // Routes reachable from the "More" sheet, used to highlight the More tab
-const moreRoutes = new Set(moreItems.map((i) => i.to));
+const moreRoutes = new Set<string>(moreItems.map((i) => i.to));
 
 export const MobileBottomNav = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const handleMoreItemClick = (to: string) => {
     setSheetOpen(false);
@@ -54,7 +55,7 @@ export const MobileBottomNav = () => {
   };
 
   // Detect if current path belongs to the "More" group so we can highlight the tab
-  const isMoreActive = moreRoutes.has(window.location.pathname);
+  const isMoreActive = moreRoutes.has(pathname);
 
   return (
     <>
@@ -138,7 +139,7 @@ export const MobileBottomNav = () => {
                     onClick={() => handleMoreItemClick(to)}
                     className={clsx(
                       'w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors',
-                      window.location.pathname === to
+                      pathname === to
                         ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     )}
