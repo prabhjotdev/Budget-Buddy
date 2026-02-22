@@ -10,7 +10,6 @@ import {
   ClipboardList,
   Receipt,
   Heart,
-  X,
   History,
   Target,
   Umbrella,
@@ -18,7 +17,7 @@ import {
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { signOut } from '../../features/auth/authSlice';
-import { toggleSidebar, closeMobileMenu } from '../../features/auth/uiSlice';
+import { toggleSidebar } from '../../features/auth/uiSlice';
 import { ROUTES } from '../../constants';
 
 const navGroups = [
@@ -55,21 +54,16 @@ const utilityItems = [
 export const Sidebar = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { sidebarCollapsed, mobileMenuOpen } = useAppSelector((state) => state.ui);
+  const { sidebarCollapsed } = useAppSelector((state) => state.ui);
 
   const handleSignOut = () => {
     dispatch(signOut());
-  };
-
-  const handleNavClick = () => {
-    dispatch(closeMobileMenu());
   };
 
   const renderNavLink = (item: { to: string; icon: React.ElementType; label: string }) => (
     <NavLink
       key={item.to}
       to={item.to}
-      onClick={handleNavClick}
       title={sidebarCollapsed ? item.label : undefined}
       className={({ isActive }) =>
         clsx(
@@ -91,20 +85,12 @@ export const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => dispatch(closeMobileMenu())}
-        />
-      )}
-
       <aside
         className={clsx(
           'fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-300 z-50',
           'dark:bg-gray-800 dark:border-gray-700',
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full',
-          'w-72 md:translate-x-0',
+          // Hidden on mobile — navigation is handled by MobileBottomNav
+          'hidden md:flex md:flex-col',
           {
             'md:w-64': !sidebarCollapsed,
             'md:w-20': sidebarCollapsed,
@@ -129,19 +115,10 @@ export const Sidebar = () => {
               </span>
             </div>
             <button
-              onClick={() => {
-                if (window.innerWidth < 768) {
-                  dispatch(closeMobileMenu());
-                } else {
-                  dispatch(toggleSidebar());
-                }
-              }}
+              onClick={() => dispatch(toggleSidebar())}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5 text-gray-500 dark:text-gray-400 md:hidden" />
-              ) : null}
-              <Menu className="w-5 h-5 text-gray-500 dark:text-gray-400 hidden md:block" />
+              <Menu className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
           </div>
 
