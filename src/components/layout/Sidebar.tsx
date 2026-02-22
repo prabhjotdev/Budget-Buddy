@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   Settings,
   LogOut,
@@ -55,6 +55,11 @@ export const Sidebar = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { sidebarCollapsed } = useAppSelector((state) => state.ui);
+  const { pathname } = useLocation();
+
+  const activeGroupLabel = navGroups.find((g) =>
+    g.items.some((i) => i.to === pathname)
+  )?.label;
 
   const handleSignOut = () => {
     dispatch(signOut());
@@ -132,13 +137,20 @@ export const Sidebar = () => {
                     { 'mx-1 mb-3': !sidebarCollapsed, 'mx-2 mb-3': sidebarCollapsed }
                   )} />
                 )}
-                {/* Section label — hidden when collapsed */}
-                <p className={clsx(
-                  'px-3 mb-1 text-xs font-semibold tracking-wider text-gray-400 dark:text-gray-500 uppercase',
-                  { 'md:hidden': sidebarCollapsed }
+                {/* Section label — animates in/out when sidebar collapses */}
+                <div className={clsx(
+                  'overflow-hidden transition-all duration-300',
+                  sidebarCollapsed ? 'max-h-0 mb-0 opacity-0' : 'max-h-8 mb-1 opacity-100'
                 )}>
-                  {group.label}
-                </p>
+                  <p className={clsx(
+                    'px-3 text-xs font-semibold tracking-wider uppercase transition-colors duration-200',
+                    activeGroupLabel === group.label
+                      ? 'text-indigo-500 dark:text-indigo-400'
+                      : 'text-gray-400 dark:text-gray-500'
+                  )}>
+                    {group.label}
+                  </p>
+                </div>
                 <div className="space-y-1">
                   {group.items.map(renderNavLink)}
                 </div>
