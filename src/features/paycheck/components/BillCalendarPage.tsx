@@ -325,7 +325,8 @@ export const BillCalendarPage = () => {
         start: cycle.startDate.toDate(),
         end: cycle.endDate.toDate(),
         isActive: cycle.status === 'active',
-      }));
+      }))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
   }, [cycles, currentMonth]);
 
   // Get cycle for a specific date
