@@ -9,6 +9,7 @@ import { fetchRecurringTransactions } from '../../features/recurring/recurringSl
 import { subscribeToActivePeriod } from '../../services/firebase/budgetPeriods';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { MobileBottomNav } from './MobileBottomNav';
 import clsx from 'clsx';
 
 interface AppLayoutProps {
@@ -50,14 +51,15 @@ export const AppLayout = ({ children, title }: AppLayoutProps) => {
       <Sidebar />
       <div
         className={clsx('transition-all duration-300', {
-          // No margin on mobile since sidebar is hidden
           'ml-0 md:ml-64': !sidebarCollapsed,
           'ml-0 md:ml-20': sidebarCollapsed,
         })}
       >
         <Header title={title} />
-        <main className="p-4 md:p-6">{children}</main>
+        {/* pb-16 on mobile reserves space above the fixed bottom tab bar */}
+        <main className="p-4 md:p-6 pb-20 md:pb-6">{children}</main>
       </div>
+      <MobileBottomNav />
     </div>
   );
 };
