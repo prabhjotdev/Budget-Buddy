@@ -153,132 +153,173 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         </div>
       )}
 
-      {/* Hero Card */}
-      <Card className={spendingProgress.isOverBudget ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}>
-        <div className="space-y-4">
-          {/* Label + Amount */}
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Left to spend
-            </p>
-            <p
-              className={`text-4xl md:text-5xl font-bold mt-1 ${
-                spendingProgress.isOverBudget
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-green-600 dark:text-green-400'
-              }`}
-            >
-              {formatCurrency(cycle.remainingToSpend)}
-            </p>
-          </div>
+      {/* Desktop: 2-column grid. Mobile: single-column stack. */}
+      <div className="md:grid md:grid-cols-[2fr_1fr] md:gap-6 md:items-start space-y-6 md:space-y-0">
 
-          {/* Spending progress bar */}
-          <div>
-            <ProgressBar
-              value={Math.min(spendingProgress.percent, 100)}
-              size="lg"
-              isOverBudget={spendingProgress.isOverBudget}
-              showLabel
-            />
-            <div className="flex justify-between text-sm mt-2 text-gray-500 dark:text-gray-400">
-              <span>{formatCurrency(cycle.totalSpent)} spent</span>
-              <span>{formatCurrency(cycle.spendingLimit)} limit</span>
+        {/* Left column — hero, mobile-only actions, breakdown, recent spending */}
+        <div className="space-y-6">
+
+          {/* Hero Card */}
+          <Card className={spendingProgress.isOverBudget ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}>
+            <div className="space-y-4">
+              {/* Label + Amount */}
+              <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Left to spend
+                </p>
+                <p
+                  className={`text-4xl md:text-5xl font-bold mt-1 ${
+                    spendingProgress.isOverBudget
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-green-600 dark:text-green-400'
+                  }`}
+                >
+                  {formatCurrency(cycle.remainingToSpend)}
+                </p>
+              </div>
+
+              {/* Spending progress bar */}
+              <div>
+                <ProgressBar
+                  value={Math.min(spendingProgress.percent, 100)}
+                  size="lg"
+                  isOverBudget={spendingProgress.isOverBudget}
+                  showLabel
+                />
+                <div className="flex justify-between text-sm mt-2 text-gray-500 dark:text-gray-400">
+                  <span>{formatCurrency(cycle.totalSpent)} spent</span>
+                  <span>{formatCurrency(cycle.spendingLimit)} limit</span>
+                </div>
+              </div>
+
+              {/* Daily budget · days left */}
+              {cycleProgress.daysRemaining > 0 && !spendingProgress.isOverBudget && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatCurrency(spendingProgress.dailyBudget)}/day &middot; {cycleProgress.daysRemaining} days left
+                </p>
+              )}
+
+              {/* Desktop-only Log Spending button */}
+              <div className="hidden md:block pt-2">
+                <Button
+                  className="flex items-center gap-2"
+                  onClick={() => setLogSpendingOpen(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  Log Spending
+                </Button>
+              </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Daily budget · days left */}
-          {cycleProgress.daysRemaining > 0 && !spendingProgress.isOverBudget && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {formatCurrency(spendingProgress.dailyBudget)}/day &middot; {cycleProgress.daysRemaining} days left
-            </p>
-          )}
-
-          {/* Desktop-only Log Spending button */}
-          <div className="hidden md:block pt-2">
+          {/* Mobile Action Row — hidden on desktop */}
+          <div className="md:hidden space-y-2">
             <Button
-              className="flex items-center gap-2"
+              className="w-full flex items-center justify-center gap-2"
               onClick={() => setLogSpendingOpen(true)}
             >
               <Plus className="w-4 h-4" />
               Log Spending
             </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Mobile Action Row — always visible on mobile, hidden on desktop */}
-      <div className="md:hidden space-y-2">
-        <Button
-          className="w-full flex items-center justify-center gap-2"
-          onClick={() => setLogSpendingOpen(true)}
-        >
-          <Plus className="w-4 h-4" />
-          Log Spending
-        </Button>
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="secondary"
-            className="flex items-center justify-center gap-2"
-            onClick={() => setMarkBillPaidOpen(true)}
-          >
-            <CheckSquare className="w-4 h-4" />
-            Mark Bill Paid
-          </Button>
-          <Button
-            variant="secondary"
-            className="flex items-center justify-center gap-2"
-            onClick={() => setUseBufferOpen(true)}
-            disabled={!buffer || buffer.totalAmount <= 0}
-          >
-            <Shield className="w-4 h-4" />
-            Use Buffer
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Compact Stats — Bills + Saved mini-cards, hidden on desktop */}
-      <div className="md:hidden grid grid-cols-2 gap-3">
-        {/* Bills mini-card — taps scroll to the bills list */}
-        <button
-          className="text-left bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3"
-          onClick={() => document.getElementById('bills-section')?.scrollIntoView({ behavior: 'smooth' })}
-        >
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bills</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-            {cycle.bills.filter((b) => b.isPaid).length}/{cycle.bills.length} paid
-          </p>
-          <div className="mt-2">
-            <ProgressBar
-              value={cycle.bills.length > 0 ? (cycle.bills.filter((b) => b.isPaid).length / cycle.bills.length) * 100 : 0}
-              size="sm"
-            />
-          </div>
-        </button>
-
-        {/* Saved mini-card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Saved</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-            {formatCurrency(cycle.minimumSave)}
-          </p>
-          {cycle.minimumSave > 0 && !spendingProgress.isOverBudget && (
-            <div className="mt-2 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-              <Check className="w-4 h-4" />
-              <span className="text-xs font-medium">On track</span>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="secondary"
+                className="flex items-center justify-center gap-2"
+                onClick={() => setMarkBillPaidOpen(true)}
+              >
+                <CheckSquare className="w-4 h-4" />
+                Mark Bill Paid
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex items-center justify-center gap-2"
+                onClick={() => setUseBufferOpen(true)}
+                disabled={!buffer || buffer.totalAmount <= 0}
+              >
+                <Shield className="w-4 h-4" />
+                Use Buffer
+              </Button>
             </div>
-          )}
+          </div>
+
+          {/* Mobile Compact Stats — hidden on desktop */}
+          <div className="md:hidden grid grid-cols-2 gap-3">
+            <button
+              className="text-left bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3"
+              onClick={() => document.getElementById('bills-section')?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bills</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                {cycle.bills.filter((b) => b.isPaid).length}/{cycle.bills.length} paid
+              </p>
+              <div className="mt-2">
+                <ProgressBar
+                  value={cycle.bills.length > 0 ? (cycle.bills.filter((b) => b.isPaid).length / cycle.bills.length) * 100 : 0}
+                  size="sm"
+                />
+              </div>
+            </button>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Saved</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+                {formatCurrency(cycle.minimumSave)}
+              </p>
+              {cycle.minimumSave > 0 && !spendingProgress.isOverBudget && (
+                <div className="mt-2 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  <Check className="w-4 h-4" />
+                  <span className="text-xs font-medium">On track</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Paycheck Breakdown */}
+          <Card>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Paycheck Breakdown</h3>
+              <button
+                onClick={() => setEditPaycheckOpen(true)}
+                className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                title="Edit paycheck amount"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-600 dark:text-gray-400">Paycheck Amount</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  {formatCurrency(cycle.paycheckAmount)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2 text-red-600 dark:text-red-400">
+                <span>− Bills Reserved</span>
+                <span>−{formatCurrency(cycle.billsTotal)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 text-blue-600 dark:text-blue-400">
+                <span>− Minimum Save</span>
+                <span>−{formatCurrency(cycle.minimumSave)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-t border-gray-200 dark:border-gray-700 font-semibold">
+                <span className="text-gray-900 dark:text-gray-100">= Spending Limit</span>
+                <span className="text-green-600 dark:text-green-400">{formatCurrency(cycle.spendingLimit)}</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Recent Spending */}
+          <SpendingSummary cycleId={cycle.id} />
+
+        </div>{/* end left column */}
+
+        {/* Right column — Bills This Cycle */}
+        <div id="bills-section">
+          <CycleBillsList bills={cycle.bills} />
         </div>
-      </div>
 
-      <div id="bills-section" className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Bills Due */}
-        <CycleBillsList bills={cycle.bills} />
+      </div>{/* end 2-col grid */}
 
-        {/* Recent Spending */}
-        <SpendingSummary cycleId={cycle.id} />
-      </div>
-
-      {/* More Actions */}
+      {/* More Actions — full width below grid */}
       <Card>
         <CardHeader title="More Actions" />
         <div className="flex flex-wrap gap-2">
@@ -307,40 +348,6 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
             <Calendar className="w-4 h-4" />
             End Cycle
           </Button>
-        </div>
-      </Card>
-
-      {/* Paycheck Breakdown */}
-      <Card>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Paycheck Breakdown</h3>
-          <button
-            onClick={() => setEditPaycheckOpen(true)}
-            className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-            title="Edit paycheck amount"
-          >
-            <Pencil className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center py-2">
-            <span className="text-gray-600 dark:text-gray-400">Paycheck Amount</span>
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
-              {formatCurrency(cycle.paycheckAmount)}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-2 text-red-600 dark:text-red-400">
-            <span>− Bills Reserved</span>
-            <span>−{formatCurrency(cycle.billsTotal)}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 text-blue-600 dark:text-blue-400">
-            <span>− Minimum Save</span>
-            <span>−{formatCurrency(cycle.minimumSave)}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-t border-gray-200 dark:border-gray-700 font-semibold">
-            <span className="text-gray-900 dark:text-gray-100">= Spending Limit</span>
-            <span className="text-green-600 dark:text-green-400">{formatCurrency(cycle.spendingLimit)}</span>
-          </div>
         </div>
       </Card>
 
