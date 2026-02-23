@@ -119,13 +119,36 @@ export const updateBill = createAsyncThunk(
         }
       }
 
+      // If dueDay, frequency, or startDate changed, remove and re-add to active cycle
+      // so the cycle entry reflects the new due date
+      if (
+        !cycleUpdate &&
+        currentBill &&
+        (updates.dueDay !== undefined || updates.frequency !== undefined || updates.startDate !== undefined)
+      ) {
+        await paycheckCyclesService.removeBillFromActiveCycles(userId, billId);
+        const updatedBill = { ...currentBill, ...updates };
+        if (updatedBill.isActive) {
+          const startDate = updatedBill.startDate ? updatedBill.startDate.toDate() : undefined;
+          cycleUpdate = await paycheckCyclesService.addBillToActiveCycle(
+            userId,
+            billId,
+            updatedBill.name,
+            updatedBill.amount,
+            updatedBill.dueDay,
+            updatedBill.frequency,
+            startDate
+          );
+        }
+      }
+
       // If amount or name changed (and bill is active), sync to active cycles
-      // Only do this if we didn't already handle isActive change above
-      if (!cycleUpdate && (updates.amount !== undefined || updates.name !== undefined)) {
+      // Only do this if we didn't already handle isActive or schedule change above
+      if (!cycleUpdate && currentBill && (updates.amount !== undefined || updates.name !== undefined)) {
         cycleUpdate = await paycheckCyclesService.syncBillAmountToActiveCycles(
           userId,
           billId,
-          updates.amount!,
+          updates.amount !== undefined ? updates.amount : currentBill.amount,
           updates.name
         );
       }
