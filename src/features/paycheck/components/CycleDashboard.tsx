@@ -3,6 +3,7 @@ import {
   Calendar,
   AlertCircle,
   Plus,
+  Check,
   CheckSquare,
   Shield,
   Pencil,
@@ -235,7 +236,41 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      {/* Mobile Compact Stats — Bills + Saved mini-cards, hidden on desktop */}
+      <div className="md:hidden grid grid-cols-2 gap-3">
+        {/* Bills mini-card — taps scroll to the bills list */}
+        <button
+          className="text-left bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3"
+          onClick={() => document.getElementById('bills-section')?.scrollIntoView({ behavior: 'smooth' })}
+        >
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Bills</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+            {cycle.bills.filter((b) => b.isPaid).length}/{cycle.bills.length} paid
+          </p>
+          <div className="mt-2">
+            <ProgressBar
+              value={cycle.bills.length > 0 ? (cycle.bills.filter((b) => b.isPaid).length / cycle.bills.length) * 100 : 0}
+              size="sm"
+            />
+          </div>
+        </button>
+
+        {/* Saved mini-card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Saved</p>
+          <p className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-1">
+            {formatCurrency(cycle.minimumSave)}
+          </p>
+          {cycle.minimumSave > 0 && !spendingProgress.isOverBudget && (
+            <div className="mt-2 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+              <Check className="w-4 h-4" />
+              <span className="text-xs font-medium">On track</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div id="bills-section" className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Bills Due */}
         <CycleBillsList bills={cycle.bills} />
 
