@@ -5,6 +5,7 @@ import {
   Plus,
   Check,
   CheckSquare,
+  ChevronDown,
   Shield,
   Pencil,
   Settings,
@@ -273,38 +274,60 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
             </div>
           </div>
 
-          {/* Paycheck Breakdown */}
-          <Card>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Paycheck Breakdown</h3>
-              <button
-                onClick={() => setEditPaycheckOpen(true)}
-                className="p-2 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
-                title="Edit paycheck amount"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600 dark:text-gray-400">Paycheck Amount</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {formatCurrency(cycle.paycheckAmount)}
-                </span>
+          {/* Paycheck Breakdown — collapsible on mobile, always open on desktop */}
+          <Card padding="none">
+            <details className="group" open>
+              <summary className="flex items-center justify-between p-4 md:p-6 list-none cursor-pointer md:cursor-default select-none">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Breakdown
+                  </h3>
+                  <ChevronDown className="w-4 h-4 text-gray-400 md:hidden transition-transform group-open:rotate-180" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">
+                    {formatCurrency(cycle.paycheckAmount)}
+                  </span>
+                  <button
+                    onClick={(e) => { e.preventDefault(); setEditPaycheckOpen(true); }}
+                    className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                    title="Edit paycheck amount"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </summary>
+
+              <div className="px-4 md:px-6 pb-4 md:pb-6 space-y-3">
+                {(() => {
+                  const total = cycle.paycheckAmount || 1;
+                  const billsPct = (cycle.billsTotal / total) * 100;
+                  const savePct = (cycle.minimumSave / total) * 100;
+                  const spendPct = (cycle.spendingLimit / total) * 100;
+                  const rows = [
+                    { label: 'Bills', pct: billsPct, amount: cycle.billsTotal, color: 'bg-blue-500' },
+                    { label: 'Save',  pct: savePct,  amount: cycle.minimumSave,    color: 'bg-emerald-500' },
+                    { label: 'Spend', pct: spendPct, amount: cycle.spendingLimit,  color: 'bg-indigo-600' },
+                  ];
+                  return rows.map(({ label, pct, amount, color }) => (
+                    <div key={label} className="flex items-center gap-3">
+                      <span className="w-12 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 shrink-0">
+                        {label}
+                      </span>
+                      <div className="flex-1 min-w-0 h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${color}`}
+                          style={{ width: `${Math.min(pct, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 shrink-0 tabular-nums whitespace-nowrap">
+                        {formatCurrency(amount)} · {pct.toFixed(0)}%
+                      </span>
+                    </div>
+                  ));
+                })()}
               </div>
-              <div className="flex justify-between items-center py-2 text-red-600 dark:text-red-400">
-                <span>− Bills Reserved</span>
-                <span>−{formatCurrency(cycle.billsTotal)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 text-blue-600 dark:text-blue-400">
-                <span>− Minimum Save</span>
-                <span>−{formatCurrency(cycle.minimumSave)}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-t border-gray-200 dark:border-gray-700 font-semibold">
-                <span className="text-gray-900 dark:text-gray-100">= Spending Limit</span>
-                <span className="text-green-600 dark:text-green-400">{formatCurrency(cycle.spendingLimit)}</span>
-              </div>
-            </div>
+            </details>
           </Card>
 
           {/* Recent Spending */}
