@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Wallet,
   Calendar,
-  TrendingDown,
-  PiggyBank,
   AlertCircle,
   Plus,
   Receipt,
@@ -155,134 +152,55 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         </div>
       )}
 
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-        {/* Remaining to Spend */}
-        <Card className={spendingProgress.isOverBudget ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}>
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Remaining to Spend</p>
-              <p
-                className={`text-xl md:text-3xl font-bold truncate ${
-                  spendingProgress.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                }`}
-              >
-                {formatCurrency(Math.max(0, cycle.remainingToSpend))}
-              </p>
-              {cycleProgress.daysRemaining > 0 && !spendingProgress.isOverBudget && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden md:block">
-                  ~{formatCurrency(spendingProgress.dailyBudget)}/day
-                </p>
-              )}
-            </div>
-            <div
-              className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                spendingProgress.isOverBudget ? 'bg-red-100 dark:bg-red-900/50' : 'bg-green-100 dark:bg-green-900/50'
+      {/* Hero Card */}
+      <Card className={spendingProgress.isOverBudget ? 'ring-2 ring-red-200 dark:ring-red-800' : ''}>
+        <div className="space-y-4">
+          {/* Label + Amount */}
+          <div>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Left to spend
+            </p>
+            <p
+              className={`text-4xl md:text-5xl font-bold mt-1 ${
+                spendingProgress.isOverBudget
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-green-600 dark:text-green-400'
               }`}
             >
-              <Wallet
-                className={`w-5 h-5 md:w-6 md:h-6 ${
-                  spendingProgress.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
-                }`}
-              />
-            </div>
+              {formatCurrency(cycle.remainingToSpend)}
+            </p>
           </div>
-        </Card>
 
-        {/* Total Spent */}
-        <Card>
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Spent This Cycle</p>
-              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
-                {formatCurrency(cycle.totalSpent)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden md:block">
-                of {formatCurrency(cycle.spendingLimit)} limit
-              </p>
-            </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center flex-shrink-0">
-              <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-orange-600 dark:text-orange-400" />
-            </div>
-          </div>
-        </Card>
-
-        {/* Bills Reserved */}
-        <Card>
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Bills Reserved</p>
-              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
-                {formatCurrency(cycle.billsTotal)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {cycle.bills.filter((b) => b.isPaid).length}/{cycle.bills.length} paid
-              </p>
-            </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center flex-shrink-0">
-              <Receipt className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400" />
-            </div>
-          </div>
-        </Card>
-
-        {/* Minimum Save */}
-        <Card>
-          <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Saving This Cycle</p>
-              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
-                {formatCurrency(cycle.minimumSave)}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden md:block">
-                Buffer: {formatCurrency(buffer?.totalAmount || 0)}
-              </p>
-            </div>
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center flex-shrink-0">
-              <PiggyBank className="w-5 h-5 md:w-6 md:h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Spending Progress */}
-      <Card>
-        <CardHeader
-          title="Spending Progress"
-          subtitle={`${cycleProgress.daysRemaining} days remaining in this cycle`}
-        />
-        <div className="space-y-4">
+          {/* Spending progress bar */}
           <div>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-gray-600 dark:text-gray-400">
-                Spent: {formatCurrency(cycle.totalSpent)}
-              </span>
-              <span className="text-gray-600 dark:text-gray-400">
-                Limit: {formatCurrency(cycle.spendingLimit)}
-              </span>
-            </div>
             <ProgressBar
               value={Math.min(spendingProgress.percent, 100)}
               size="lg"
               isOverBudget={spendingProgress.isOverBudget}
               showLabel
             />
+            <div className="flex justify-between text-sm mt-2 text-gray-500 dark:text-gray-400">
+              <span>{formatCurrency(cycle.totalSpent)} spent</span>
+              <span>{formatCurrency(cycle.spendingLimit)} limit</span>
+            </div>
           </div>
 
-          {/* Cycle Timeline */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-2">
-              <span>{cycle.startDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-              <span>{cycle.endDate.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-            </div>
-            <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-indigo-500 dark:bg-indigo-400 transition-all"
-                style={{ width: `${cycleProgress.percentComplete}%` }}
-              />
-            </div>
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Day {cycleProgress.daysElapsed} of {cycleProgress.totalDays}
+          {/* Daily budget · days left */}
+          {cycleProgress.daysRemaining > 0 && !spendingProgress.isOverBudget && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {formatCurrency(spendingProgress.dailyBudget)}/day &middot; {cycleProgress.daysRemaining} days left
             </p>
+          )}
+
+          {/* Desktop-only Log Spending button */}
+          <div className="hidden md:block pt-2">
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => setLogSpendingOpen(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Log Spending
+            </Button>
           </div>
         </div>
       </Card>
