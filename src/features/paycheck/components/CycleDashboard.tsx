@@ -3,7 +3,7 @@ import {
   Calendar,
   AlertCircle,
   Plus,
-  Receipt,
+  CheckSquare,
   Shield,
   Pencil,
   Settings,
@@ -205,31 +205,22 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Bills Due */}
-        <CycleBillsList bills={cycle.bills} />
-
-        {/* Recent Spending */}
-        <SpendingSummary cycleId={cycle.id} />
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader title="Quick Actions" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-          <Button
-            className="flex items-center justify-center gap-2"
-            onClick={() => setLogSpendingOpen(true)}
-          >
-            <Plus className="w-4 h-4" />
-            Log Spending
-          </Button>
+      {/* Mobile Action Row — always visible on mobile, hidden on desktop */}
+      <div className="md:hidden space-y-2">
+        <Button
+          className="w-full flex items-center justify-center gap-2"
+          onClick={() => setLogSpendingOpen(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Log Spending
+        </Button>
+        <div className="grid grid-cols-2 gap-2">
           <Button
             variant="secondary"
             className="flex items-center justify-center gap-2"
             onClick={() => setMarkBillPaidOpen(true)}
           >
-            <Receipt className="w-4 h-4" />
+            <CheckSquare className="w-4 h-4" />
             Mark Bill Paid
           </Button>
           <Button
@@ -241,9 +232,33 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
             <Shield className="w-4 h-4" />
             Use Buffer
           </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* Bills Due */}
+        <CycleBillsList bills={cycle.bills} />
+
+        {/* Recent Spending */}
+        <SpendingSummary cycleId={cycle.id} />
+      </div>
+
+      {/* More Actions */}
+      <Card>
+        <CardHeader title="More Actions" />
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
-            className="flex items-center justify-center gap-2"
+            className="flex items-center gap-2"
+            onClick={() => setUseBufferOpen(true)}
+            disabled={!buffer || buffer.totalAmount <= 0}
+          >
+            <Shield className="w-4 h-4" />
+            Use Buffer
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex items-center gap-2"
             onClick={() => setEditCycleOpen(true)}
           >
             <Settings className="w-4 h-4" />
@@ -251,7 +266,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
           </Button>
           <Button
             variant="secondary"
-            className="flex items-center justify-center gap-2 col-span-2 md:col-span-1"
+            className="flex items-center gap-2"
             onClick={() => setEndCycleOpen(true)}
           >
             <Calendar className="w-4 h-4" />
