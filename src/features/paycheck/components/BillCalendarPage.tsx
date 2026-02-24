@@ -10,7 +10,6 @@ import {
   CreditCard,
   Layers,
   LayoutGrid,
-  List,
   RefreshCw,
   Zap,
 } from 'lucide-react';
@@ -44,7 +43,7 @@ import { Badge, Button, Card, Modal } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { Bill, PaycheckCycle } from '../../../types';
 
-type ViewMode = 'month' | 'week' | 'agenda' | 'cycle';
+type ViewMode = 'month' | 'week' | 'cycle';
 
 // Projected bill instance for calendar display
 interface ProjectedBill {
@@ -725,158 +724,6 @@ export const BillCalendarPage = () => {
     </div>
   );
 
-  // ── Agenda View ───────────────────────────────────────────────────────────────
-
-  const renderAgendaView = () => {
-    const today = new Date();
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(addMonths(currentMonth, 1));
-    const agendaBills = projectBillsForRange(activeBills, start, end, cycles);
-
-    // Group by date key
-    const grouped: { dateKey: string; date: Date; bills: ProjectedBill[] }[] = [];
-    agendaBills.forEach((pb) => {
-      const key = format(pb.date, 'yyyy-MM-dd');
-      const existing = grouped.find((g) => g.dateKey === key);
-      if (existing) {
-        existing.bills.push(pb);
-      } else {
-        grouped.push({ dateKey: key, date: pb.date, bills: [pb] });
-      }
-    });
-
-    if (grouped.length === 0) {
-      return (
-        <div className="py-16 text-center text-gray-400 dark:text-gray-500 text-sm">
-          No bills scheduled for this period.
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-1">
-        {grouped.map(({ dateKey, date, bills }) => {
-          const isTodayDate = isToday(date);
-          const isPast = isBefore(date, today) && !isTodayDate;
-          const cycle = getCycleForDate(date);
-
-          return (
-            <div key={dateKey}>
-              {/* Date row */}
-              <div
-                className={clsx(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg',
-                  isTodayDate
-                    ? 'bg-indigo-50 dark:bg-indigo-900/30'
-                    : cycle?.isActive
-                      ? 'bg-indigo-50/40 dark:bg-indigo-900/15'
-                      : ''
-                )}
-              >
-                <div
-                  className={clsx(
-                    'w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold flex-shrink-0',
-                    isTodayDate
-                      ? 'bg-indigo-600 text-white'
-                      : isPast
-                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                  )}
-                >
-                  {format(date, 'd')}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={clsx(
-                      'text-sm font-semibold',
-                      isTodayDate
-                        ? 'text-indigo-700 dark:text-indigo-300'
-                        : isPast
-                          ? 'text-gray-400 dark:text-gray-500'
-                          : 'text-gray-900 dark:text-gray-100'
-                    )}
-                  >
-                    {isTodayDate ? 'Today — ' : ''}{format(date, 'EEEE, MMMM d')}
-                  </p>
-                  {cycle?.isActive && (
-                    <p className="text-xs text-indigo-500 dark:text-indigo-400">Active pay cycle</p>
-                  )}
-                </div>
-                <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 flex-shrink-0">
-                  {formatCurrency(bills.reduce((s, pb) => s + pb.bill.amount, 0))}
-                </span>
-              </div>
-
-              {/* Bill rows */}
-              <div className="ml-11 mb-3 space-y-1">
-                {bills.map((pb, idx) => (
-                  <button
-                    key={`${pb.bill.id}-${idx}`}
-                    onClick={() => setSelectedBill(pb)}
-                    className={clsx(
-                      'w-full flex items-center justify-between p-2.5 rounded-lg transition-colors text-left',
-                      pb.isPaid
-                        ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
-                        : pb.isInCurrentCycle
-                          ? 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
-                          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div
-                        className={clsx(
-                          'w-2 h-2 rounded-full flex-shrink-0',
-                          pb.isPaid
-                            ? 'bg-green-500'
-                            : pb.isInCurrentCycle
-                              ? 'bg-yellow-500'
-                              : 'bg-gray-300 dark:bg-gray-600'
-                        )}
-                      />
-                      <div className="min-w-0">
-                        <p
-                          className={clsx(
-                            'font-medium text-sm truncate',
-                            pb.isPaid
-                              ? 'text-green-700 dark:text-green-300 line-through opacity-75'
-                              : 'text-gray-900 dark:text-gray-100'
-                          )}
-                        >
-                          {pb.bill.name}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 capitalize">
-                          {pb.bill.frequency}
-                          {pb.bill.isAutoPay && ' · AutoPay'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span
-                        className={clsx(
-                          'font-semibold text-sm',
-                          pb.isPaid
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-gray-900 dark:text-gray-100'
-                        )}
-                      >
-                        {formatCurrency(pb.bill.amount)}
-                      </span>
-                      {pb.isPaid ? (
-                        <Check className="w-4 h-4 text-green-500" />
-                      ) : pb.isInCurrentCycle ? (
-                        <Clock className="w-4 h-4 text-yellow-500" />
-                      ) : null}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   // ── Cycle View ────────────────────────────────────────────────────────────────
 
   const renderCycleView = () => {
@@ -1219,7 +1066,6 @@ export const BillCalendarPage = () => {
                 [
                   { mode: 'month', Icon: LayoutGrid, label: 'Month' },
                   { mode: 'week', Icon: CalendarDays, label: 'Week' },
-                  { mode: 'agenda', Icon: List, label: 'Agenda' },
                   { mode: 'cycle', Icon: Layers, label: 'By Cycle' },
                 ] as const
               ).map(({ mode, Icon, label }) => (
@@ -1268,7 +1114,6 @@ export const BillCalendarPage = () => {
             {/* ── View content ── */}
             {viewMode === 'month' && renderMonthView()}
             {viewMode === 'week' && renderWeekView()}
-            {viewMode === 'agenda' && renderAgendaView()}
             {viewMode === 'cycle' && renderCycleView()}
           </Card>
         </div>
