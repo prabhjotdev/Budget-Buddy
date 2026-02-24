@@ -647,81 +647,165 @@ export const BillCalendarPage = () => {
   // ── Week View ─────────────────────────────────────────────────────────────────
 
   const renderWeekView = () => (
-    <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-      {weekDates.map((date) => {
-        const dateKey = format(date, 'yyyy-MM-dd');
-        const dayBills = billsByDate.get(dateKey) || [];
-        const isTodayDate = isToday(date);
-        const cycle = getCycleForDate(date);
-        const activeDay = cycle?.isActive;
+    <>
+      {/* ── Mobile: vertical stack (one card per day) ── */}
+      <div className="flex flex-col gap-2 sm:hidden">
+        {weekDates.map((date) => {
+          const dateKey = format(date, 'yyyy-MM-dd');
+          const dayBills = billsByDate.get(dateKey) || [];
+          const isTodayDate = isToday(date);
+          const cycle = getCycleForDate(date);
+          const activeDay = cycle?.isActive;
 
-        return (
-          <div
-            key={dateKey}
-            className={clsx(
-              'rounded-xl border p-1.5 sm:p-2 min-h-[160px] sm:min-h-[200px]',
-              activeDay
-                ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/25'
-                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
-              isTodayDate && 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-gray-900'
-            )}
-          >
-            {/* Day header */}
-            <div className="text-center mb-2">
-              <div className="text-xs font-medium text-gray-400 dark:text-gray-500">
-                {format(date, 'EEE')}
-              </div>
-              <div
-                className={clsx(
-                  'w-7 h-7 sm:w-8 sm:h-8 mx-auto flex items-center justify-center rounded-full font-bold text-xs sm:text-sm mt-0.5',
-                  isTodayDate
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-900 dark:text-gray-100'
+          return (
+            <div
+              key={dateKey}
+              className={clsx(
+                'rounded-xl border p-3',
+                activeDay
+                  ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/25'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
+                isTodayDate && 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-gray-900'
+              )}
+            >
+              {/* Day header row */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={clsx(
+                      'w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm',
+                      isTodayDate
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-gray-900 dark:text-gray-100'
+                    )}
+                  >
+                    {format(date, 'd')}
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      {format(date, 'EEEE')}
+                    </div>
+                    {activeDay && (
+                      <div className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">
+                        active cycle
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {dayBills.length > 0 && (
+                  <div className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+                    {formatCurrency(dayBills.reduce((s, pb) => s + pb.bill.amount, 0))}
+                  </div>
                 )}
-              >
-                {format(date, 'd')}
               </div>
-              {activeDay && (
-                <div className="text-[9px] text-indigo-500 dark:text-indigo-400 font-medium mt-0.5 hidden sm:block">
-                  active cycle
+
+              {/* Bills */}
+              {dayBills.length === 0 ? (
+                <div className="text-sm text-gray-300 dark:text-gray-600 pl-1">No bills</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {dayBills.map((pb, idx) => (
+                    <button
+                      key={`${pb.bill.id}-${idx}`}
+                      onClick={() => setSelectedBill(pb)}
+                      className={clsx(
+                        'w-full text-left text-sm p-2 rounded-lg transition-colors',
+                        billChipClass(pb)
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{pb.bill.name}</span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                          <span>{formatCurrency(pb.bill.amount)}</span>
+                          {pb.isPaid && <Check className="w-3.5 h-3.5" />}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
+          );
+        })}
+      </div>
 
-            {/* Bills */}
-            <div className="space-y-1">
-              {dayBills.length === 0 ? (
-                <div className="text-center text-gray-300 dark:text-gray-600 pt-3 text-lg">—</div>
-              ) : (
-                dayBills.map((pb, idx) => (
-                  <button
-                    key={`${pb.bill.id}-${idx}`}
-                    onClick={() => setSelectedBill(pb)}
-                    className={clsx(
-                      'w-full text-left text-xs p-1 sm:p-1.5 rounded-lg transition-colors',
-                      billChipClass(pb)
-                    )}
-                  >
-                    <div className="font-medium truncate">{pb.bill.name}</div>
-                    <div className="flex items-center justify-between mt-0.5 opacity-90">
-                      <span>{formatCurrency(pb.bill.amount)}</span>
-                      {pb.isPaid && <Check className="w-3 h-3 flex-shrink-0" />}
-                    </div>
-                  </button>
-                ))
+      {/* ── Desktop: 7-column grid ── */}
+      <div className="hidden sm:grid grid-cols-7 gap-2">
+        {weekDates.map((date) => {
+          const dateKey = format(date, 'yyyy-MM-dd');
+          const dayBills = billsByDate.get(dateKey) || [];
+          const isTodayDate = isToday(date);
+          const cycle = getCycleForDate(date);
+          const activeDay = cycle?.isActive;
+
+          return (
+            <div
+              key={dateKey}
+              className={clsx(
+                'rounded-xl border p-2 min-h-[200px]',
+                activeDay
+                  ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/25'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
+                isTodayDate && 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-gray-900'
+              )}
+            >
+              {/* Day header */}
+              <div className="text-center mb-2">
+                <div className="text-xs font-medium text-gray-400 dark:text-gray-500">
+                  {format(date, 'EEE')}
+                </div>
+                <div
+                  className={clsx(
+                    'w-8 h-8 mx-auto flex items-center justify-center rounded-full font-bold text-sm mt-0.5',
+                    isTodayDate
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-900 dark:text-gray-100'
+                  )}
+                >
+                  {format(date, 'd')}
+                </div>
+                {activeDay && (
+                  <div className="text-[9px] text-indigo-500 dark:text-indigo-400 font-medium mt-0.5">
+                    active cycle
+                  </div>
+                )}
+              </div>
+
+              {/* Bills */}
+              <div className="space-y-1">
+                {dayBills.length === 0 ? (
+                  <div className="text-center text-gray-300 dark:text-gray-600 pt-3 text-lg">—</div>
+                ) : (
+                  dayBills.map((pb, idx) => (
+                    <button
+                      key={`${pb.bill.id}-${idx}`}
+                      onClick={() => setSelectedBill(pb)}
+                      className={clsx(
+                        'w-full text-left text-xs p-1.5 rounded-lg transition-colors',
+                        billChipClass(pb)
+                      )}
+                    >
+                      <div className="font-medium truncate">{pb.bill.name}</div>
+                      <div className="flex items-center justify-between mt-0.5 opacity-90">
+                        <span>{formatCurrency(pb.bill.amount)}</span>
+                        {pb.isPaid && <Check className="w-3 h-3 flex-shrink-0" />}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Day total */}
+              {dayBills.length > 0 && (
+                <div className="mt-2 pt-1.5 border-t border-gray-100 dark:border-gray-700 text-xs text-center font-semibold text-gray-500 dark:text-gray-400">
+                  {formatCurrency(dayBills.reduce((s, pb) => s + pb.bill.amount, 0))}
+                </div>
               )}
             </div>
-
-            {/* Day total */}
-            {dayBills.length > 0 && (
-              <div className="mt-2 pt-1.5 border-t border-gray-100 dark:border-gray-700 text-xs text-center font-semibold text-gray-500 dark:text-gray-400">
-                {formatCurrency(dayBills.reduce((s, pb) => s + pb.bill.amount, 0))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </>
   );
 
   // ── Cycle View ────────────────────────────────────────────────────────────────
