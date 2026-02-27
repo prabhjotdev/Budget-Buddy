@@ -78,7 +78,7 @@ export const addDeposit = createAsyncThunk(
       description: string;
       date: Timestamp;
     },
-    { rejectWithValue, getState }
+    { rejectWithValue }
   ) => {
     try {
       // Add transaction
@@ -89,13 +89,13 @@ export const addDeposit = createAsyncThunk(
         date,
       });
 
-      // Update balance
-      const state = getState() as { emergencyFund: EmergencyFundState };
-      const currentBalance = state.emergencyFund.fund?.currentBalance || 0;
+      // Read current balance from Firestore to avoid stale Redux state
+      const currentFund = await emergencyFundService.getEmergencyFund(userId);
+      const currentBalance = currentFund?.currentBalance || 0;
       const newBalance = currentBalance + amount;
 
       // If fund doesn't exist, create it
-      if (!state.emergencyFund.fund) {
+      if (!currentFund) {
         await emergencyFundService.saveEmergencyFund(userId, {
           currentBalance: newBalance,
         });
@@ -124,7 +124,7 @@ export const addWithdrawal = createAsyncThunk(
       description: string;
       date: Timestamp;
     },
-    { rejectWithValue, getState }
+    { rejectWithValue }
   ) => {
     try {
       // Add transaction
@@ -135,9 +135,9 @@ export const addWithdrawal = createAsyncThunk(
         date,
       });
 
-      // Update balance
-      const state = getState() as { emergencyFund: EmergencyFundState };
-      const currentBalance = state.emergencyFund.fund?.currentBalance || 0;
+      // Read current balance from Firestore to avoid stale Redux state
+      const currentFund = await emergencyFundService.getEmergencyFund(userId);
+      const currentBalance = currentFund?.currentBalance || 0;
       const newBalance = Math.max(0, currentBalance - amount);
 
       await emergencyFundService.updateEmergencyFundBalance(userId, newBalance);
@@ -163,14 +163,14 @@ export const deleteTransaction = createAsyncThunk(
       amount: number;
       type: 'deposit' | 'withdrawal';
     },
-    { rejectWithValue, getState }
+    { rejectWithValue }
   ) => {
     try {
       await emergencyFundService.deleteEmergencyFundTransaction(userId, transactionId);
 
-      // Update balance
-      const state = getState() as { emergencyFund: EmergencyFundState };
-      const currentBalance = state.emergencyFund.fund?.currentBalance || 0;
+      // Read current balance from Firestore to avoid stale Redux state
+      const currentFund = await emergencyFundService.getEmergencyFund(userId);
+      const currentBalance = currentFund?.currentBalance || 0;
       const newBalance =
         type === 'deposit' ? currentBalance - amount : currentBalance + amount;
 
