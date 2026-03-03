@@ -313,10 +313,10 @@ export const SubscriptionsPage = () => {
         ) : (
           <>
             {/* ── Stats row ── */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <Card padding="sm">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {stats.count}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -324,17 +324,17 @@ export const SubscriptionsPage = () => {
                   </p>
                 </div>
               </Card>
-              <Card>
+              <Card padding="sm">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                     {formatCurrency(stats.monthlyTotal)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Est. / month</p>
                 </div>
               </Card>
-              <Card>
+              <Card padding="sm">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100 truncate">
                     {formatCurrency(stats.annualTotal)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Est. / year</p>
