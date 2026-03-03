@@ -10,5 +10,6 @@ export const ROUTES = {
   EMERGENCY_FUND: '/emergency-fund',
   SAVINGS_GOALS: '/savings-goals',
   MANAGE: '/manage',
+  SUBSCRIPTIONS: '/subscriptions',
   SETTINGS: '/settings',
 } as const;

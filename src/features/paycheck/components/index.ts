@@ -19,3 +19,4 @@ export { SpendingLogsPage } from './SpendingLogsPage';
 export { WishlistPage } from './WishlistPage';
 export { BillCalendarPage } from './BillCalendarPage';
 export { CycleHistoryPage } from './CycleHistoryPage';
+export { SubscriptionsPage } from './SubscriptionsPage';

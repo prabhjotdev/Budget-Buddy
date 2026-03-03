@@ -13,6 +13,7 @@ import {
   History,
   Target,
   Umbrella,
+  RefreshCw,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -27,6 +28,7 @@ const navGroups = [
       { to: ROUTES.PAYCHECK, icon: Calendar, label: 'Paycheck' },
       { to: ROUTES.SPENDING, icon: Receipt, label: 'Spending' },
       { to: ROUTES.CALENDAR, icon: CalendarDays, label: 'Bill Calendar' },
+      { to: ROUTES.SUBSCRIPTIONS, icon: RefreshCw, label: 'Subscriptions' },
     ],
   },
   {

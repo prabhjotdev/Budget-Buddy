@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from '../constants';
 import { LoginPage, AuthGuard } from '../features/auth';
-import { CycleDashboard, BufferManager, ManagePage, SpendingLogsPage, WishlistPage, BillCalendarPage, CycleHistoryPage } from '../features/paycheck/components';
+import { CycleDashboard, BufferManager, ManagePage, SpendingLogsPage, WishlistPage, BillCalendarPage, CycleHistoryPage, SubscriptionsPage } from '../features/paycheck/components';
 import { SettingsPage } from '../features/settings';
 import { EmergencyFundPage } from '../features/emergencyFund';
 import { SavingsGoalsPage } from '../features/savingsGoals';
@@ -80,6 +80,14 @@ export const AppRouter = () => {
           element={
             <AuthGuard>
               <ManagePage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path={ROUTES.SUBSCRIPTIONS}
+          element={
+            <AuthGuard>
+              <SubscriptionsPage />
             </AuthGuard>
           }
         />

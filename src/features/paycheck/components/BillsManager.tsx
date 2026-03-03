@@ -8,6 +8,7 @@ import {
   CalendarCheck,
   RotateCcw,
   Zap,
+  RefreshCw,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
@@ -59,6 +60,8 @@ export const BillsManager = () => {
   const [formIsAutoPay, setFormIsAutoPay] = useState(false);
   const [formPaymentMethodId, setFormPaymentMethodId] = useState<string>('');
   const [formIsActive, setFormIsActive] = useState(true);
+  const [formIsSubscription, setFormIsSubscription] = useState(false);
+  const [formCancelReminderDate, setFormCancelReminderDate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const bills = useMemo(() => {
@@ -91,6 +94,8 @@ export const BillsManager = () => {
     setFormIsAutoPay(false);
     setFormPaymentMethodId('');
     setFormIsActive(true);
+    setFormIsSubscription(false);
+    setFormCancelReminderDate('');
     setModalOpen(true);
   };
 
@@ -105,6 +110,10 @@ export const BillsManager = () => {
     setFormIsAutoPay(bill.isAutoPay);
     setFormPaymentMethodId(bill.paymentMethodId || '');
     setFormIsActive(bill.isActive !== false); // Default to true for backwards compatibility
+    setFormIsSubscription(bill.isSubscription || false);
+    setFormCancelReminderDate(
+      bill.cancelReminderDate ? getLocalDateString(bill.cancelReminderDate.toDate()) : ''
+    );
     setModalOpen(true);
   };
 
@@ -125,6 +134,12 @@ export const BillsManager = () => {
         startDate = Timestamp.fromDate(new Date(year, month - 1, day));
       }
 
+      let cancelReminderDate: import('firebase/firestore').Timestamp | null = null;
+      if (formIsSubscription && formCancelReminderDate) {
+        const [year, month, day] = formCancelReminderDate.split('-').map(Number);
+        cancelReminderDate = Timestamp.fromDate(new Date(year, month - 1, day));
+      }
+
       const billData = {
         name: formName.trim(),
         amount: parseFloat(formAmount) || 0,
@@ -135,6 +150,8 @@ export const BillsManager = () => {
         isAutoPay: formIsAutoPay,
         paymentMethodId: formPaymentMethodId || null,
         isActive: formIsActive,
+        isSubscription: formIsSubscription,
+        cancelReminderDate,
       };
 
       if (editingBill) {
@@ -245,6 +262,14 @@ export const BillsManager = () => {
                             title="Variable amount"
                           >
                             <RotateCcw className="w-3 h-3" />
+                          </span>
+                        )}
+                        {bill.isSubscription && (
+                          <span
+                            className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/50 px-1.5 py-0.5 rounded"
+                            title="Subscription"
+                          >
+                            <RefreshCw className="w-3 h-3" />
                           </span>
                         )}
                       </div>
@@ -414,7 +439,33 @@ export const BillsManager = () => {
                 <p className="text-xs text-gray-500 dark:text-gray-400">Uncheck to hide from calendar and cycle totals</p>
               </div>
             </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formIsSubscription}
+                onChange={(e) => setFormIsSubscription(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">This is a subscription</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Track it on the Subscriptions page</p>
+              </div>
+            </label>
           </div>
+
+          {formIsSubscription && (
+            <div>
+              <Input
+                label="Cancel Reminder Date (optional)"
+                type="date"
+                value={formCancelReminderDate}
+                onChange={(e) => setFormCancelReminderDate(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Set a date to remind yourself to cancel before the next renewal.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>
