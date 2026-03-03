@@ -79,6 +79,10 @@ export interface Bill {
   // Is this on autopay? (for awareness)
   isAutoPay: boolean;
 
+  // Subscription tracking
+  isSubscription?: boolean; // If true, this bill is a recurring subscription
+  cancelReminderDate?: Timestamp | null; // Optional: remind user to cancel before this date
+
   isActive: boolean;
 
   createdAt: Timestamp;
