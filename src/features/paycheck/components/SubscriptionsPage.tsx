@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   RefreshCw,
@@ -11,12 +11,14 @@ import {
 } from 'lucide-react';
 import { addDays, addMonths, differenceInDays, format, isBefore } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
-import { useAppSelector } from '../../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
 import { Card, CardHeader, Button } from '../../../components/shared';
 import { Bill, BillFrequency } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
 import { ROUTES } from '../../../constants';
+import { fetchBills } from '../billsSlice';
+import { fetchPaymentMethods } from '../paymentMethodsSlice';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -219,8 +221,17 @@ const SubscriptionCard = ({ bill, paymentMethodName, onManage }: SubscriptionCar
 
 export const SubscriptionsPage = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
   const { byId, allIds } = useAppSelector((state) => state.bills);
   const { byId: paymentMethodsById } = useAppSelector((state) => state.paymentMethods);
+
+  useEffect(() => {
+    if (user) {
+      dispatch(fetchBills(user.uid));
+      dispatch(fetchPaymentMethods(user.uid));
+    }
+  }, [user, dispatch]);
 
   const subscriptions = useMemo(() => {
     return allIds
