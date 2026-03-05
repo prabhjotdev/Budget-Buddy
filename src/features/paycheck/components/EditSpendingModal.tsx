@@ -204,9 +204,9 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
       <div className="space-y-5">
         {/* Amount Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xl">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-xl">
               $
             </span>
             <input
@@ -216,14 +216,14 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
               placeholder="0.00"
               step="0.01"
               min="0"
-              className="w-full pl-10 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:placeholder:text-gray-500"
             />
           </div>
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description (optional)
           </label>
           <Input
@@ -235,7 +235,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
 
         {/* Payment Method */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
           <div className="flex flex-wrap gap-2">
             {paymentMethods.map((method) => (
               <button
@@ -244,8 +244,8 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                 onClick={() => setPaymentMethodId(method.id)}
                 className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
                   paymentMethodId === method.id
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                    : 'border-gray-200 text-gray-600 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500'
                 }`}
               >
                 <CreditCard className="w-4 h-4 inline mr-2" />
@@ -257,7 +257,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Tags (optional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags (optional)</label>
           <div className="flex flex-wrap gap-2">
             {tags.slice(0, 10).map((tag) => (
               <button
@@ -266,8 +266,8 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                 onClick={() => handleTagToggle(tag.id)}
                 className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                   selectedTagIds.includes(tag.id)
-                    ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300'
-                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200'
+                    ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-600'
+                    : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
                 }`}
               >
                 <Tag className="w-3 h-3 inline mr-1" />
@@ -278,7 +278,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
               <button
                 type="button"
                 onClick={() => setShowNewTagInput(true)}
-                className="px-3 py-1.5 rounded-full text-sm bg-gray-50 text-gray-500 border-2 border-dashed border-gray-300 hover:bg-gray-100"
+                className="px-3 py-1.5 rounded-full text-sm bg-gray-50 text-gray-500 border-2 border-dashed border-gray-300 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
               >
                 <Plus className="w-3 h-3 inline mr-1" />
                 Add tag
@@ -294,7 +294,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value.toLowerCase())}
                 placeholder="New tag name"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:placeholder:text-gray-500"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -311,7 +311,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                   setShowNewTagInput(false);
                   setNewTagName('');
                 }}
-                className="p-2 text-gray-400 hover:text-gray-600"
+                className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -321,14 +321,14 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
 
         {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
 
         {/* Delete Confirmation */}
         {showDeleteConfirm ? (
-          <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-            <p className="text-sm text-red-700 mb-3">
+          <div className="p-4 bg-red-50 rounded-lg border border-red-200 dark:bg-red-900/20 dark:border-red-800">
+            <p className="text-sm text-red-700 dark:text-red-400 mb-3">
               Are you sure you want to delete this transaction? This cannot be undone.
             </p>
             <div className="flex gap-2">
@@ -354,7 +354,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
           </div>
         ) : (
           /* Actions */
-          <div className="flex justify-between pt-4 border-t">
+          <div className="flex justify-between pt-4 border-t dark:border-gray-700">
             <Button
               variant="ghost"
               onClick={() => setShowDeleteConfirm(true)}
