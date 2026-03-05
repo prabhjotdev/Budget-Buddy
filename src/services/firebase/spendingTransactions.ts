@@ -9,6 +9,7 @@ import {
   orderBy,
   where,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
 import { SpendingTransaction } from '../../types';
@@ -20,6 +21,21 @@ export const getSpendingTransactions = async (
   userId: string
 ): Promise<SpendingTransaction[]> => {
   const q = query(getTransactionsRef(userId), orderBy('date', 'desc'));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as SpendingTransaction);
+};
+
+export const getRecentSpendingTransactions = async (
+  userId: string,
+  days: number
+): Promise<SpendingTransaction[]> => {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const q = query(
+    getTransactionsRef(userId),
+    where('date', '>=', Timestamp.fromDate(cutoff)),
+    orderBy('date', 'desc')
+  );
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as SpendingTransaction);
 };

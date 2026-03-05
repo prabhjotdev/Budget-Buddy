@@ -22,7 +22,11 @@ import {
   Edit2,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
-import { fetchSpendingTransactions } from '../spendingTransactionsSlice';
+import {
+  fetchSpendingTransactions,
+  fetchRecentSpendingTransactions,
+} from '../spendingTransactionsSlice';
+import { fetchActiveCycle } from '../paycheckCyclesSlice';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
@@ -36,11 +40,12 @@ const ITEMS_PER_PAGE = 20;
 
 // Date range presets
 const DATE_RANGE_OPTIONS = [
-  { value: 'all', label: 'All Time' },
+  { value: 'cycle', label: 'Current Cycle' },
   { value: '30', label: 'Last 30 Days' },
   { value: '90', label: 'Last 90 Days' },
   { value: '180', label: 'Last 6 Months' },
   { value: '365', label: 'Last Year' },
+  { value: 'all', label: 'All Time' },
   { value: 'custom', label: 'Custom Range' },
 ];
 
@@ -87,7 +92,11 @@ export const SpendingLogsPage = () => {
   const { theme } = useTheme();
   const isDarkMode = theme === 'dark';
   const { user } = useAppSelector((state) => state.auth);
-  const { byId, allIds, isLoading } = useAppSelector((state) => state.spendingTransactions);
+  const { byId, allIds, isLoading, hasFullHistory } = useAppSelector(
+    (state) => state.spendingTransactions
+  );
+  const { byId: cyclesById, activeCycleId } = useAppSelector((state) => state.paycheckCycles);
+  const activeCycle = activeCycleId ? cyclesById[activeCycleId] : null;
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector(
     (state) => state.paymentMethods
   );
@@ -105,7 +114,7 @@ export const SpendingLogsPage = () => {
   };
 
   // Filter state
-  const [dateRange, setDateRange] = useState('365');
+  const [dateRange, setDateRange] = useState('cycle');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [selectedTagId, setSelectedTagId] = useState('all');
@@ -121,14 +130,25 @@ export const SpendingLogsPage = () => {
   // Edit modal state
   const [editingTransaction, setEditingTransaction] = useState<SpendingTransaction | null>(null);
 
-  // Fetch data on mount
+  // Fetch data on mount — load last 365 days (covers 12-month chart) instead of all-time
   useEffect(() => {
     if (user) {
-      dispatch(fetchSpendingTransactions(user.uid));
+      dispatch(fetchRecentSpendingTransactions({ userId: user.uid, days: 365 }));
       dispatch(fetchPaymentMethods(user.uid));
       dispatch(fetchSpendingTags(user.uid));
+      // Load active cycle if not already in state
+      if (!activeCycleId && Object.keys(cyclesById).length === 0) {
+        dispatch(fetchActiveCycle(user.uid));
+      }
     }
-  }, [dispatch, user]);
+  }, [dispatch, user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When user selects "All Time", fetch the full history if not already loaded
+  useEffect(() => {
+    if (dateRange === 'all' && !hasFullHistory && user) {
+      dispatch(fetchSpendingTransactions(user.uid));
+    }
+  }, [dateRange, hasFullHistory, user, dispatch]);
 
   // Get all transactions as array
   const allTransactions = useMemo(() => {
@@ -140,7 +160,15 @@ export const SpendingLogsPage = () => {
     let filtered = [...allTransactions];
 
     // Date range filter
-    if (dateRange === 'custom') {
+    if (dateRange === 'cycle' && activeCycle) {
+      const cycleStart = activeCycle.startDate.toDate();
+      const cycleEnd = activeCycle.endDate.toDate();
+      cycleEnd.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((tx) => {
+        const txDate = tx.date.toDate();
+        return txDate >= cycleStart && txDate <= cycleEnd;
+      });
+    } else if (dateRange === 'custom') {
       // Custom date range
       if (customStartDate) {
         const startDate = parseLocalDate(customStartDate);
@@ -170,7 +198,7 @@ export const SpendingLogsPage = () => {
     }
 
     return filtered;
-  }, [allTransactions, dateRange, customStartDate, customEndDate, selectedTagId, selectedPaymentMethodId]);
+  }, [allTransactions, dateRange, customStartDate, customEndDate, selectedTagId, selectedPaymentMethodId, activeCycle]);
 
   // Calculate monthly data for chart (past 12 months)
   const chartData = useMemo(() => {
@@ -292,7 +320,7 @@ export const SpendingLogsPage = () => {
   const hasMore = visibleCount < filteredTransactions.length;
 
   const clearFilters = () => {
-    setDateRange('365');
+    setDateRange('cycle');
     setCustomStartDate('');
     setCustomEndDate('');
     setSelectedTagId('all');
@@ -300,7 +328,7 @@ export const SpendingLogsPage = () => {
   };
 
   const hasActiveFilters =
-    dateRange !== '365' || selectedTagId !== 'all' || selectedPaymentMethodId !== 'all';
+    dateRange !== 'cycle' || selectedTagId !== 'all' || selectedPaymentMethodId !== 'all';
 
   // Format date for display
   const formatDate = (tx: SpendingTransaction) => {

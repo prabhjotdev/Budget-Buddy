@@ -6,6 +6,7 @@ interface SpendingTransactionsState {
   byId: Record<string, SpendingTransaction>;
   allIds: string[];
   idsByCycle: Record<string, string[]>;
+  hasFullHistory: boolean;
   isLoading: boolean;
   error: string | null;
 }
@@ -14,6 +15,7 @@ const initialState: SpendingTransactionsState = {
   byId: {},
   allIds: [],
   idsByCycle: {},
+  hasFullHistory: false,
   isLoading: false,
   error: null,
 };
@@ -23,6 +25,17 @@ export const fetchSpendingTransactions = createAsyncThunk(
   async (userId: string, { rejectWithValue }) => {
     try {
       return await spendingTransactionsService.getSpendingTransactions(userId);
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+export const fetchRecentSpendingTransactions = createAsyncThunk(
+  'spendingTransactions/fetchRecent',
+  async ({ userId, days }: { userId: string; days: number }, { rejectWithValue }) => {
+    try {
+      return await spendingTransactionsService.getRecentSpendingTransactions(userId, days);
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -139,6 +152,7 @@ const spendingTransactionsSlice = createSlice({
       state.byId = {};
       state.allIds = [];
       state.idsByCycle = {};
+      state.hasFullHistory = false;
     },
     clearCycleTransactions: (state, action: PayloadAction<string>) => {
       const cycleId = action.payload;
@@ -160,12 +174,32 @@ const spendingTransactionsSlice = createSlice({
         fetchSpendingTransactions.fulfilled,
         (state, action: PayloadAction<SpendingTransaction[]>) => {
           state.isLoading = false;
+          state.hasFullHistory = true;
           const organized = organizeTransactions(action.payload);
           state.byId = organized.byId;
           state.allIds = organized.allIds;
           state.idsByCycle = organized.idsByCycle;
         }
       )
+      .addCase(fetchRecentSpendingTransactions.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(
+        fetchRecentSpendingTransactions.fulfilled,
+        (state, action: PayloadAction<SpendingTransaction[]>) => {
+          state.isLoading = false;
+          state.hasFullHistory = false;
+          const organized = organizeTransactions(action.payload);
+          state.byId = organized.byId;
+          state.allIds = organized.allIds;
+          state.idsByCycle = organized.idsByCycle;
+        }
+      )
+      .addCase(fetchRecentSpendingTransactions.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
       .addCase(fetchSpendingTransactions.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
