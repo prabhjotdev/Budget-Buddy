@@ -25,7 +25,7 @@ import { fetchSavingsGoals, depositToSavingsGoal, withdrawFromSavingsGoal } from
 import { addDeposit as addEmergencyDeposit, addWithdrawal as addEmergencyWithdrawal } from '../../emergencyFund/emergencyFundSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency, PaycheckCycle } from '../../../types';
+import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency, PaycheckCycle, UserSettings } from '../../../types';
 
 type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'allocate' | 'buffer-draw' | 'review';
 
@@ -64,6 +64,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   const { byId: cyclesById, allIds: cycleIds } = useAppSelector((state) => state.paycheckCycles);
   const { goals: savingsGoalsState } = useAppSelector((state) => state.savingsGoals);
   const { fund: emergencyFund } = useAppSelector((state) => state.emergencyFund);
+  const { data: settings } = useAppSelector((state) => state.settings);
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('paycheck');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,15 +113,20 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
     }
   }, [dispatch, user]);
 
-  // Calculate default end date (14 days from start for bi-weekly) - only for new cycles
+  // Calculate default end date based on pay schedule settings - only for new cycles
   useEffect(() => {
     if (cycleStartDate && !isEditMode) {
       const start = parseLocalDate(cycleStartDate);
-      const end = new Date(start);
-      end.setDate(end.getDate() + 13); // 14 days including start
+      let end: Date;
+      if (settings?.scheduleType === 'semi-monthly' && settings.semiMonthlyDays) {
+        end = getSemiMonthlyEndDate(start, settings.semiMonthlyDays);
+      } else {
+        end = new Date(start);
+        end.setDate(end.getDate() + 13); // 14 days including start
+      }
       setCycleEndDate(formatLocalDate(end));
     }
-  }, [cycleStartDate, isEditMode]);
+  }, [cycleStartDate, isEditMode, settings?.scheduleType, settings?.semiMonthlyDays]);
 
   // Pre-populate state when editing an existing cycle
   useEffect(() => {
@@ -163,6 +169,19 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       }
     }
   }, [editingCycle]);
+
+  // Pre-fill from pay schedule settings for new cycles
+  useEffect(() => {
+    if (isEditMode || !settings) return;
+    if (settings.defaultMinimumSave !== undefined) {
+      setMinimumSave(settings.defaultMinimumSave);
+    }
+    const suggestedStart = getSuggestedStartDate(settings);
+    if (suggestedStart) {
+      setCycleStartDate(suggestedStart);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.scheduleType, settings?.semiMonthlyDays, settings?.biWeeklyAnchorDate, settings?.defaultMinimumSave, isEditMode]);
 
   const activePaymentMethods = useMemo(() => {
     return paymentMethodIds.map((id) => paymentMethodsById[id]).filter((m) => m && m.isActive);
@@ -1715,6 +1734,62 @@ function getOrdinalSuffix(n: number): string {
   const s = ['th', 'st', 'nd', 'rd'];
   const v = n % 100;
   return s[(v - 20) % 10] || s[v] || s[0];
+}
+
+// Returns the suggested cycle start date based on the user's pay schedule settings
+function getSuggestedStartDate(settings: UserSettings): string | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (settings.scheduleType === 'semi-monthly' && settings.semiMonthlyDays) {
+    const [day1, day2] = settings.semiMonthlyDays;
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const todayDay = today.getDate();
+
+    if (todayDay <= day1) {
+      return formatLocalDate(new Date(year, month, day1));
+    } else if (todayDay <= day2) {
+      return formatLocalDate(new Date(year, month, day2));
+    } else {
+      const nextMonth = month === 11 ? 0 : month + 1;
+      const nextYear = month === 11 ? year + 1 : year;
+      return formatLocalDate(new Date(nextYear, nextMonth, day1));
+    }
+  }
+
+  if (settings.scheduleType === 'bi-weekly' && settings.biWeeklyAnchorDate) {
+    const anchor = settings.biWeeklyAnchorDate.toDate();
+    anchor.setHours(0, 0, 0, 0);
+    const current = new Date(anchor);
+    while (current < today) {
+      current.setDate(current.getDate() + 14);
+    }
+    return formatLocalDate(current);
+  }
+
+  return null;
+}
+
+// Returns the end date for a semi-monthly cycle given its start date and pay days
+function getSemiMonthlyEndDate(startDate: Date, payDays: [number, number]): Date {
+  const [day1, day2] = payDays;
+  const startDay = startDate.getDate();
+  const year = startDate.getFullYear();
+  const month = startDate.getMonth();
+
+  let nextPayDate: Date;
+  if (startDay <= day1) {
+    nextPayDate = new Date(year, month, day2);
+  } else {
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
+    nextPayDate = new Date(nextYear, nextMonth, day1);
+  }
+
+  const end = new Date(nextPayDate);
+  end.setDate(end.getDate() - 1);
+  return end;
 }
 
 // Parse a YYYY-MM-DD string as local time instead of UTC
