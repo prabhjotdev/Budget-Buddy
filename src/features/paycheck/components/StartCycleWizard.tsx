@@ -230,7 +230,36 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
         return false;
       }
 
-      // For monthly/quarterly/etc bills, check if dueDay falls within the cycle
+      // For quarterly/semi-annual/annual bills, anchor to startDate and advance by frequency
+      if (
+        bill.frequency === 'quarterly' ||
+        bill.frequency === 'semi-annual' ||
+        bill.frequency === 'annual'
+      ) {
+        const anchorSource = bill.startDate ? bill.startDate.toDate() : bill.createdAt.toDate();
+        const months =
+          bill.frequency === 'quarterly' ? 3 : bill.frequency === 'semi-annual' ? 6 : 12;
+        const currentDate = new Date(
+          anchorSource.getFullYear(),
+          anchorSource.getMonth(),
+          Math.min(
+            bill.dueDay,
+            new Date(anchorSource.getFullYear(), anchorSource.getMonth() + 1, 0).getDate()
+          )
+        );
+
+        // If the first occurrence is already past the cycle end, skip
+        if (currentDate > endDate) return false;
+
+        // Advance until we reach or pass the cycle start
+        while (currentDate < startDate) {
+          currentDate.setMonth(currentDate.getMonth() + months);
+        }
+
+        return currentDate >= startDate && currentDate <= endDate;
+      }
+
+      // For monthly bills, check if dueDay falls within the cycle
       // We need to check each month that the cycle spans
       const dueDay = bill.dueDay;
 
