@@ -9,6 +9,9 @@ import {
   RotateCcw,
   Zap,
   RefreshCw,
+  ChevronDown,
+  ChevronRight,
+  Power,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
@@ -49,6 +52,7 @@ export const BillsManager = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [billToDelete, setBillToDelete] = useState<Bill | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -64,9 +68,15 @@ export const BillsManager = () => {
   const [formCancelReminderDate, setFormCancelReminderDate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const bills = useMemo(() => {
-    return allIds.map((id) => byId[id]).filter(Boolean);
+  const activeBills = useMemo(() => {
+    return allIds.map((id) => byId[id]).filter((b) => b && b.isActive !== false);
   }, [allIds, byId]);
+
+  const inactiveBills = useMemo(() => {
+    return allIds.map((id) => byId[id]).filter((b) => b && b.isActive === false);
+  }, [allIds, byId]);
+
+  const bills = useMemo(() => [...activeBills, ...inactiveBills], [activeBills, inactiveBills]);
 
   const paymentMethodOptions = useMemo(() => {
     return [
@@ -120,6 +130,15 @@ export const BillsManager = () => {
   const handleDeleteClick = (bill: Bill) => {
     setBillToDelete(bill);
     setDeleteConfirmOpen(true);
+  };
+
+  const handleQuickReactivate = async (bill: Bill) => {
+    if (!user) return;
+    try {
+      await dispatch(updateBill({ userId: user.uid, billId: bill.id, updates: { isActive: true } })).unwrap();
+    } catch (error) {
+      console.error('Failed to reactivate bill:', error);
+    }
   };
 
   const handleSave = async () => {
@@ -209,7 +228,7 @@ export const BillsManager = () => {
           </Button>
         </div>
 
-        {bills.length === 0 ? (
+        {activeBills.length === 0 && inactiveBills.length === 0 ? (
           <div className="text-center py-8">
             <Receipt className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
             <p className="text-gray-500 dark:text-gray-400 mb-4">No bills tracked yet.</p>
@@ -217,7 +236,10 @@ export const BillsManager = () => {
           </div>
         ) : (
           <div className="space-y-2">
-            {bills.map((bill) => {
+            {activeBills.length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No active bills.</p>
+            )}
+            {activeBills.map((bill) => {
               const paymentMethod = bill.paymentMethodId
                 ? paymentMethodsById[bill.paymentMethodId]
                 : null;
@@ -225,29 +247,15 @@ export const BillsManager = () => {
               return (
                 <div
                   key={bill.id}
-                  className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${
-                    bill.isActive === false ? 'opacity-60' : ''
-                  }`}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`p-2 rounded-lg flex-shrink-0 ${
-                      bill.isActive === false
-                        ? 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500'
-                        : 'bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400'
-                    }`}>
+                    <div className="p-2 rounded-lg flex-shrink-0 bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400">
                       <Receipt className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{bill.name}</span>
-                        {bill.isActive === false && (
-                          <span
-                            className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded"
-                            title="Inactive - excluded from calendar and totals"
-                          >
-                            Inactive
-                          </span>
-                        )}
                         {bill.isAutoPay && (
                           <span
                             className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/50 px-1.5 py-0.5 rounded"
@@ -315,23 +323,130 @@ export const BillsManager = () => {
                 </div>
               );
             })}
+
+            {inactiveBills.length > 0 && (
+              <div className="mt-2">
+                <button
+                  onClick={() => setShowInactive((v) => !v)}
+                  className="flex items-center gap-2 w-full px-2 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {showInactive ? (
+                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                  )}
+                  <span>Inactive Bills ({inactiveBills.length})</span>
+                </button>
+
+                {showInactive && (
+                  <div className="space-y-2 mt-1">
+                    {inactiveBills.map((bill) => {
+                      const paymentMethod = bill.paymentMethodId
+                        ? paymentMethodsById[bill.paymentMethodId]
+                        : null;
+
+                      return (
+                        <div
+                          key={bill.id}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors opacity-60"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="p-2 rounded-lg flex-shrink-0 bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500">
+                              <Receipt className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{bill.name}</span>
+                                {bill.isAutoPay && (
+                                  <span
+                                    className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/50 px-1.5 py-0.5 rounded"
+                                    title="Auto-pay enabled"
+                                  >
+                                    <Zap className="w-3 h-3" />
+                                  </span>
+                                )}
+                                {bill.isVariable && (
+                                  <span
+                                    className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/50 px-1.5 py-0.5 rounded"
+                                    title="Variable amount"
+                                  >
+                                    <RotateCcw className="w-3 h-3" />
+                                  </span>
+                                )}
+                                {bill.isSubscription && (
+                                  <span
+                                    className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/50 px-1.5 py-0.5 rounded"
+                                    title="Subscription"
+                                  >
+                                    <RefreshCw className="w-3 h-3" />
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span className="flex items-center gap-1">
+                                  <CalendarCheck className="w-3 h-3" />
+                                  Due: {bill.dueDay}
+                                  {getOrdinalSuffix(bill.dueDay)}
+                                </span>
+                                <span>•</span>
+                                <span>{FREQUENCY_LABELS[bill.frequency]}</span>
+                                {paymentMethod && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{paymentMethod.name}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 flex-shrink-0">
+                            <span className="font-semibold text-gray-900 dark:text-gray-100">
+                              ${bill.amount.toFixed(2)}
+                              {bill.isVariable && <span className="text-xs text-gray-400 dark:text-gray-500"> ~</span>}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleQuickReactivate(bill)}
+                                className="p-2 text-gray-500 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                                title="Re-enable bill"
+                              >
+                                <Power className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleEdit(bill)}
+                                className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(bill)}
+                                className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {bills.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              {bills.length} bill{bills.length !== 1 ? 's' : ''} tracked
-              {bills.filter((b) => b.isActive === false).length > 0 && (
-                <span className="ml-1 text-xs">
-                  ({bills.filter((b) => b.isActive !== false).length} active)
-                </span>
-              )}
+              {activeBills.length} active bill{activeBills.length !== 1 ? 's' : ''}
             </span>
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               Monthly Total: ${(
-                bills.filter((b) => b.isActive !== false && b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0) +
-                bills.filter((b) => b.isActive !== false && b.frequency === 'bi-weekly').reduce((sum, b) => sum + b.amount * 2, 0)
+                activeBills.filter((b) => b.frequency === 'monthly').reduce((sum, b) => sum + b.amount, 0) +
+                activeBills.filter((b) => b.frequency === 'bi-weekly').reduce((sum, b) => sum + b.amount * 2, 0)
               ).toFixed(2)}
             </span>
           </div>
