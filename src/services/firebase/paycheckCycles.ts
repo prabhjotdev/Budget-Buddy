@@ -252,6 +252,23 @@ export const addBillToActiveCycle = async (
     if (currentDate >= cycleStart && currentDate <= cycleEnd) {
       dueDate = new Date(currentDate);
     }
+  } else if (
+    (frequency === 'quarterly' || frequency === 'semi-annual' || frequency === 'annual') &&
+    startDate
+  ) {
+    // Quarterly/semi-annual/annual: anchor to startDate and advance by frequency
+    const months =
+      frequency === 'quarterly' ? 3 : frequency === 'semi-annual' ? 6 : 12;
+    const currentDate = new Date(startDate);
+
+    if (currentDate <= cycleEnd) {
+      while (currentDate < cycleStart) {
+        currentDate.setMonth(currentDate.getMonth() + months);
+      }
+      if (currentDate >= cycleStart && currentDate <= cycleEnd) {
+        dueDate = new Date(currentDate);
+      }
+    }
   } else {
     // Monthly and other frequencies: check if dueDay falls within cycle
     const startMonth = cycleStart.getMonth();
