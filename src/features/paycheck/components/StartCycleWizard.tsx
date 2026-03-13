@@ -398,7 +398,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   // Total allocated savings
   const totalAllocated = useMemo(() => {
     const goalsTotal = Object.values(goalAllocations).reduce((sum, amt) => sum + amt, 0);
-    return bufferAllocation + emergencyFundAllocation + goalsTotal;
+    return Math.round((bufferAllocation + emergencyFundAllocation + goalsTotal) * 100) / 100;
   }, [bufferAllocation, emergencyFundAllocation, goalAllocations]);
 
   // Calculate tiered buffer draw options
