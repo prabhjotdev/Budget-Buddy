@@ -1,8 +1,11 @@
-import { useState, useMemo, ChangeEvent } from 'react';
+import { useState, useMemo, useEffect, ChangeEvent } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { Modal, Button, Input, Spinner } from '../../../components/shared';
-import { completeCycle } from '../paycheckCyclesSlice';
+import { completeCycle, updatePaycheckCycle } from '../paycheckCyclesSlice';
 import { addToBuffer } from '../bufferSlice';
+import { addDeposit, fetchEmergencyFund } from '../../emergencyFund/emergencyFundSlice';
+import { depositToSavingsGoal, fetchSavingsGoals } from '../../savingsGoals/savingsGoalsSlice';
 import { formatCurrency } from '../../../utils';
 import { PaycheckCycle } from '../../../types';
 import {
@@ -12,6 +15,8 @@ import {
   AlertTriangle,
   Sparkles,
   ArrowRight,
+  Shield,
+  Target,
 } from 'lucide-react';
 
 interface EndCycleModalProps {
@@ -26,11 +31,29 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { buffer } = useAppSelector((state) => state.buffer);
+  const { fund: emergencyFund } = useAppSelector((state) => state.emergencyFund);
+  const { goals } = useAppSelector((state) => state.savingsGoals);
+
+  const activeGoals = useMemo(
+    () => goals.allIds.map((id) => goals.byId[id]).filter((g) => g.isActive),
+    [goals]
+  );
 
   const [step, setStep] = useState<Step>('summary');
   const [bufferAmount, setBufferAmount] = useState('');
+  const [emergencyFundAmount, setEmergencyFundAmount] = useState('');
+  const [goalAmounts, setGoalAmounts] = useState<Record<string, string>>({});
   const [reflection, setReflection] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [finalSaved, setFinalSaved] = useState(0);
+
+  // Fetch emergency fund and savings goals when modal opens
+  useEffect(() => {
+    if (isOpen && user) {
+      dispatch(fetchEmergencyFund(user.uid));
+      dispatch(fetchSavingsGoals(user.uid));
+    }
+  }, [isOpen, user, dispatch]);
 
   // Calculate summary data
   const summary = useMemo(() => {
@@ -52,13 +75,30 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
 
   const suggestedBufferAmount = summary.leftover > 0 ? summary.leftover : 0;
 
+  const totalAllocated = useMemo(() => {
+    const bufferVal = parseFloat(bufferAmount) || 0;
+    const efVal = parseFloat(emergencyFundAmount) || 0;
+    const goalsVal = Object.values(goalAmounts).reduce(
+      (sum, v) => sum + (parseFloat(v) || 0),
+      0
+    );
+    return bufferVal + efVal + goalsVal;
+  }, [bufferAmount, emergencyFundAmount, goalAmounts]);
+
+  const remainingToAllocate = Math.max(0, suggestedBufferAmount - totalAllocated);
+
   const handleComplete = async () => {
     if (!user) return;
 
     setIsSubmitting(true);
     try {
       const bufferContribution = parseFloat(bufferAmount) || 0;
-      const actualSaved = cycle.minimumSave + bufferContribution;
+      const efContribution = parseFloat(emergencyFundAmount) || 0;
+      const totalLeftoverAllocated =
+        bufferContribution +
+        efContribution +
+        activeGoals.reduce((sum, g) => sum + (parseFloat(goalAmounts[g.id]) || 0), 0);
+      const actualSaved = cycle.minimumSave + totalLeftoverAllocated;
 
       // Complete the cycle
       await dispatch(
@@ -71,7 +111,30 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
         })
       ).unwrap();
 
-      // If contributing to buffer, add it
+      // Persist the full savingsAllocations breakdown on the cycle document
+      const goalAllocations = activeGoals
+        .map((g) => ({
+          goalId: g.id,
+          goalName: g.name,
+          amount: parseFloat(goalAmounts[g.id]) || 0,
+        }))
+        .filter(({ amount }) => amount > 0);
+
+      await dispatch(
+        updatePaycheckCycle({
+          userId: user.uid,
+          cycleId: cycle.id,
+          updates: {
+            savingsAllocations: {
+              buffer: bufferContribution,
+              emergencyFund: efContribution,
+              goals: goalAllocations,
+            },
+          },
+        })
+      ).unwrap();
+
+      // Add to buffer if contributing
       if (bufferContribution > 0) {
         await dispatch(
           addToBuffer({
@@ -83,6 +146,32 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
         ).unwrap();
       }
 
+      // Add to emergency fund if contributing
+      if (efContribution > 0) {
+        await dispatch(
+          addDeposit({
+            userId: user.uid,
+            amount: efContribution,
+            description: 'Cycle leftover savings',
+            date: Timestamp.now(),
+          })
+        ).unwrap();
+      }
+
+      // Add to each savings goal
+      for (const { goalId, amount } of goalAllocations) {
+        await dispatch(
+          depositToSavingsGoal({
+            userId: user.uid,
+            goalId,
+            amount,
+            description: 'Cycle leftover savings',
+            cycleId: cycle.id,
+          })
+        ).unwrap();
+      }
+
+      setFinalSaved(actualSaved);
       setStep('complete');
     } catch (error) {
       console.error('Failed to complete cycle:', error);
@@ -94,7 +183,10 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
   const handleClose = () => {
     setStep('summary');
     setBufferAmount('');
+    setEmergencyFundAmount('');
+    setGoalAmounts({});
     setReflection('');
+    setFinalSaved(0);
     onClose();
   };
 
@@ -189,33 +281,64 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
 
       case 'savings':
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
+            {/* Header */}
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <TrendingUp className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-green-900">Add to Your Buffer</h4>
-                  <p className="text-sm text-green-700">
-                    {summary.isUnderBudget
-                      ? `You have ${formatCurrency(summary.leftover)} leftover. Consider adding some or all to your emergency buffer.`
-                      : 'Even though you went over budget, you can still contribute to your buffer if you have extra funds.'}
-                  </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <TrendingUp className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-green-900">Allocate Your Leftover</h4>
+                    <p className="text-sm text-green-700">
+                      {summary.isUnderBudget
+                        ? `You have ${formatCurrency(summary.leftover)} leftover. Distribute it across your savings destinations.`
+                        : 'Even though you went over budget, you can still contribute to your savings.'}
+                    </p>
+                  </div>
                 </div>
+                {suggestedBufferAmount > 0 && (
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-xs text-green-700">Remaining</p>
+                    <p
+                      className={`text-sm font-bold ${
+                        totalAllocated > suggestedBufferAmount
+                          ? 'text-red-600'
+                          : 'text-green-800'
+                      }`}
+                    >
+                      {formatCurrency(remainingToAllocate)}
+                    </p>
+                  </div>
+                )}
               </div>
+              {totalAllocated > suggestedBufferAmount && (
+                <p className="text-xs text-red-600 mt-2">
+                  Allocation exceeds leftover amount ({formatCurrency(suggestedBufferAmount)}).
+                </p>
+              )}
             </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Amount to Add to Buffer
-                </label>
+            {/* Buffer Card */}
+            <div className="p-4 border border-gray-200 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-900">Buffer</span>
+                </div>
                 {suggestedBufferAmount > 0 && (
                   <button
                     type="button"
-                    onClick={() => setBufferAmount(suggestedBufferAmount.toString())}
-                    className="text-sm text-indigo-600 hover:text-indigo-800"
+                    onClick={() =>
+                      setBufferAmount(
+                        (
+                          Math.max(0, suggestedBufferAmount - totalAllocated) +
+                          (parseFloat(bufferAmount) || 0)
+                        ).toFixed(2)
+                      )
+                    }
+                    className="text-xs text-indigo-600 hover:text-indigo-800"
                   >
-                    Add all ({formatCurrency(suggestedBufferAmount)})
+                    Add remaining ({formatCurrency(remainingToAllocate + (parseFloat(bufferAmount) || 0))})
                   </button>
                 )}
               </div>
@@ -227,8 +350,8 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
                 min="0"
                 step="0.01"
               />
-              <p className="text-gray-500 text-sm mt-1">
-                Current buffer: {formatCurrency(buffer?.totalAmount || 0)}
+              <p className="text-gray-500 text-xs">
+                Current: {formatCurrency(buffer?.totalAmount || 0)}
                 {parseFloat(bufferAmount) > 0 && (
                   <span className="text-green-600">
                     {' → '}
@@ -238,7 +361,83 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
               </p>
             </div>
 
-            <div className="flex justify-between pt-4">
+            {/* Emergency Fund Card */}
+            <div className="p-4 border border-gray-200 rounded-lg space-y-2">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-900">Emergency Fund</span>
+              </div>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={emergencyFundAmount}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setEmergencyFundAmount(e.target.value)
+                }
+                min="0"
+                step="0.01"
+              />
+              <p className="text-gray-500 text-xs">
+                {emergencyFund
+                  ? <>
+                      Current: {formatCurrency(emergencyFund.currentBalance)}
+                      {parseFloat(emergencyFundAmount) > 0 && (
+                        <span className="text-green-600">
+                          {' → '}
+                          {formatCurrency(
+                            emergencyFund.currentBalance + parseFloat(emergencyFundAmount)
+                          )}
+                        </span>
+                      )}
+                    </>
+                  : 'No emergency fund set up yet — you can still contribute'}
+              </p>
+            </div>
+
+            {/* Savings Goals */}
+            {activeGoals.length > 0 ? (
+              activeGoals.map((goal) => (
+                <div key={goal.id} className="p-4 border border-gray-200 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-gray-900">{goal.name}</span>
+                    {goal.targetAmount && (
+                      <span className="text-xs text-gray-500 ml-auto">
+                        Goal: {formatCurrency(goal.targetAmount)}
+                      </span>
+                    )}
+                  </div>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={goalAmounts[goal.id] || ''}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setGoalAmounts((prev) => ({ ...prev, [goal.id]: e.target.value }))
+                    }
+                    min="0"
+                    step="0.01"
+                  />
+                  <p className="text-gray-500 text-xs">
+                    Current: {formatCurrency(goal.currentBalance)}
+                    {parseFloat(goalAmounts[goal.id]) > 0 && (
+                      <span className="text-green-600">
+                        {' → '}
+                        {formatCurrency(goal.currentBalance + parseFloat(goalAmounts[goal.id]))}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Target className="w-4 h-4" />
+                  <span className="text-sm">No active savings goals</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between pt-2">
               <Button variant="secondary" onClick={() => setStep('summary')}>
                 Back
               </Button>
@@ -247,6 +446,8 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
                   variant="secondary"
                   onClick={() => {
                     setBufferAmount('0');
+                    setEmergencyFundAmount('0');
+                    setGoalAmounts({});
                     setStep('reflection');
                   }}
                 >
@@ -296,16 +497,36 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
                 <span className="text-gray-600">Minimum Save</span>
                 <span className="font-medium">{formatCurrency(cycle.minimumSave)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Buffer Contribution</span>
-                <span className="font-medium text-green-600">
-                  +{formatCurrency(parseFloat(bufferAmount) || 0)}
-                </span>
-              </div>
+              {(parseFloat(bufferAmount) || 0) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Buffer Contribution</span>
+                  <span className="font-medium text-green-600">
+                    +{formatCurrency(parseFloat(bufferAmount) || 0)}
+                  </span>
+                </div>
+              )}
+              {(parseFloat(emergencyFundAmount) || 0) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Emergency Fund</span>
+                  <span className="font-medium text-green-600">
+                    +{formatCurrency(parseFloat(emergencyFundAmount) || 0)}
+                  </span>
+                </div>
+              )}
+              {activeGoals
+                .filter((g) => (parseFloat(goalAmounts[g.id]) || 0) > 0)
+                .map((g) => (
+                  <div key={g.id} className="flex justify-between text-sm">
+                    <span className="text-gray-600">{g.name}</span>
+                    <span className="font-medium text-green-600">
+                      +{formatCurrency(parseFloat(goalAmounts[g.id]) || 0)}
+                    </span>
+                  </div>
+                ))}
               <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
                 <span className="text-gray-900 font-medium">Total Saved</span>
                 <span className="font-bold text-green-600">
-                  {formatCurrency(cycle.minimumSave + (parseFloat(bufferAmount) || 0))}
+                  {formatCurrency(cycle.minimumSave + totalAllocated)}
                 </span>
               </div>
             </div>
@@ -340,9 +561,7 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Cycle Complete!</h3>
             <p className="text-gray-600 mb-6">
               You saved{' '}
-              <span className="font-bold text-green-600">
-                {formatCurrency(cycle.minimumSave + (parseFloat(bufferAmount) || 0))}
-              </span>{' '}
+              <span className="font-bold text-green-600">{formatCurrency(finalSaved)}</span>{' '}
               this cycle.
             </p>
             <Button onClick={handleClose}>Start New Cycle</Button>
@@ -356,7 +575,7 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
       case 'summary':
         return 'End Cycle: Summary';
       case 'savings':
-        return 'End Cycle: Buffer Contribution';
+        return 'End Cycle: Allocate Leftover';
       case 'reflection':
         return 'End Cycle: Reflection';
       case 'complete':
