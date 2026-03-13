@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, ChangeEvent } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { Modal, Button, Input, Spinner } from '../../../components/shared';
-import { completeCycle } from '../paycheckCyclesSlice';
+import { completeCycle, updatePaycheckCycle } from '../paycheckCyclesSlice';
 import { addToBuffer } from '../bufferSlice';
 import { addDeposit, fetchEmergencyFund } from '../../emergencyFund/emergencyFundSlice';
 import { depositToSavingsGoal, fetchSavingsGoals } from '../../savingsGoals/savingsGoalsSlice';
@@ -94,13 +94,10 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
     try {
       const bufferContribution = parseFloat(bufferAmount) || 0;
       const efContribution = parseFloat(emergencyFundAmount) || 0;
-      const goalContributions = activeGoals
-        .map((g) => ({ goal: g, amount: parseFloat(goalAmounts[g.id]) || 0 }))
-        .filter(({ amount }) => amount > 0);
       const totalLeftoverAllocated =
         bufferContribution +
         efContribution +
-        goalContributions.reduce((sum, { amount }) => sum + amount, 0);
+        activeGoals.reduce((sum, g) => sum + (parseFloat(goalAmounts[g.id]) || 0), 0);
       const actualSaved = cycle.minimumSave + totalLeftoverAllocated;
 
       // Complete the cycle
@@ -111,6 +108,29 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
           actualSaved,
           bufferContribution,
           reflection: reflection.trim() || undefined,
+        })
+      ).unwrap();
+
+      // Persist the full savingsAllocations breakdown on the cycle document
+      const goalAllocations = activeGoals
+        .map((g) => ({
+          goalId: g.id,
+          goalName: g.name,
+          amount: parseFloat(goalAmounts[g.id]) || 0,
+        }))
+        .filter(({ amount }) => amount > 0);
+
+      await dispatch(
+        updatePaycheckCycle({
+          userId: user.uid,
+          cycleId: cycle.id,
+          updates: {
+            savingsAllocations: {
+              buffer: bufferContribution,
+              emergencyFund: efContribution,
+              goals: goalAllocations,
+            },
+          },
         })
       ).unwrap();
 
@@ -139,11 +159,11 @@ export const EndCycleModal = ({ isOpen, onClose, cycle }: EndCycleModalProps) =>
       }
 
       // Add to each savings goal
-      for (const { goal, amount } of goalContributions) {
+      for (const { goalId, amount } of goalAllocations) {
         await dispatch(
           depositToSavingsGoal({
             userId: user.uid,
-            goalId: goal.id,
+            goalId,
             amount,
             description: 'Cycle leftover savings',
             cycleId: cycle.id,
