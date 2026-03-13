@@ -17,3 +17,4 @@ export * from './spendingTransactions';
 export * from './buffer';
 export * from './wishlistItems';
 export * from './savingsGoals';
+export * from './variableObligations';

@@ -56,6 +56,26 @@ export interface PaymentMethod {
   updatedAt: Timestamp;
 }
 
+// --- Variable Obligations ---
+
+// Master list entry — recurring necessities without a due date (gas, groceries, etc.)
+export interface VariableObligation {
+  id: string;
+  name: string; // "Gas", "Groceries"
+  estimatedAmount: number; // Default per-cycle estimate
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+// Per-cycle snapshot of a variable obligation
+export interface CycleVariableObligationEntry {
+  obligationId: string;
+  obligationName: string;
+  estimatedAmount: number; // Set when cycle starts (can be adjusted)
+  amountSpent: number; // Sum of transactions assigned to this obligation
+}
+
 // --- Bills ---
 
 export type BillFrequency = 'monthly' | 'bi-weekly' | 'quarterly' | 'semi-annual' | 'annual' | 'one-time';
@@ -132,10 +152,15 @@ export interface PaycheckCycle {
   minimumSave: number; // User-set for this cycle (can be $0)
   actualSaved: number; // What was actually saved
 
+  // Variable obligations (non-dated mandatory spending like gas, groceries)
+  variableObligations?: CycleVariableObligationEntry[];
+  variableObligationsTotal?: number; // Sum of obligation budgets
+  variableObligationsSpent?: number; // Sum of obligation-assigned transactions
+
   // Spending
-  spendingLimit: number; // paycheckAmount - billsTotal - minimumSave
-  totalSpent: number; // Sum of spending transactions
-  remainingToSpend: number; // spendingLimit - totalSpent
+  spendingLimit: number; // paycheckAmount - billsTotal - variableObligationsTotal - minimumSave
+  totalSpent: number; // Sum of ALL spending transactions (for credit card reconciliation)
+  remainingToSpend: number; // spendingLimit - discretionary spending (excludes obligation transactions)
 
   // Buffer contribution (leftover at end)
   bufferContribution: number;
@@ -176,6 +201,10 @@ export interface SpendingTransaction {
   // Optional tags
   tagIds: string[];
   tagNames: string[]; // Denormalized for display
+
+  // Optional link to a variable obligation (gas, groceries, etc.)
+  variableObligationId?: string | null;
+  variableObligationName?: string | null;
 
   // When it happened
   date: Timestamp;

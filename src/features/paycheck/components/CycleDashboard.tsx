@@ -301,15 +301,22 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
               <div className="px-4 md:px-6 pb-4 md:pb-6 space-y-3">
                 {(() => {
                   const total = cycle.paycheckAmount || 1;
+                  const oblTotal = cycle.variableObligationsTotal || 0;
+                  const oblSpent = cycle.variableObligationsSpent || 0;
                   const billsPct = (cycle.billsTotal / total) * 100;
+                  const oblPct = (oblTotal / total) * 100;
                   const savePct = (cycle.minimumSave / total) * 100;
                   const spendPct = (cycle.spendingLimit / total) * 100;
+
                   const rows = [
-                    { label: 'Bills', pct: billsPct, amount: cycle.billsTotal, color: 'bg-blue-500' },
-                    { label: 'Save',  pct: savePct,  amount: cycle.minimumSave,    color: 'bg-emerald-500' },
-                    { label: 'Spend', pct: spendPct, amount: cycle.spendingLimit,  color: 'bg-indigo-600' },
+                    { label: 'Bills', pct: billsPct, amount: cycle.billsTotal, color: 'bg-blue-500', sub: null },
+                    ...(oblTotal > 0
+                      ? [{ label: 'Needs', pct: oblPct, amount: oblTotal, color: 'bg-orange-500', sub: oblSpent > 0 ? `${formatCurrency(oblSpent)} used` : null }]
+                      : []),
+                    { label: 'Save', pct: savePct, amount: cycle.minimumSave, color: 'bg-emerald-500', sub: null },
+                    { label: 'Spend', pct: spendPct, amount: cycle.spendingLimit, color: 'bg-indigo-600', sub: null },
                   ];
-                  return rows.map(({ label, pct, amount, color }) => (
+                  return rows.map(({ label, pct, amount, color, sub }) => (
                     <div key={label} className="flex items-center gap-3">
                       <span className="w-12 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 shrink-0">
                         {label}
@@ -322,6 +329,7 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
                       </div>
                       <span className="text-sm text-gray-700 dark:text-gray-300 shrink-0 tabular-nums whitespace-nowrap">
                         {formatCurrency(amount)} · {pct.toFixed(0)}%
+                        {sub && <span className="text-xs text-gray-400 ml-1">({sub})</span>}
                       </span>
                     </div>
                   ));
@@ -389,8 +397,11 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         isOpen={logSpendingOpen}
         onClose={() => setLogSpendingOpen(false)}
         cycleId={cycle.id}
-        currentSpent={cycle.totalSpent}
+        currentSpent={cycle.totalSpent - (cycle.variableObligationsSpent || 0)}
+        totalSpentInCycle={cycle.totalSpent}
         spendingLimit={cycle.spendingLimit}
+        variableObligations={cycle.variableObligations || []}
+        variableObligationsSpent={cycle.variableObligationsSpent || 0}
       />
 
       {/* End Cycle Modal */}

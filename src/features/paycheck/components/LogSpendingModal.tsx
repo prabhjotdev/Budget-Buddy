@@ -1,19 +1,25 @@
 import { useState, useMemo, useEffect } from 'react';
-import { DollarSign, Tag, CreditCard, X, Plus, Check } from 'lucide-react';
+import { DollarSign, Tag, CreditCard, X, Plus, Check, ShoppingCart } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createSpendingTransaction } from '../spendingTransactionsSlice';
-import { updateCycleSpending } from '../paycheckCyclesSlice';
+import { updateCycleSpending, updateCycleObligationSpending } from '../paycheckCyclesSlice';
 import { incrementTagUsage, createSpendingTag } from '../spendingTagsSlice';
 import { Modal, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
+import { CycleVariableObligationEntry } from '../../../types';
 
 interface LogSpendingModalProps {
   isOpen: boolean;
   onClose: () => void;
   cycleId: string;
+  /** Discretionary spent (totalSpent - variableObligationsSpent) — used for the preview */
   currentSpent: number;
+  /** Full total across all spending — used for credit card reconciliation tracking */
+  totalSpentInCycle: number;
   spendingLimit: number;
+  variableObligations?: CycleVariableObligationEntry[];
+  variableObligationsSpent?: number;
 }
 
 // Helper to get local date string (YYYY-MM-DD) without timezone issues
@@ -29,7 +35,10 @@ export const LogSpendingModal = ({
   onClose,
   cycleId,
   currentSpent,
+  totalSpentInCycle,
   spendingLimit,
+  variableObligations = [],
+  variableObligationsSpent = 0,
 }: LogSpendingModalProps) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -42,6 +51,7 @@ export const LogSpendingModal = ({
   const [description, setDescription] = useState('');
   const [paymentMethodId, setPaymentMethodId] = useState(defaultId || '');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedObligationId, setSelectedObligationId] = useState<string>('');
   const [date, setDate] = useState(getLocalDateString());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNewTagInput, setShowNewTagInput] = useState(false);
@@ -54,6 +64,7 @@ export const LogSpendingModal = ({
       setDescription('');
       setPaymentMethodId(defaultId || paymentMethodIds[0] || '');
       setSelectedTagIds([]);
+      setSelectedObligationId('');
       setDate(getLocalDateString());
       setShowNewTagInput(false);
       setNewTagName('');
@@ -72,9 +83,23 @@ export const LogSpendingModal = ({
   }, [tagIds, tagsById]);
 
   const parsedAmount = parseFloat(amount) || 0;
-  const newTotal = currentSpent + parsedAmount;
-  const newRemaining = spendingLimit - newTotal;
+
+  // Preview: only show discretionary impact when it's a discretionary transaction
+  const isObligationTransaction = !!selectedObligationId;
+  const newDiscretionaryTotal = isObligationTransaction ? currentSpent : currentSpent + parsedAmount;
+  const newRemaining = spendingLimit - newDiscretionaryTotal;
   const isOverBudget = newRemaining < 0;
+
+  // For obligation: show obligation budget progress
+  const selectedObligation = variableObligations.find(
+    (o) => o.obligationId === selectedObligationId
+  );
+  const newObligationSpent = selectedObligation
+    ? selectedObligation.amountSpent + parsedAmount
+    : 0;
+  const obligationOver = selectedObligation
+    ? newObligationSpent > selectedObligation.estimatedAmount
+    : false;
 
   const handleTagToggle = (tagId: string) => {
     setSelectedTagIds((prev) =>
@@ -97,7 +122,6 @@ export const LogSpendingModal = ({
         })
       ).unwrap();
 
-      // Select the new tag
       if (result.id) {
         setSelectedTagIds((prev) => [...prev, result.id]);
       }
@@ -116,10 +140,8 @@ export const LogSpendingModal = ({
       const selectedPaymentMethod = paymentMethodsById[paymentMethodId];
       const selectedTags = selectedTagIds.map((id) => tagsById[id]).filter(Boolean);
 
-      // Create the transaction
-      // Parse date as local time (not UTC) to avoid timezone issues
       const [year, month, day] = date.split('-').map(Number);
-      const localDate = new Date(year, month - 1, day, 12, 0, 0); // noon local time
+      const localDate = new Date(year, month - 1, day, 12, 0, 0);
 
       await dispatch(
         createSpendingTransaction({
@@ -133,19 +155,35 @@ export const LogSpendingModal = ({
             tagIds: selectedTagIds,
             tagNames: selectedTags.map((t) => t.name),
             date: Timestamp.fromDate(localDate),
+            variableObligationId: selectedObligationId || null,
+            variableObligationName: selectedObligation?.obligationName || null,
           },
         })
       ).unwrap();
 
-      // Update cycle spending totals
-      await dispatch(
-        updateCycleSpending({
-          userId: user.uid,
-          cycleId,
-          totalSpent: newTotal,
-          remainingToSpend: newRemaining,
-        })
-      ).unwrap();
+      if (isObligationTransaction && selectedObligation) {
+        // Obligation transaction: update obligation tracking, keep remainingToSpend unchanged
+        await dispatch(
+          updateCycleObligationSpending({
+            userId: user.uid,
+            cycleId,
+            obligationId: selectedObligation.obligationId,
+            newObligationAmountSpent: selectedObligation.amountSpent + parsedAmount,
+            newVariableObligationsSpent: variableObligationsSpent + parsedAmount,
+            newTotalSpent: totalSpentInCycle + parsedAmount,
+          })
+        ).unwrap();
+      } else {
+        // Discretionary transaction: deduct from remainingToSpend
+        await dispatch(
+          updateCycleSpending({
+            userId: user.uid,
+            cycleId,
+            totalSpent: totalSpentInCycle + parsedAmount,
+            remainingToSpend: newRemaining,
+          })
+        ).unwrap();
+      }
 
       // Increment tag usage counts
       for (const tagId of selectedTagIds) {
@@ -182,27 +220,94 @@ export const LogSpendingModal = ({
             />
           </div>
 
-          {/* Remaining preview */}
+          {/* Preview */}
           {parsedAmount > 0 && (
-            <div
-              className={`mt-2 p-3 rounded-lg ${
-                isOverBudget ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-              }`}
-            >
-              <div className="flex justify-between text-sm">
-                <span>After this:</span>
-                <span className="font-semibold">
-                  {formatCurrency(Math.max(0, newRemaining))} remaining
-                </span>
-              </div>
-              {isOverBudget && (
-                <p className="text-xs mt-1">
-                  This will put you ${Math.abs(newRemaining).toFixed(2)} over your limit
-                </p>
+            <div className="mt-2 space-y-1">
+              {isObligationTransaction && selectedObligation ? (
+                <div
+                  className={`p-3 rounded-lg ${
+                    obligationOver
+                      ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                      : 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                  }`}
+                >
+                  <div className="flex justify-between text-sm">
+                    <span>{selectedObligation.obligationName} budget:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(newObligationSpent)} / {formatCurrency(selectedObligation.estimatedAmount)}
+                    </span>
+                  </div>
+                  {obligationOver && (
+                    <p className="text-xs mt-1">
+                      {formatCurrency(newObligationSpent - selectedObligation.estimatedAmount)} over obligation budget
+                    </p>
+                  )}
+                  <p className="text-xs mt-1 opacity-75">Discretionary spending limit unchanged</p>
+                </div>
+              ) : (
+                <div
+                  className={`p-3 rounded-lg ${
+                    isOverBudget
+                      ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                      : 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                  }`}
+                >
+                  <div className="flex justify-between text-sm">
+                    <span>After this:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(Math.max(0, newRemaining))} remaining
+                    </span>
+                  </div>
+                  {isOverBudget && (
+                    <p className="text-xs mt-1">
+                      This will put you ${Math.abs(newRemaining).toFixed(2)} over your limit
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           )}
         </div>
+
+        {/* Variable Obligation Assignment */}
+        {variableObligations.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <ShoppingCart className="w-4 h-4 inline mr-1 text-orange-500" />
+              Obligation (optional)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedObligationId('')}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  !selectedObligationId
+                    ? 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-100 font-medium'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Discretionary
+              </button>
+              {variableObligations.map((obligation) => (
+                <button
+                  key={obligation.obligationId}
+                  type="button"
+                  onClick={() => setSelectedObligationId(obligation.obligationId)}
+                  className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    selectedObligationId === obligation.obligationId
+                      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-2 border-orange-300 dark:border-orange-600 font-medium'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-2 border-transparent hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {obligation.obligationName}
+                  <span className="text-xs ml-1 opacity-60">
+                    {formatCurrency(obligation.amountSpent)}/{formatCurrency(obligation.estimatedAmount)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Description */}
         <div>

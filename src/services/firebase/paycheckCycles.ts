@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './config';
-import { PaycheckCycle, CycleStatus } from '../../types';
+import { PaycheckCycle, CycleStatus, CycleVariableObligationEntry } from '../../types';
 
 const getCyclesRef = (userId: string) => collection(db, `users/${userId}/paycheckCycles`);
 
@@ -70,7 +70,7 @@ export const updatePaycheckCycle = async (
   });
 };
 
-// Update spending totals after a transaction
+// Update spending totals after a discretionary transaction
 export const updateCycleSpending = async (
   userId: string,
   cycleId: string,
@@ -81,6 +81,36 @@ export const updateCycleSpending = async (
   await updateDoc(docRef, {
     totalSpent,
     remainingToSpend,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Update spending totals after a variable obligation transaction
+// Does NOT change remainingToSpend (obligation spending comes from a separate pool)
+export const updateCycleObligationSpending = async (
+  userId: string,
+  cycleId: string,
+  obligationId: string,
+  newObligationAmountSpent: number,
+  newVariableObligationsSpent: number,
+  newTotalSpent: number
+): Promise<void> => {
+  const cycleRef = doc(db, `users/${userId}/paycheckCycles/${cycleId}`);
+  const cycleSnap = await getDoc(cycleRef);
+  if (!cycleSnap.exists()) return;
+
+  const cycle = cycleSnap.data() as PaycheckCycle;
+  const updatedObligations = (cycle.variableObligations || []).map(
+    (o: CycleVariableObligationEntry) =>
+      o.obligationId === obligationId
+        ? { ...o, amountSpent: newObligationAmountSpent }
+        : o
+  );
+
+  await updateDoc(cycleRef, {
+    variableObligations: updatedObligations,
+    variableObligationsSpent: newVariableObligationsSpent,
+    totalSpent: newTotalSpent,
     updatedAt: serverTimestamp(),
   });
 };

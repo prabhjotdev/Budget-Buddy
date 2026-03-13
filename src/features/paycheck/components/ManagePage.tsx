@@ -3,11 +3,13 @@ import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchBills } from '../billsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
+import { fetchVariableObligations } from '../variableObligationsSlice';
 import { AppLayout } from '../../../components/layout';
 import { PaymentMethodsManager } from './PaymentMethodsManager';
 import { BillsManager } from './BillsManager';
 import { SpendingTagsManager } from './SpendingTagsManager';
-import { CreditCard, Receipt, Tags } from 'lucide-react';
+import { VariableObligationsManager } from './VariableObligationsManager';
+import { CreditCard, Receipt, Tags, ShoppingCart } from 'lucide-react';
 
 export const ManagePage = () => {
   const dispatch = useAppDispatch();
@@ -18,6 +20,7 @@ export const ManagePage = () => {
       dispatch(fetchPaymentMethods(user.uid));
       dispatch(fetchBills(user.uid));
       dispatch(fetchSpendingTags(user.uid));
+      dispatch(fetchVariableObligations(user.uid));
     }
   }, [user, dispatch]);
 
@@ -33,7 +36,7 @@ export const ManagePage = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-3">
           <QuickStat
             icon={CreditCard}
             label="Payment Methods"
@@ -43,6 +46,11 @@ export const ManagePage = () => {
             icon={Receipt}
             label="Bills"
             color="amber"
+          />
+          <QuickStat
+            icon={ShoppingCart}
+            label="Obligations"
+            color="orange"
           />
           <QuickStat
             icon={Tags}
@@ -57,6 +65,9 @@ export const ManagePage = () => {
         {/* Bills */}
         <BillsManager />
 
+        {/* Variable Obligations */}
+        <VariableObligationsManager />
+
         {/* Spending Tags */}
         <SpendingTagsManager />
       </div>
@@ -67,13 +78,14 @@ export const ManagePage = () => {
 interface QuickStatProps {
   icon: typeof CreditCard;
   label: string;
-  color: 'indigo' | 'amber' | 'emerald';
+  color: 'indigo' | 'amber' | 'orange' | 'emerald';
 }
 
 const QuickStat = ({ icon: Icon, label, color }: QuickStatProps) => {
   const colorClasses = {
     indigo: 'bg-indigo-100 text-indigo-600',
     amber: 'bg-amber-100 text-amber-600',
+    orange: 'bg-orange-100 text-orange-600',
     emerald: 'bg-emerald-100 text-emerald-600',
   };
 
