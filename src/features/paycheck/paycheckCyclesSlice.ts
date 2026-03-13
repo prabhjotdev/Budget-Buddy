@@ -3,6 +3,7 @@ import { PaycheckCycle, CycleBillEntry } from '../../types';
 import * as paycheckCyclesService from '../../services/firebase/paycheckCycles';
 import { createBill, updateBill, deleteBill } from './billsSlice';
 
+
 interface PaycheckCyclesState {
   byId: Record<string, PaycheckCycle>;
   allIds: string[];
@@ -103,6 +104,42 @@ export const updateCycleSpending = createAsyncThunk(
     try {
       await paycheckCyclesService.updateCycleSpending(userId, cycleId, totalSpent, remainingToSpend);
       return { cycleId, totalSpent, remainingToSpend };
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
+export const updateCycleObligationSpending = createAsyncThunk(
+  'paycheckCycles/updateObligationSpending',
+  async (
+    {
+      userId,
+      cycleId,
+      obligationId,
+      newObligationAmountSpent,
+      newVariableObligationsSpent,
+      newTotalSpent,
+    }: {
+      userId: string;
+      cycleId: string;
+      obligationId: string;
+      newObligationAmountSpent: number;
+      newVariableObligationsSpent: number;
+      newTotalSpent: number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      await paycheckCyclesService.updateCycleObligationSpending(
+        userId,
+        cycleId,
+        obligationId,
+        newObligationAmountSpent,
+        newVariableObligationsSpent,
+        newTotalSpent
+      );
+      return { cycleId, obligationId, newObligationAmountSpent, newVariableObligationsSpent, newTotalSpent };
     } catch (error) {
       return rejectWithValue((error as Error).message);
     }
@@ -255,6 +292,21 @@ const paycheckCyclesSlice = createSlice({
         if (state.byId[cycleId]) {
           state.byId[cycleId].totalSpent = totalSpent;
           state.byId[cycleId].remainingToSpend = remainingToSpend;
+        }
+      })
+      .addCase(updateCycleObligationSpending.fulfilled, (state, action) => {
+        const { cycleId, obligationId, newObligationAmountSpent, newVariableObligationsSpent, newTotalSpent } = action.payload;
+        const cycle = state.byId[cycleId];
+        if (cycle) {
+          if (cycle.variableObligations) {
+            const obligation = cycle.variableObligations.find((o) => o.obligationId === obligationId);
+            if (obligation) {
+              obligation.amountSpent = newObligationAmountSpent;
+            }
+          }
+          cycle.variableObligationsSpent = newVariableObligationsSpent;
+          cycle.totalSpent = newTotalSpent;
+          // remainingToSpend intentionally unchanged — obligation spending is separate pool
         }
       })
       .addCase(markCycleBillPaid.fulfilled, (state, action) => {

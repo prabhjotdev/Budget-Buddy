@@ -18,6 +18,7 @@ import {
   spendingTransactionsReducer,
   bufferReducer,
   wishlistReducer,
+  variableObligationsReducer,
 } from '../features/paycheck';
 
 // Emergency fund reducer
@@ -47,6 +48,7 @@ export const store = configureStore({
     spendingTransactions: spendingTransactionsReducer,
     buffer: bufferReducer,
     wishlist: wishlistReducer,
+    variableObligations: variableObligationsReducer,
     emergencyFund: emergencyFundReducer,
     savingsGoals: savingsGoalsReducer,
   },
@@ -86,6 +88,9 @@ export const store = configureStore({
           'wishlist/create/fulfilled',
           'wishlist/update/fulfilled',
           'wishlist/markPurchased/fulfilled',
+          'variableObligations/fetch/fulfilled',
+          'variableObligations/create/fulfilled',
+          'variableObligations/update/fulfilled',
           // Emergency fund actions with Timestamps
           'emergencyFund/fetch/fulfilled',
           'emergencyFund/fetchTransactions/fulfilled',
@@ -116,6 +121,7 @@ export const store = configureStore({
           'bills.byId',
           'spendingTags.byId',
           'wishlist.byId',
+          'variableObligations.byId',
           // Emergency fund paths with Timestamps
           'emergencyFund.fund',
           'emergencyFund.transactions',

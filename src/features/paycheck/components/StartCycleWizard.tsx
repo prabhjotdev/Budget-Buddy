@@ -14,20 +14,22 @@ import {
   Info,
   Target,
   ShieldCheck,
+  ShoppingCart,
 } from 'lucide-react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchBills, createBill } from '../billsSlice';
 import { fetchPaymentMethods, createPaymentMethod } from '../paymentMethodsSlice';
 import { createPaycheckCycle, fetchPaycheckCycles, updatePaycheckCycle } from '../paycheckCyclesSlice';
+import { fetchVariableObligations, createVariableObligation } from '../variableObligationsSlice';
 import { fetchBuffer, withdrawFromBuffer, addToBuffer } from '../bufferSlice';
 import { fetchSavingsGoals, depositToSavingsGoal, withdrawFromSavingsGoal } from '../../savingsGoals/savingsGoalsSlice';
 import { addDeposit as addEmergencyDeposit, addWithdrawal as addEmergencyWithdrawal } from '../../emergencyFund/emergencyFundSlice';
 import { Card, CardHeader, Button, Input } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
-import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency, PaycheckCycle, UserSettings } from '../../../types';
+import { CycleBillEntry, CycleStatus, PaymentMethodType, BillFrequency, PaycheckCycle, UserSettings, CycleVariableObligationEntry } from '../../../types';
 
-type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'savings' | 'allocate' | 'buffer-draw' | 'review';
+type WizardStep = 'paycheck' | 'paymentMethods' | 'bills' | 'variableObligations' | 'savings' | 'allocate' | 'buffer-draw' | 'review';
 
 type BufferDrawOption = 'none' | 'minimum' | 'moderate' | 'comfortable' | 'custom';
 
@@ -35,6 +37,7 @@ const STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'paycheck', title: 'Paycheck', icon: Wallet },
   { id: 'paymentMethods', title: 'Accounts', icon: CreditCard },
   { id: 'bills', title: 'Bills', icon: Receipt },
+  { id: 'variableObligations', title: 'Needs', icon: ShoppingCart },
   { id: 'savings', title: 'Savings', icon: PiggyBank },
   { id: 'allocate', title: 'Allocate', icon: Target },
   { id: 'review', title: 'Review', icon: Check },
@@ -44,6 +47,7 @@ const STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
 const EDIT_STEPS: { id: WizardStep; title: string; icon: typeof Wallet }[] = [
   { id: 'paycheck', title: 'Paycheck', icon: Wallet },
   { id: 'bills', title: 'Bills', icon: Receipt },
+  { id: 'variableObligations', title: 'Needs', icon: ShoppingCart },
   { id: 'savings', title: 'Savings', icon: PiggyBank },
   { id: 'allocate', title: 'Allocate', icon: Target },
   { id: 'review', title: 'Review', icon: Check },
@@ -60,6 +64,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   const { user } = useAppSelector((state) => state.auth);
   const { byId: billsById, allIds: billIds } = useAppSelector((state) => state.bills);
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector((state) => state.paymentMethods);
+  const { byId: obligationsById, allIds: obligationIds } = useAppSelector((state) => state.variableObligations);
   const { buffer } = useAppSelector((state) => state.buffer);
   const { byId: cyclesById, allIds: cycleIds } = useAppSelector((state) => state.paycheckCycles);
   const { goals: savingsGoalsState } = useAppSelector((state) => state.savingsGoals);
@@ -102,7 +107,18 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   const [newBillIsAutoPay, setNewBillIsAutoPay] = useState(false);
   const [isAddingBill, setIsAddingBill] = useState(false);
 
-  // Load payment methods, bills, buffer, historical cycles, and savings goals
+  // Variable obligations state: id → { selected, amount }
+  const [selectedObligations, setSelectedObligations] = useState<
+    Record<string, { selected: boolean; amount: number }>
+  >({});
+
+  // Inline obligation creation state
+  const [showAddObligation, setShowAddObligation] = useState(false);
+  const [newObligationName, setNewObligationName] = useState('');
+  const [newObligationAmount, setNewObligationAmount] = useState('');
+  const [isAddingObligation, setIsAddingObligation] = useState(false);
+
+  // Load payment methods, bills, buffer, historical cycles, savings goals, and obligations
   useEffect(() => {
     if (user) {
       dispatch(fetchPaymentMethods(user.uid));
@@ -110,6 +126,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       dispatch(fetchBuffer(user.uid));
       dispatch(fetchPaycheckCycles(user.uid));
       dispatch(fetchSavingsGoals(user.uid));
+      dispatch(fetchVariableObligations(user.uid));
     }
   }, [dispatch, user]);
 
@@ -157,6 +174,18 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       });
       setSelectedBills(billSelections);
 
+      // Pre-populate variable obligations from existing cycle
+      if (editingCycle.variableObligations) {
+        const obligationSelections: Record<string, { selected: boolean; amount: number }> = {};
+        editingCycle.variableObligations.forEach((o) => {
+          obligationSelections[o.obligationId] = {
+            selected: true,
+            amount: o.estimatedAmount,
+          };
+        });
+        setSelectedObligations(obligationSelections);
+      }
+
       // Pre-populate savings allocations from existing cycle
       if (editingCycle.savingsAllocations) {
         setBufferAllocation(editingCycle.savingsAllocations.buffer);
@@ -190,6 +219,10 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
   const activeBills = useMemo(() => {
     return billIds.map((id) => billsById[id]).filter((b) => b && b.isActive);
   }, [billIds, billsById]);
+
+  const activeObligations = useMemo(() => {
+    return obligationIds.map((id) => obligationsById[id]).filter((o) => o && o.isActive);
+  }, [obligationIds, obligationsById]);
 
   // Filter bills to only show those due within the selected cycle dates
   const billsDueThisCycle = useMemo(() => {
@@ -335,11 +368,33 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
       .reduce((sum, { amount }) => sum + amount, 0);
   }, [selectedBills]);
 
+  // Auto-select all active obligations for new cycles
+  useEffect(() => {
+    if (isEditMode) return; // pre-populated from editingCycle
+    const initial: Record<string, { selected: boolean; amount: number }> = {};
+    activeObligations.forEach((obligation) => {
+      // Preserve existing selection if already set
+      if (selectedObligations[obligation.id] === undefined) {
+        initial[obligation.id] = { selected: true, amount: obligation.estimatedAmount };
+      }
+    });
+    if (Object.keys(initial).length > 0) {
+      setSelectedObligations((prev) => ({ ...initial, ...prev }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeObligations, isEditMode]);
+
+  const variableObligationsTotal = useMemo(() => {
+    return Object.values(selectedObligations)
+      .filter(({ selected }) => selected)
+      .reduce((sum, { amount }) => sum + amount, 0);
+  }, [selectedObligations]);
+
   // Raw spending limit before buffer draw
   const rawSpendingLimit = useMemo(() => {
     const paycheck = parseFloat(paycheckAmount) || 0;
-    return paycheck - billsTotal - minimumSave;
-  }, [paycheckAmount, billsTotal, minimumSave]);
+    return paycheck - billsTotal - variableObligationsTotal - minimumSave;
+  }, [paycheckAmount, billsTotal, variableObligationsTotal, minimumSave]);
 
   // Calculate the gap (how much we're short by)
   const spendingGap = useMemo(() => {
@@ -454,6 +509,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
         return true; // Can skip payment methods
       case 'bills':
         return true; // Can skip bills
+      case 'variableObligations':
+        return true; // Can skip / have no obligations
       case 'savings':
         return minimumSave >= 0;
       case 'allocate':
@@ -598,6 +655,58 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
     }
   };
 
+  const handleObligationToggle = (obligationId: string, defaultAmount: number) => {
+    setSelectedObligations((prev) => ({
+      ...prev,
+      [obligationId]: {
+        selected: !prev[obligationId]?.selected,
+        amount: prev[obligationId]?.amount ?? defaultAmount,
+      },
+    }));
+  };
+
+  const handleObligationAmountChange = (obligationId: string, amount: number) => {
+    setSelectedObligations((prev) => ({
+      ...prev,
+      [obligationId]: { ...prev[obligationId], amount },
+    }));
+  };
+
+  const handleAddObligation = async () => {
+    if (!user || !newObligationName || !newObligationAmount) return;
+
+    setIsAddingObligation(true);
+    try {
+      const amount = parseFloat(newObligationAmount);
+      if (isNaN(amount) || amount <= 0) return;
+
+      const result = await dispatch(
+        createVariableObligation({
+          userId: user.uid,
+          obligation: {
+            name: newObligationName.trim(),
+            estimatedAmount: amount,
+            isActive: true,
+          },
+        })
+      ).unwrap();
+
+      // Auto-select the newly created obligation
+      setSelectedObligations((prev) => ({
+        ...prev,
+        [(result as { id: string }).id]: { selected: true, amount },
+      }));
+
+      setNewObligationName('');
+      setNewObligationAmount('');
+      setShowAddObligation(false);
+    } catch (error) {
+      console.error('Failed to add obligation:', error);
+    } finally {
+      setIsAddingObligation(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!user) return;
 
@@ -640,9 +749,26 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           })),
       };
 
+      // Build cycle variable obligations
+      const cycleVariableObligations: CycleVariableObligationEntry[] = Object.entries(selectedObligations)
+        .filter(([, { selected }]) => selected)
+        .map(([obligationId, { amount }]) => {
+          const obligation = obligationsById[obligationId];
+          // In edit mode, preserve amountSpent for obligations already in the cycle
+          const existingEntry = editingCycle?.variableObligations?.find(
+            (o) => o.obligationId === obligationId
+          );
+          return {
+            obligationId,
+            obligationName: obligation?.name || 'Unknown',
+            estimatedAmount: amount,
+            amountSpent: existingEntry?.amountSpent || 0,
+          };
+        });
+
       if (isEditMode && editingCycle) {
         // EDIT MODE: Update existing cycle
-        const newRemainingToSpend = spendingLimit - editingCycle.totalSpent;
+        const newRemainingToSpend = spendingLimit - (editingCycle.totalSpent - (editingCycle.variableObligationsSpent || 0));
 
         // Calculate any additional buffer draw needed (if user increased buffer draw)
         const existingBufferDraw = editingCycle.bufferDraw || 0;
@@ -709,6 +835,9 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           paycheckAmount: parseFloat(paycheckAmount),
           bills: cycleBills,
           billsTotal,
+          variableObligations: cycleVariableObligations,
+          variableObligationsTotal,
+          variableObligationsSpent: editingCycle.variableObligationsSpent || 0,
           minimumSave,
           spendingLimit,
           remainingToSpend: newRemainingToSpend,
@@ -745,6 +874,9 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           paycheckAmount: parseFloat(paycheckAmount),
           bills: cycleBills,
           billsTotal,
+          variableObligations: cycleVariableObligations,
+          variableObligationsTotal,
+          variableObligationsSpent: 0,
           minimumSave,
           actualSaved: 0,
           spendingLimit,
@@ -1205,6 +1337,158 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
           </div>
         )}
 
+        {currentStep === 'variableObligations' && (
+          <div className="space-y-6">
+            <CardHeader
+              title="Variable Obligations"
+              subtitle="Recurring necessities without a specific due date — pre-allocated from your paycheck"
+            />
+
+            <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg flex items-start gap-2">
+              <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-orange-700 dark:text-orange-300">
+                These are budgeted separately from your discretionary spending. Gas and grocery purchases still go on your credit card as normal — just assign them to an obligation when logging to track your budget.
+              </p>
+            </div>
+
+            {/* Existing obligations */}
+            {activeObligations.length > 0 && (
+              <div className="space-y-3">
+                {activeObligations.map((obligation) => (
+                  <div
+                    key={obligation.id}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      selectedObligations[obligation.id]?.selected
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-400'
+                        : 'border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-3 cursor-pointer flex-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedObligations[obligation.id]?.selected || false}
+                          onChange={() =>
+                            handleObligationToggle(obligation.id, obligation.estimatedAmount)
+                          }
+                          className="w-5 h-5 text-orange-600 rounded"
+                        />
+                        <div>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {obligation.name}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                            No specific due date
+                          </span>
+                        </div>
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 dark:text-gray-400">$</span>
+                        <input
+                          type="number"
+                          value={selectedObligations[obligation.id]?.amount ?? obligation.estimatedAmount}
+                          onChange={(e) =>
+                            handleObligationAmountChange(
+                              obligation.id,
+                              parseFloat(e.target.value) || 0
+                            )
+                          }
+                          disabled={!selectedObligations[obligation.id]?.selected}
+                          className="w-24 px-3 py-1 text-right border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty state */}
+            {activeObligations.length === 0 && !showAddObligation && (
+              <div className="text-center py-8">
+                <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400 mb-2">No variable obligations set up yet</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                  Add things like Gas or Groceries to pre-allocate budget from your paycheck
+                </p>
+                <Button onClick={() => setShowAddObligation(true)} className="inline-flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Your First Obligation
+                </Button>
+              </div>
+            )}
+
+            {/* Add obligation inline form */}
+            {showAddObligation && (
+              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-4">Add an Obligation</h4>
+                <div className="space-y-3">
+                  <Input
+                    label="Name"
+                    placeholder="e.g., Gas, Groceries"
+                    value={newObligationName}
+                    onChange={(e) => setNewObligationName(e.target.value)}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Estimated Amount this Cycle
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={newObligationAmount}
+                        onChange={(e) => setNewObligationAmount(e.target.value)}
+                        className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleAddObligation}
+                      disabled={!newObligationName || !newObligationAmount || isAddingObligation}
+                      isLoading={isAddingObligation}
+                    >
+                      Add Obligation
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setShowAddObligation(false);
+                        setNewObligationName('');
+                        setNewObligationAmount('');
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Add another */}
+            {activeObligations.length > 0 && !showAddObligation && (
+              <button
+                onClick={() => setShowAddObligation(true)}
+                className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-orange-400 hover:text-orange-600 dark:hover:border-orange-500 dark:hover:text-orange-400 transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Another Obligation
+              </button>
+            )}
+
+            {variableObligationsTotal > 0 && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <span className="text-gray-600 dark:text-gray-400">Total Obligations Budget</span>
+                <span className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                  {formatCurrency(variableObligationsTotal)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {currentStep === 'savings' && (
           <div className="space-y-6">
             <CardHeader
@@ -1643,6 +1927,12 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 <span>− Bills Reserved ({Object.values(selectedBills).filter((b) => b.selected).length})</span>
                 <span>−{formatCurrency(billsTotal)}</span>
               </div>
+              {variableObligationsTotal > 0 && (
+                <div className="flex justify-between items-center text-orange-600 dark:text-orange-400">
+                  <span>− Variable Obligations ({Object.values(selectedObligations).filter((o) => o.selected).length})</span>
+                  <span>−{formatCurrency(variableObligationsTotal)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center text-blue-600 dark:text-blue-400">
                 <span>− Savings</span>
                 <span>−{formatCurrency(minimumSave)}</span>
