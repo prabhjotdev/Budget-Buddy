@@ -5,12 +5,14 @@ import { Card, Button, Spinner } from '../../../components/shared';
 import {
   fetchSavingsGoals,
   createSavingsGoal,
+  updateSavingsGoal,
   deleteSavingsGoal,
   depositToSavingsGoal,
   withdrawFromSavingsGoal,
   fetchSavingsGoalTransactions,
 } from '../savingsGoalsSlice';
 import { CreateGoalModal } from './CreateGoalModal';
+import { EditGoalModal } from './EditGoalModal';
 import { GoalTransactionModal } from './GoalTransactionModal';
 import { formatCurrency } from '../../../utils';
 import {
@@ -19,6 +21,7 @@ import {
   Minus,
   TrendingUp,
   Trash2,
+  Pencil,
 } from 'lucide-react';
 
 export const SavingsGoalsPage = () => {
@@ -42,6 +45,11 @@ const SavingsGoalsContent = () => {
     currentBalance: number;
   } | null>(null);
   const [expandedGoalId, setExpandedGoalId] = useState<string | null>(null);
+  const [editGoal, setEditGoal] = useState<{
+    goalId: string;
+    name: string;
+    targetAmount?: number;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -90,6 +98,17 @@ const SavingsGoalsContent = () => {
         amount,
         description,
         cycleId: null,
+      })
+    ).unwrap();
+  };
+
+  const handleEditGoal = async (name: string, targetAmount?: number) => {
+    if (!user || !editGoal) return;
+    await dispatch(
+      updateSavingsGoal({
+        userId: user.uid,
+        goalId: editGoal.goalId,
+        updates: { name, targetAmount },
       })
     ).unwrap();
   };
@@ -249,6 +268,19 @@ const SavingsGoalsContent = () => {
                       {isExpanded ? 'Hide' : 'Show'} history
                     </button>
                     <button
+                      onClick={() =>
+                        setEditGoal({
+                          goalId: goal.id,
+                          name: goal.name,
+                          targetAmount: goal.targetAmount,
+                        })
+                      }
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      title="Edit goal"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteGoal(goal.id)}
                       className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       title="Delete goal"
@@ -315,6 +347,16 @@ const SavingsGoalsContent = () => {
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreateGoal}
       />
+
+      {editGoal && (
+        <EditGoalModal
+          isOpen={!!editGoal}
+          onClose={() => setEditGoal(null)}
+          onSubmit={handleEditGoal}
+          initialName={editGoal.name}
+          initialTargetAmount={editGoal.targetAmount}
+        />
+      )}
 
       {transactionModal && (
         <GoalTransactionModal
