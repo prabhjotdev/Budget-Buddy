@@ -7,10 +7,14 @@ import {
   deleteVariableObligation,
 } from '../variableObligationsSlice';
 import { Card, CardHeader, Button, Input, Modal } from '../../../components/shared';
-import { VariableObligation } from '../../../types';
+import { VariableObligation, CycleVariableObligationEntry } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
 
-export const VariableObligationsManager = () => {
+interface Props {
+  cycleObligations?: CycleVariableObligationEntry[];
+}
+
+export const VariableObligationsManager = ({ cycleObligations }: Props) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { byId, allIds } = useAppSelector((state) => state.variableObligations);
@@ -131,6 +135,14 @@ export const VariableObligationsManager = () => {
     [activeObligations, inactiveObligations]
   );
 
+  const cycleObligationMap = useMemo(() => {
+    if (!cycleObligations) return {} as Record<string, CycleVariableObligationEntry>;
+    return cycleObligations.reduce<Record<string, CycleVariableObligationEntry>>((acc, entry) => {
+      acc[entry.obligationId] = entry;
+      return acc;
+    }, {});
+  }, [cycleObligations]);
+
   return (
     <>
       <Card>
@@ -161,20 +173,51 @@ export const VariableObligationsManager = () => {
 
         {activeObligations.length > 0 && (
           <div className="space-y-2 mt-4">
-            {activeObligations.map((obligation) => (
+            {activeObligations.map((obligation) => {
+              const cycleEntry = cycleObligationMap[obligation.id];
+              const pct = cycleEntry
+                ? Math.min((cycleEntry.amountSpent / cycleEntry.estimatedAmount) * 100, 100)
+                : 0;
+              const barColor =
+                pct >= 100
+                  ? 'bg-red-500'
+                  : pct >= 75
+                  ? 'bg-amber-500'
+                  : 'bg-emerald-500';
+              return (
               <div
                 key={obligation.id}
                 className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0">
                     <ShoppingCart className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900 dark:text-gray-100">{obligation.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      ~{formatCurrency(obligation.estimatedAmount)} / cycle
-                    </p>
+                    {cycleEntry ? (
+                      <div className="mt-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {formatCurrency(cycleEntry.amountSpent)}{' '}
+                            <span className="text-gray-400 dark:text-gray-500">/ {formatCurrency(cycleEntry.estimatedAmount)}</span>
+                          </p>
+                          {pct >= 100 && (
+                            <span className="text-xs font-medium text-red-600 dark:text-red-400">Over</span>
+                          )}
+                        </div>
+                        <div className="h-1.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${barColor}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        ~{formatCurrency(obligation.estimatedAmount)} / cycle
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -201,7 +244,8 @@ export const VariableObligationsManager = () => {
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
