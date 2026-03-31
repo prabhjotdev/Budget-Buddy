@@ -4,6 +4,7 @@ import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchBills } from '../billsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
 import { fetchVariableObligations } from '../variableObligationsSlice';
+import { fetchActiveCycle } from '../paycheckCyclesSlice';
 import { AppLayout } from '../../../components/layout';
 import { PaymentMethodsManager } from './PaymentMethodsManager';
 import { BillsManager } from './BillsManager';
@@ -14,6 +15,8 @@ import { CreditCard, Receipt, Tags, ShoppingCart } from 'lucide-react';
 export const ManagePage = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { byId: cyclesById, activeCycleId } = useAppSelector((state) => state.paycheckCycles);
+  const activeCycleObligations = activeCycleId ? cyclesById[activeCycleId]?.variableObligations : undefined;
 
   useEffect(() => {
     if (user) {
@@ -21,6 +24,7 @@ export const ManagePage = () => {
       dispatch(fetchBills(user.uid));
       dispatch(fetchSpendingTags(user.uid));
       dispatch(fetchVariableObligations(user.uid));
+      dispatch(fetchActiveCycle(user.uid));
     }
   }, [user, dispatch]);
 
@@ -66,7 +70,7 @@ export const ManagePage = () => {
         <BillsManager />
 
         {/* Variable Obligations */}
-        <VariableObligationsManager />
+        <VariableObligationsManager cycleObligations={activeCycleObligations} />
 
         {/* Spending Tags */}
         <SpendingTagsManager />
