@@ -4,6 +4,7 @@ export interface SavingsGoal {
   id: string;
   name: string;
   targetAmount?: number;
+  targetDate?: Timestamp;
   currentBalance: number;
   isActive: boolean;
   createdAt: Timestamp;
