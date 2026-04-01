@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { SavingsGoalsState } from '../../types/savingsGoals';
+import type { Timestamp } from 'firebase/firestore';
 import * as savingsGoalsService from '../../services/firebase/savingsGoals';
 
 const initialState: SavingsGoalsState = {
@@ -36,7 +37,7 @@ export const createSavingsGoal = createAsyncThunk(
       goal,
     }: {
       userId: string;
-      goal: { name: string; targetAmount?: number; currentBalance: number; isActive: boolean };
+      goal: { name: string; targetAmount?: number; targetDate?: Timestamp; currentBalance: number; isActive: boolean };
     },
     { rejectWithValue }
   ) => {
@@ -58,7 +59,7 @@ export const updateSavingsGoal = createAsyncThunk(
     }: {
       userId: string;
       goalId: string;
-      updates: { name?: string; targetAmount?: number; isActive?: boolean };
+      updates: { name?: string; targetAmount?: number; targetDate?: Timestamp; isActive?: boolean };
     },
     { rejectWithValue }
   ) => {

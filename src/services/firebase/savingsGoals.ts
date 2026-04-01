@@ -47,7 +47,7 @@ export const createSavingsGoal = async (
 export const updateSavingsGoal = async (
   userId: string,
   goalId: string,
-  updates: Partial<Pick<SavingsGoal, 'name' | 'targetAmount' | 'isActive'>>
+  updates: Partial<Pick<SavingsGoal, 'name' | 'targetAmount' | 'targetDate' | 'isActive'>>
 ): Promise<void> => {
   const goalRef = doc(db, `users/${userId}/savingsGoals/${goalId}`);
   await updateDoc(goalRef, {

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
 import { Card, Button, Spinner } from '../../../components/shared';
@@ -15,6 +16,8 @@ import { CreateGoalModal } from './CreateGoalModal';
 import { EditGoalModal } from './EditGoalModal';
 import { GoalTransactionModal } from './GoalTransactionModal';
 import { formatCurrency } from '../../../utils';
+import { SavingsGoal } from '../../../types/savingsGoals';
+import { UserSettings } from '../../../types/models';
 import {
   Target,
   Plus,
@@ -22,7 +25,140 @@ import {
   TrendingUp,
   Trash2,
   Pencil,
+  Calendar,
 } from 'lucide-react';
+import {
+  differenceInDays,
+  addDays,
+  setDate,
+  addMonths,
+  isAfter,
+  isBefore,
+  startOfDay,
+} from 'date-fns';
+
+/**
+ * Calculate the number of paychecks remaining between now and a target date
+ * based on the user's paycheck schedule.
+ */
+const countPaychecksRemaining = (
+  targetDate: Date,
+  settings: UserSettings | null
+): number | null => {
+  const today = startOfDay(new Date());
+  const target = startOfDay(targetDate);
+
+  if (!isAfter(target, today)) return 0;
+  if (!settings) return null;
+
+  if (settings.scheduleType === 'bi-weekly' && settings.biWeeklyAnchorDate) {
+    const anchor = startOfDay(settings.biWeeklyAnchorDate.toDate());
+    // Find the next paycheck on or after today
+    const daysSinceAnchor = differenceInDays(today, anchor);
+    const cyclesSinceAnchor = Math.ceil(daysSinceAnchor / 14);
+    let nextPayday = addDays(anchor, cyclesSinceAnchor * 14);
+    if (isBefore(nextPayday, today)) {
+      nextPayday = addDays(nextPayday, 14);
+    }
+
+    let count = 0;
+    let current = nextPayday;
+    while (!isAfter(current, target)) {
+      count++;
+      current = addDays(current, 14);
+    }
+    return count;
+  }
+
+  if (settings.scheduleType === 'semi-monthly' && settings.semiMonthlyDays) {
+    const [day1, day2] = [...settings.semiMonthlyDays].sort((a, b) => a - b);
+    let count = 0;
+    // Start from the current month and iterate
+    let cursor = new Date(today.getFullYear(), today.getMonth(), 1);
+    const maxIterations = differenceInDays(target, today) + 62; // safety limit
+    let iterations = 0;
+
+    while (iterations < maxIterations) {
+      for (const day of [day1, day2]) {
+        const payday = setDate(cursor, Math.min(day, 28));
+        if (!isBefore(payday, today) && !isAfter(payday, target)) {
+          count++;
+        }
+        if (isAfter(payday, target)) {
+          return count;
+        }
+        iterations++;
+      }
+      cursor = addMonths(cursor, 1);
+    }
+    return count;
+  }
+
+  // Fallback: estimate ~2 paychecks per month
+  const daysRemaining = differenceInDays(target, today);
+  return Math.max(1, Math.round(daysRemaining / 14));
+};
+
+const formatTargetDate = (ts: Timestamp): string => {
+  return ts.toDate().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const PerPaycheckIndicator = ({
+  goal,
+  settings,
+}: {
+  goal: SavingsGoal;
+  settings: UserSettings | null;
+}) => {
+  const indicator = useMemo(() => {
+    if (!goal.targetAmount || !goal.targetDate) return null;
+
+    const remaining = Math.max(0, goal.targetAmount - goal.currentBalance);
+    if (remaining === 0) {
+      return { text: 'Goal reached!', color: 'text-green-600 dark:text-green-400' };
+    }
+
+    const targetDate = goal.targetDate.toDate();
+    if (isBefore(startOfDay(targetDate), startOfDay(new Date()))) {
+      return { text: 'Target date has passed', color: 'text-orange-600 dark:text-orange-400' };
+    }
+
+    const paychecks = countPaychecksRemaining(targetDate, settings);
+    if (paychecks === null) {
+      // No settings available, show basic time-based estimate
+      const days = differenceInDays(targetDate, new Date());
+      const estimated = Math.max(1, Math.round(days / 14));
+      const perPaycheck = remaining / estimated;
+      return {
+        text: `~${formatCurrency(perPaycheck)} per paycheck`,
+        color: 'text-indigo-600 dark:text-indigo-400',
+      };
+    }
+
+    if (paychecks === 0) {
+      return { text: 'No paychecks before target date', color: 'text-orange-600 dark:text-orange-400' };
+    }
+
+    const perPaycheck = remaining / paychecks;
+    return {
+      text: `~${formatCurrency(perPaycheck)} per paycheck (${paychecks} paycheck${paychecks !== 1 ? 's' : ''} left)`,
+      color: 'text-indigo-600 dark:text-indigo-400',
+    };
+  }, [goal.targetAmount, goal.targetDate, goal.currentBalance, settings]);
+
+  if (!indicator) return null;
+
+  return (
+    <div className={`flex items-center gap-1.5 text-sm ${indicator.color}`}>
+      <Calendar className="w-3.5 h-3.5" />
+      <span>{indicator.text}</span>
+    </div>
+  );
+};
 
 export const SavingsGoalsPage = () => {
   return (
@@ -36,6 +172,7 @@ const SavingsGoalsContent = () => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { goals, transactions, status } = useAppSelector((state) => state.savingsGoals);
+  const { data: settings } = useAppSelector((state) => state.settings);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [transactionModal, setTransactionModal] = useState<{
@@ -49,6 +186,7 @@ const SavingsGoalsContent = () => {
     goalId: string;
     name: string;
     targetAmount?: number;
+    targetDate?: Timestamp;
   } | null>(null);
 
   useEffect(() => {
@@ -66,12 +204,12 @@ const SavingsGoalsContent = () => {
     return activeGoals.reduce((sum, goal) => sum + goal.currentBalance, 0);
   }, [activeGoals]);
 
-  const handleCreateGoal = async (name: string, targetAmount?: number) => {
+  const handleCreateGoal = async (name: string, targetAmount?: number, targetDate?: Timestamp) => {
     if (!user) return;
     await dispatch(
       createSavingsGoal({
         userId: user.uid,
-        goal: { name, targetAmount, currentBalance: 0, isActive: true },
+        goal: { name, targetAmount, targetDate, currentBalance: 0, isActive: true },
       })
     ).unwrap();
   };
@@ -102,13 +240,13 @@ const SavingsGoalsContent = () => {
     ).unwrap();
   };
 
-  const handleEditGoal = async (name: string, targetAmount?: number) => {
+  const handleEditGoal = async (name: string, targetAmount?: number, targetDate?: Timestamp) => {
     if (!user || !editGoal) return;
     await dispatch(
       updateSavingsGoal({
         userId: user.uid,
         goalId: editGoal.goalId,
-        updates: { name, targetAmount },
+        updates: { name, targetAmount, targetDate },
       })
     ).unwrap();
   };
@@ -199,6 +337,11 @@ const SavingsGoalsContent = () => {
                             Target: {formatCurrency(goal.targetAmount)}
                           </p>
                         )}
+                        {goal.targetDate && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            By {formatTargetDate(goal.targetDate)}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -225,6 +368,13 @@ const SavingsGoalsContent = () => {
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
                         {progress.toFixed(0)}%
                       </p>
+                    </div>
+                  )}
+
+                  {/* Per-paycheck indicator */}
+                  {goal.targetAmount && goal.targetDate && (
+                    <div className="mb-4">
+                      <PerPaycheckIndicator goal={goal} settings={settings} />
                     </div>
                   )}
 
@@ -273,6 +423,7 @@ const SavingsGoalsContent = () => {
                           goalId: goal.id,
                           name: goal.name,
                           targetAmount: goal.targetAmount,
+                          targetDate: goal.targetDate,
                         })
                       }
                       className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
@@ -355,6 +506,7 @@ const SavingsGoalsContent = () => {
           onSubmit={handleEditGoal}
           initialName={editGoal.name}
           initialTargetAmount={editGoal.targetAmount}
+          initialTargetDate={editGoal.targetDate}
         />
       )}
 

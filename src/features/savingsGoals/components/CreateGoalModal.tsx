@@ -1,15 +1,17 @@
 import { useState } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { Modal, Button, Input } from '../../../components/shared';
 
 interface CreateGoalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string, targetAmount?: number) => Promise<void>;
+  onSubmit: (name: string, targetAmount?: number, targetDate?: Timestamp) => Promise<void>;
 }
 
 export const CreateGoalModal = ({ isOpen, onClose, onSubmit }: CreateGoalModalProps) => {
   const [name, setName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
+  const [targetDate, setTargetDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -17,9 +19,11 @@ export const CreateGoalModal = ({ isOpen, onClose, onSubmit }: CreateGoalModalPr
     setIsSubmitting(true);
     try {
       const target = targetAmount ? parseFloat(targetAmount) : undefined;
-      await onSubmit(name.trim(), target && target > 0 ? target : undefined);
+      const date = targetDate ? Timestamp.fromDate(new Date(targetDate + 'T00:00:00')) : undefined;
+      await onSubmit(name.trim(), target && target > 0 ? target : undefined, date);
       setName('');
       setTargetAmount('');
+      setTargetDate('');
       onClose();
     } catch (error) {
       console.error('Failed to create goal:', error);
@@ -56,6 +60,21 @@ export const CreateGoalModal = ({ isOpen, onClose, onSubmit }: CreateGoalModalPr
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Leave blank if you don't have a specific target.
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Target Date (optional)
+          </label>
+          <input
+            type="date"
+            value={targetDate}
+            onChange={(e) => setTargetDate(e.target.value)}
+            min={new Date().toISOString().split('T')[0]}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Set a deadline to see how much to save per paycheck.
           </p>
         </div>
         <div className="flex gap-3 pt-2">
