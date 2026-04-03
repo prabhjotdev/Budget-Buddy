@@ -6,6 +6,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   query,
   orderBy,
   where,
@@ -30,11 +31,15 @@ export const createSavingsGoal = async (
   const goalsRef = collection(db, `users/${userId}/savingsGoals`);
   const now = Timestamp.now();
 
-  const docRef = await addDoc(goalsRef, {
-    ...goal,
-    createdAt: now,
-    updatedAt: now,
-  });
+  // Filter out undefined values – Firestore rejects them.
+  const goalData: Record<string, unknown> = { createdAt: now, updatedAt: now };
+  for (const [key, value] of Object.entries(goal)) {
+    if (value !== undefined) {
+      goalData[key] = value;
+    }
+  }
+
+  const docRef = await addDoc(goalsRef, goalData);
 
   return {
     id: docRef.id,
@@ -50,8 +55,17 @@ export const updateSavingsGoal = async (
   updates: Partial<Pick<SavingsGoal, 'name' | 'targetAmount' | 'targetDate' | 'isActive'>>
 ): Promise<void> => {
   const goalRef = doc(db, `users/${userId}/savingsGoals/${goalId}`);
+
+  // Firestore does not accept undefined values. For optional fields that are
+  // explicitly cleared (i.e. set to undefined), use deleteField() so the field
+  // is removed from the document instead of sending an invalid undefined value.
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(updates)) {
+    sanitized[key] = value === undefined ? deleteField() : value;
+  }
+
   await updateDoc(goalRef, {
-    ...updates,
+    ...sanitized,
     updatedAt: Timestamp.now(),
   });
 };
