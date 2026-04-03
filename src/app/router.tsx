@@ -5,6 +5,7 @@ import { CycleDashboard, BufferManager, ManagePage, SpendingLogsPage, WishlistPa
 import { SettingsPage } from '../features/settings';
 import { EmergencyFundPage } from '../features/emergencyFund';
 import { SavingsGoalsPage } from '../features/savingsGoals';
+import { LoanPayoffPage } from '../features/loanPayoff';
 
 export const AppRouter = () => {
   return (
@@ -88,6 +89,14 @@ export const AppRouter = () => {
           element={
             <AuthGuard>
               <SubscriptionsPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path={ROUTES.LOAN_PAYOFF}
+          element={
+            <AuthGuard>
+              <LoanPayoffPage />
             </AuthGuard>
           }
         />
