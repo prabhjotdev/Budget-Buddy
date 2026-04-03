@@ -27,6 +27,9 @@ import emergencyFundReducer from '../features/emergencyFund/emergencyFundSlice';
 // Savings goals reducer
 import savingsGoalsReducer from '../features/savingsGoals/savingsGoalsSlice';
 
+// Loan payoff reducer
+import loanPayoffReducer from '../features/loanPayoff/loanPayoffSlice';
+
 export const store = configureStore({
   reducer: {
     // Legacy system
@@ -51,6 +54,7 @@ export const store = configureStore({
     variableObligations: variableObligationsReducer,
     emergencyFund: emergencyFundReducer,
     savingsGoals: savingsGoalsReducer,
+    loanPayoff: loanPayoffReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -104,6 +108,10 @@ export const store = configureStore({
           'savingsGoals/deposit/fulfilled',
           'savingsGoals/withdraw/fulfilled',
           'savingsGoals/fetchTransactions/fulfilled',
+          // Loan payoff actions with Timestamps
+          'loanPayoff/fetch/fulfilled',
+          'loanPayoff/create/fulfilled',
+          'loanPayoff/update/fulfilled',
         ],
         ignoredPaths: [
           'budgetPeriods.byId',
@@ -128,6 +136,8 @@ export const store = configureStore({
           // Savings goals paths with Timestamps
           'savingsGoals.goals',
           'savingsGoals.transactions',
+          // Loan payoff paths with Timestamps
+          'loanPayoff.loans',
         ],
       },
     }),

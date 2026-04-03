@@ -12,4 +12,5 @@ export const ROUTES = {
   MANAGE: '/manage',
   SUBSCRIPTIONS: '/subscriptions',
   SETTINGS: '/settings',
+  LOAN_PAYOFF: '/loan-payoff',
 } as const;

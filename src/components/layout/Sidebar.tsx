@@ -14,6 +14,7 @@ import {
   Target,
   Umbrella,
   RefreshCw,
+  Landmark,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -42,6 +43,7 @@ const navGroups = [
   {
     label: 'PLANNING',
     items: [
+      { to: ROUTES.LOAN_PAYOFF, icon: Landmark, label: 'Loan Payoff' },
       { to: ROUTES.WISHLIST, icon: Heart, label: 'Wishlist' },
       { to: ROUTES.HISTORY, icon: History, label: 'History' },
     ],
