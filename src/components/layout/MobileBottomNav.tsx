@@ -15,6 +15,7 @@ import {
   X,
   RefreshCw,
   Landmark,
+  Handshake,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAppDispatch } from '../../app/hooks';
@@ -31,6 +32,7 @@ const moreItems = [
   { to: ROUTES.CALENDAR, icon: CalendarDays, label: 'Bill Calendar' },
   { to: ROUTES.SUBSCRIPTIONS, icon: RefreshCw, label: 'Subscriptions' },
   { to: ROUTES.LOAN_PAYOFF, icon: Landmark, label: 'Loan Payoff' },
+  { to: ROUTES.DEBT_TRACKING, icon: Handshake, label: 'Debt Tracker' },
   { to: ROUTES.WISHLIST, icon: Heart, label: 'Wishlist' },
   { to: ROUTES.HISTORY, icon: History, label: 'History' },
   { to: ROUTES.BUFFER, icon: Umbrella, label: 'Buffer' },
