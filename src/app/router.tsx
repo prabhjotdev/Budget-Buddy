@@ -6,6 +6,7 @@ import { SettingsPage } from '../features/settings';
 import { EmergencyFundPage } from '../features/emergencyFund';
 import { SavingsGoalsPage } from '../features/savingsGoals';
 import { LoanPayoffPage } from '../features/loanPayoff';
+import { DebtTrackingPage } from '../features/debtTracking';
 
 export const AppRouter = () => {
   return (
@@ -97,6 +98,14 @@ export const AppRouter = () => {
           element={
             <AuthGuard>
               <LoanPayoffPage />
+            </AuthGuard>
+          }
+        />
+        <Route
+          path={ROUTES.DEBT_TRACKING}
+          element={
+            <AuthGuard>
+              <DebtTrackingPage />
             </AuthGuard>
           }
         />
