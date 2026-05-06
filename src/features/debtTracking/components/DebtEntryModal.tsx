@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { Modal, Input, CurrencyInput, Button } from '../../../components/shared';
 import { DebtEntry } from '../../../types/debtTracking';
+import { Lock } from 'lucide-react';
 
 interface DebtEntryModalProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ interface DebtEntryModalProps {
     'direction' | 'personName' | 'item' | 'description' | 'amount' | 'date'
   >;
   title?: string;
+  existingPersonNames?: string[];
+  lockedPersonName?: string;
 }
 
 export const DebtEntryModal = ({
@@ -28,6 +31,8 @@ export const DebtEntryModal = ({
   onSubmit,
   initialValues,
   title = 'Add Debt',
+  existingPersonNames = [],
+  lockedPersonName,
 }: DebtEntryModalProps) => {
   const [direction, setDirection] = useState<'i-owe' | 'they-owe'>('i-owe');
   const [personName, setPersonName] = useState('');
@@ -36,6 +41,8 @@ export const DebtEntryModal = ({
   const [amount, setAmount] = useState(0);
   const [date, setDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const comboboxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && initialValues) {
@@ -53,11 +60,15 @@ export const DebtEntryModal = ({
       setAmount(0);
       setDate(new Date().toISOString().split('T')[0]);
     }
+    setDropdownOpen(false);
   }, [isOpen, initialValues]);
+
+  const filteredNames = existingPersonNames.filter((n) =>
+    n.toLowerCase().includes(personName.toLowerCase())
+  );
 
   const handleSubmit = async () => {
     if (!personName.trim() || !item.trim() || amount <= 0 || !date) return;
-
     setSubmitting(true);
     try {
       await onSubmit({
@@ -76,6 +87,7 @@ export const DebtEntryModal = ({
   };
 
   const isValid = personName.trim() && item.trim() && amount > 0 && date;
+  const isLocked = !!lockedPersonName;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="lg">
@@ -111,12 +123,56 @@ export const DebtEntryModal = ({
           </div>
         </div>
 
-        <Input
-          label="Person's Name"
-          placeholder={direction === 'i-owe' ? 'Who do you owe?' : 'Who owes you?'}
-          value={personName}
-          onChange={(e) => setPersonName(e.target.value)}
-        />
+        {/* Person name — locked display or combobox */}
+        {isLocked ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Person's Name
+            </label>
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/50">
+              <Lock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {personName}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="relative"
+            ref={comboboxRef}
+            onFocus={() => setDropdownOpen(true)}
+            onBlur={(e) => {
+              if (!comboboxRef.current?.contains(e.relatedTarget as Node)) {
+                setDropdownOpen(false);
+              }
+            }}
+          >
+            <Input
+              label="Person's Name"
+              placeholder={direction === 'i-owe' ? 'Who do you owe?' : 'Who owes you?'}
+              value={personName}
+              onChange={(e) => setPersonName(e.target.value)}
+              autoComplete="off"
+            />
+            {dropdownOpen && filteredNames.length > 0 && (
+              <div className="absolute z-20 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
+                {filteredNames.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onMouseDown={() => {
+                      setPersonName(name);
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <Input
           label="Item"
@@ -139,7 +195,6 @@ export const DebtEntryModal = ({
             onChange={setAmount}
             placeholder="0.00"
           />
-
           <Input
             label="Date"
             type="date"

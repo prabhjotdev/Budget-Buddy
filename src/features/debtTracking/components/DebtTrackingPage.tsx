@@ -20,7 +20,9 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Check,
+  CheckCheck,
 } from 'lucide-react';
 
 const formatDate = (ts: Timestamp): string => {
@@ -29,6 +31,32 @@ const formatDate = (ts: Timestamp): string => {
     day: 'numeric',
     year: 'numeric',
   });
+};
+
+interface PersonGroup {
+  personName: string;
+  entries: DebtEntry[];
+  total: number;
+}
+
+const groupByPerson = (entries: DebtEntry[]): PersonGroup[] => {
+  const map = new Map<string, DebtEntry[]>();
+  for (const entry of entries) {
+    const list = map.get(entry.personName) ?? [];
+    list.push(entry);
+    map.set(entry.personName, list);
+  }
+  return Array.from(map.entries())
+    .map(([personName, grouped]) => ({
+      personName,
+      entries: [...grouped].sort((a, b) => b.date.seconds - a.date.seconds),
+      total: grouped.reduce((s, e) => s + e.amount, 0),
+    }))
+    .sort((a, b) => {
+      const aLatest = Math.max(...a.entries.map((e) => e.date.seconds));
+      const bLatest = Math.max(...b.entries.map((e) => e.date.seconds));
+      return bLatest - aLatest;
+    });
 };
 
 export const DebtTrackingPage = () => {
@@ -47,9 +75,13 @@ const DebtTrackingContent = () => {
   const [activeTab, setActiveTab] = useState<'i-owe' | 'they-owe'>('i-owe');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createDirection, setCreateDirection] = useState<'i-owe' | 'they-owe'>('i-owe');
+  const [prefillPersonName, setPrefillPersonName] = useState('');
+  const [lockPersonName, setLockPersonName] = useState(false);
   const [editEntry, setEditEntry] = useState<DebtEntry | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [markingAllPaidFor, setMarkingAllPaidFor] = useState<string | null>(null);
+  const [expandedPersons, setExpandedPersons] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -66,37 +98,56 @@ const DebtTrackingContent = () => {
     () => allEntries.filter((e) => e.direction === 'i-owe' && !e.isPaid),
     [allEntries]
   );
-
   const theyOweUnpaid = useMemo(
     () => allEntries.filter((e) => e.direction === 'they-owe' && !e.isPaid),
     [allEntries]
   );
-
   const iOwePaid = useMemo(
     () => allEntries.filter((e) => e.direction === 'i-owe' && e.isPaid),
     [allEntries]
   );
-
   const theyOwePaid = useMemo(
     () => allEntries.filter((e) => e.direction === 'they-owe' && e.isPaid),
     [allEntries]
   );
 
   const iOweTotal = useMemo(
-    () => iOweUnpaid.reduce((sum, e) => sum + e.amount, 0),
+    () => iOweUnpaid.reduce((s, e) => s + e.amount, 0),
     [iOweUnpaid]
   );
-
   const theyOweTotal = useMemo(
-    () => theyOweUnpaid.reduce((sum, e) => sum + e.amount, 0),
+    () => theyOweUnpaid.reduce((s, e) => s + e.amount, 0),
     [theyOweUnpaid]
   );
 
   const activeEntries = activeTab === 'i-owe' ? iOweUnpaid : theyOweUnpaid;
   const historyEntries = activeTab === 'i-owe' ? iOwePaid : theyOwePaid;
 
-  const handleOpenCreate = (direction: 'i-owe' | 'they-owe') => {
+  const activeGroups = useMemo(() => groupByPerson(activeEntries), [activeEntries]);
+  const historyGroups = useMemo(() => groupByPerson(historyEntries), [historyEntries]);
+
+  const allPersonNames = useMemo(() => {
+    const names = new Set(allEntries.map((e) => e.personName));
+    return Array.from(names).sort();
+  }, [allEntries]);
+
+  const togglePerson = (key: string) => {
+    setExpandedPersons((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const handleOpenCreate = (
+    direction: 'i-owe' | 'they-owe',
+    personName = '',
+    locked = false
+  ) => {
     setCreateDirection(direction);
+    setPrefillPersonName(personName);
+    setLockPersonName(locked);
     setCreateModalOpen(true);
   };
 
@@ -158,6 +209,22 @@ const DebtTrackingContent = () => {
     }
   };
 
+  const handleMarkAllPaid = async (personName: string, groupEntries: DebtEntry[]) => {
+    if (!user) return;
+    const unpaid = groupEntries.filter((e) => !e.isPaid);
+    if (unpaid.length === 0) return;
+    setMarkingAllPaidFor(personName);
+    try {
+      await Promise.all(
+        unpaid.map((e) =>
+          dispatch(markDebtPaid({ userId: user.uid, entryId: e.id, isPaid: true })).unwrap()
+        )
+      );
+    } finally {
+      setMarkingAllPaidFor(null);
+    }
+  };
+
   if (status === 'loading') {
     return (
       <div className="flex justify-center items-center py-12">
@@ -188,8 +255,6 @@ const DebtTrackingContent = () => {
             Add Debt
           </Button>
         </div>
-
-        {/* Totals */}
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3 text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">You Owe</p>
@@ -215,7 +280,10 @@ const DebtTrackingContent = () => {
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
         <button
-          onClick={() => { setActiveTab('i-owe'); setShowHistory(false); }}
+          onClick={() => {
+            setActiveTab('i-owe');
+            setShowHistory(false);
+          }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'i-owe'
               ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
@@ -230,7 +298,10 @@ const DebtTrackingContent = () => {
           )}
         </button>
         <button
-          onClick={() => { setActiveTab('they-owe'); setShowHistory(false); }}
+          onClick={() => {
+            setActiveTab('they-owe');
+            setShowHistory(false);
+          }}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'they-owe'
               ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
@@ -246,8 +317,8 @@ const DebtTrackingContent = () => {
         </button>
       </div>
 
-      {/* Active entries */}
-      {activeEntries.length === 0 ? (
+      {/* Active entries grouped by person */}
+      {activeGroups.length === 0 ? (
         <Card>
           <div className="text-center py-10">
             <Handshake className="w-14 h-14 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
@@ -270,21 +341,27 @@ const DebtTrackingContent = () => {
         </Card>
       ) : (
         <div className="space-y-3">
-          {activeEntries.map((entry) => (
-            <DebtEntryCard
-              key={entry.id}
-              entry={entry}
-              isToggling={togglingId === entry.id}
-              onTogglePaid={() => handleTogglePaid(entry)}
-              onEdit={() => setEditEntry(entry)}
-              onDelete={() => handleDelete(entry.id)}
+          {activeGroups.map((group) => (
+            <PersonGroupCard
+              key={group.personName}
+              group={group}
+              direction={activeTab}
+              isExpanded={expandedPersons.has(group.personName)}
+              onToggle={() => togglePerson(group.personName)}
+              onAddDebt={() => handleOpenCreate(activeTab, group.personName, true)}
+              onMarkAllPaid={() => handleMarkAllPaid(group.personName, group.entries)}
+              isMarkingAllPaid={markingAllPaidFor === group.personName}
+              onTogglePaid={handleTogglePaid}
+              onEdit={setEditEntry}
+              onDelete={handleDelete}
+              togglingId={togglingId}
             />
           ))}
         </div>
       )}
 
       {/* History section */}
-      {historyEntries.length > 0 && (
+      {historyGroups.length > 0 && (
         <div>
           <button
             onClick={() => setShowHistory(!showHistory)}
@@ -300,14 +377,19 @@ const DebtTrackingContent = () => {
 
           {showHistory && (
             <div className="space-y-3 mt-2">
-              {historyEntries.map((entry) => (
-                <DebtEntryCard
-                  key={entry.id}
-                  entry={entry}
-                  isToggling={togglingId === entry.id}
-                  onTogglePaid={() => handleTogglePaid(entry)}
-                  onEdit={() => setEditEntry(entry)}
-                  onDelete={() => handleDelete(entry.id)}
+              {historyGroups.map((group) => (
+                <PersonGroupCard
+                  key={group.personName}
+                  group={group}
+                  direction={activeTab}
+                  isExpanded={expandedPersons.has(`history:${group.personName}`)}
+                  onToggle={() => togglePerson(`history:${group.personName}`)}
+                  onAddDebt={() => handleOpenCreate(activeTab, group.personName, true)}
+                  isMarkingAllPaid={false}
+                  onTogglePaid={handleTogglePaid}
+                  onEdit={setEditEntry}
+                  onDelete={handleDelete}
+                  togglingId={togglingId}
                   isPaidView
                 />
               ))}
@@ -321,11 +403,13 @@ const DebtTrackingContent = () => {
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreate}
+        existingPersonNames={allPersonNames}
+        lockedPersonName={lockPersonName ? prefillPersonName : undefined}
         initialValues={
           createModalOpen
             ? {
                 direction: createDirection,
-                personName: '',
+                personName: prefillPersonName,
                 item: '',
                 amount: 0,
                 date: Timestamp.now(),
@@ -340,6 +424,7 @@ const DebtTrackingContent = () => {
           onClose={() => setEditEntry(null)}
           onSubmit={handleUpdate}
           title="Edit Debt"
+          existingPersonNames={allPersonNames}
           initialValues={{
             direction: editEntry.direction,
             personName: editEntry.personName,
@@ -354,8 +439,112 @@ const DebtTrackingContent = () => {
   );
 };
 
-interface DebtEntryCardProps {
+interface PersonGroupCardProps {
+  group: PersonGroup;
+  direction: 'i-owe' | 'they-owe';
+  isExpanded: boolean;
+  onToggle: () => void;
+  onAddDebt: () => void;
+  onMarkAllPaid?: () => void;
+  isMarkingAllPaid: boolean;
+  onTogglePaid: (entry: DebtEntry) => void;
+  onEdit: (entry: DebtEntry) => void;
+  onDelete: (id: string) => void;
+  togglingId: string | null;
+  isPaidView?: boolean;
+}
+
+const PersonGroupCard = ({
+  group,
+  direction,
+  isExpanded,
+  onToggle,
+  onAddDebt,
+  onMarkAllPaid,
+  isMarkingAllPaid,
+  onTogglePaid,
+  onEdit,
+  onDelete,
+  togglingId,
+  isPaidView = false,
+}: PersonGroupCardProps) => {
+  const amountColor = isPaidView
+    ? 'text-gray-400 dark:text-gray-500'
+    : direction === 'i-owe'
+    ? 'text-orange-600 dark:text-orange-400'
+    : 'text-green-600 dark:text-green-400';
+
+  return (
+    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-800">
+      {/* Person header row */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-800/80">
+        <button
+          onClick={onToggle}
+          className="flex-1 flex items-center gap-2 text-left min-w-0"
+        >
+          <ChevronRight
+            className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${
+              isExpanded ? 'rotate-90' : ''
+            }`}
+          />
+          <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {group.personName}
+          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+            {group.entries.length} {group.entries.length === 1 ? 'item' : 'items'}
+          </span>
+        </button>
+
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <span className={`font-bold text-sm mr-1 ${amountColor}`}>
+            {formatCurrency(group.total)}
+          </span>
+          {!isPaidView && onMarkAllPaid && (
+            <button
+              onClick={onMarkAllPaid}
+              disabled={isMarkingAllPaid}
+              title="Mark all paid"
+              className="p-1.5 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors disabled:opacity-40"
+            >
+              <CheckCheck className="w-4 h-4" />
+            </button>
+          )}
+          {!isPaidView && (
+            <button
+              onClick={onAddDebt}
+              title="Add debt for this person"
+              className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Debt rows (visible when expanded) */}
+      {isExpanded && (
+        <div className="divide-y divide-gray-100 dark:divide-gray-700/60">
+          {group.entries.map((entry) => (
+            <DebtItemRow
+              key={entry.id}
+              entry={entry}
+              direction={direction}
+              isToggling={togglingId === entry.id}
+              onTogglePaid={() => onTogglePaid(entry)}
+              onEdit={() => onEdit(entry)}
+              onDelete={() => onDelete(entry.id)}
+              isPaidView={isPaidView}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface DebtItemRowProps {
   entry: DebtEntry;
+  direction: 'i-owe' | 'they-owe';
   isToggling: boolean;
   onTogglePaid: () => void;
   onEdit: () => void;
@@ -363,97 +552,78 @@ interface DebtEntryCardProps {
   isPaidView?: boolean;
 }
 
-const DebtEntryCard = ({
+const DebtItemRow = ({
   entry,
+  direction,
   isToggling,
   onTogglePaid,
   onEdit,
   onDelete,
   isPaidView = false,
-}: DebtEntryCardProps) => {
+}: DebtItemRowProps) => {
   return (
-    <Card>
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Checkbox */}
-          <button
-            onClick={onTogglePaid}
-            disabled={isToggling}
-            className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-              entry.isPaid
-                ? 'bg-green-500 border-green-500 dark:bg-green-600 dark:border-green-600'
-                : 'border-gray-300 dark:border-gray-500 hover:border-indigo-400 dark:hover:border-indigo-500'
-            } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-            title={entry.isPaid ? 'Mark as unpaid' : 'Mark as paid'}
-          >
-            {entry.isPaid && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-          </button>
+    <div className="flex items-center gap-3 px-4 py-3">
+      <button
+        onClick={onTogglePaid}
+        disabled={isToggling}
+        className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+          entry.isPaid
+            ? 'bg-green-500 border-green-500 dark:bg-green-600 dark:border-green-600'
+            : 'border-gray-300 dark:border-gray-500 hover:border-indigo-400 dark:hover:border-indigo-500'
+        } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+        title={entry.isPaid ? 'Mark as unpaid' : 'Mark as paid'}
+      >
+        {entry.isPaid && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+      </button>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p
-                  className={`font-semibold text-gray-900 dark:text-gray-100 truncate ${
-                    isPaidView ? 'line-through text-gray-400 dark:text-gray-500' : ''
-                  }`}
-                >
-                  {entry.personName}
-                </p>
-                <p
-                  className={`text-sm truncate ${
-                    isPaidView
-                      ? 'text-gray-400 dark:text-gray-500 line-through'
-                      : 'text-gray-600 dark:text-gray-300'
-                  }`}
-                >
-                  {entry.item}
-                  <span className="mx-1.5 text-gray-300 dark:text-gray-600">·</span>
-                  <span className="text-gray-400 dark:text-gray-500">{formatDate(entry.date)}</span>
-                </p>
-                {entry.description && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-                    {entry.description}
-                  </p>
-                )}
-                {isPaidView && entry.paidDate && (
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
-                    Paid {formatDate(entry.paidDate)}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <span
-                  className={`font-bold text-base ${
-                    isPaidView
-                      ? 'text-gray-400 dark:text-gray-500 line-through'
-                      : entry.direction === 'i-owe'
-                      ? 'text-orange-600 dark:text-orange-400'
-                      : 'text-green-600 dark:text-green-400'
-                  }`}
-                >
-                  {formatCurrency(entry.amount)}
-                </span>
-                <button
-                  onClick={onEdit}
-                  className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                  title="Edit"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={onDelete}
-                  className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                  title="Delete"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-sm font-medium truncate ${
+            isPaidView
+              ? 'line-through text-gray-400 dark:text-gray-500'
+              : 'text-gray-900 dark:text-gray-100'
+          }`}
+        >
+          {entry.item}
+        </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
+          {formatDate(entry.date)}
+          {entry.description && <span> · {entry.description}</span>}
+        </p>
+        {isPaidView && entry.paidDate && (
+          <p className="text-xs text-green-600 dark:text-green-400">
+            Paid {formatDate(entry.paidDate)}
+          </p>
+        )}
       </div>
-    </Card>
+
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <span
+          className={`font-bold text-sm ${
+            isPaidView
+              ? 'text-gray-400 dark:text-gray-500 line-through'
+              : direction === 'i-owe'
+              ? 'text-orange-600 dark:text-orange-400'
+              : 'text-green-600 dark:text-green-400'
+          }`}
+        >
+          {formatCurrency(entry.amount)}
+        </span>
+        <button
+          onClick={onEdit}
+          className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          title="Edit"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          title="Delete"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
   );
 };
