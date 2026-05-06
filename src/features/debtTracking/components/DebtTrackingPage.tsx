@@ -10,6 +10,7 @@ import {
   markDebtPaid,
 } from '../debtTrackingSlice';
 import { DebtEntryModal } from './DebtEntryModal';
+import { SplitBillModal } from './SplitBillModal';
 import { formatCurrency } from '../../../utils';
 import { DebtEntry } from '../../../types/debtTracking';
 import { Timestamp } from 'firebase/firestore';
@@ -17,6 +18,7 @@ import {
   Handshake,
   Plus,
   Pencil,
+  Scissors,
   Trash2,
   ChevronDown,
   ChevronUp,
@@ -82,6 +84,7 @@ const DebtTrackingContent = () => {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [markingAllPaidFor, setMarkingAllPaidFor] = useState<string | null>(null);
   const [expandedPersons, setExpandedPersons] = useState<Set<string>>(new Set());
+  const [splitBillModalOpen, setSplitBillModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -162,6 +165,25 @@ const DebtTrackingContent = () => {
   }) => {
     if (!user) return;
     await dispatch(createDebtEntry({ userId: user.uid, entry })).unwrap();
+  };
+
+  const handleSplitBillSubmit = async (
+    entries: Array<{
+      direction: 'they-owe';
+      personName: string;
+      item: string;
+      description?: string;
+      amount: number;
+      date: Timestamp;
+      isPaid: false;
+    }>
+  ) => {
+    if (!user) return;
+    await Promise.all(
+      entries.map((entry) =>
+        dispatch(createDebtEntry({ userId: user.uid, entry })).unwrap()
+      )
+    );
   };
 
   const handleUpdate = async (entry: {
@@ -247,13 +269,23 @@ const DebtTrackingContent = () => {
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => handleOpenCreate(activeTab)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Debt
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setSplitBillModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <Scissors className="w-4 h-4" />
+              Split Bill
+            </Button>
+            <Button
+              onClick={() => handleOpenCreate(activeTab)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Debt
+            </Button>
+          </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="bg-white/60 dark:bg-gray-800/60 rounded-lg p-3 text-center">
@@ -399,6 +431,13 @@ const DebtTrackingContent = () => {
       )}
 
       {/* Modals */}
+      <SplitBillModal
+        isOpen={splitBillModalOpen}
+        onClose={() => setSplitBillModalOpen(false)}
+        onSubmit={handleSplitBillSubmit}
+        existingPersonNames={allPersonNames}
+      />
+
       <DebtEntryModal
         isOpen={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
