@@ -9,6 +9,7 @@ export interface Loan {
   monthlyPayment: number;
   interestRate: number; // Annual APR as percentage (e.g. 5.5 = 5.5%)
   payoffDate?: Timestamp;
+  lastPaymentDate?: Timestamp;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
