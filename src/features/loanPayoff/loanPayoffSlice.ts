@@ -96,9 +96,20 @@ export const applyDuePayments = createAsyncThunk(
           ? loan.lastPaymentDate.toDate()
           : loan.createdAt.toDate();
 
-        const monthsElapsed =
+        // Payment day of month is anchored to the loan's creation date (e.g. created on the 15th → due on the 15th each month)
+        const paymentDay = loan.createdAt.toDate().getDate();
+
+        const rawMonthsElapsed =
           (now.getFullYear() - lastPayment.getFullYear()) * 12 +
           (now.getMonth() - lastPayment.getMonth());
+
+        // Only count a month if today has reached or passed the payment day in that month
+        const nextDueDate = new Date(
+          lastPayment.getFullYear(),
+          lastPayment.getMonth() + rawMonthsElapsed,
+          paymentDay
+        );
+        const monthsElapsed = now >= nextDueDate ? rawMonthsElapsed : rawMonthsElapsed - 1;
 
         if (monthsElapsed <= 0) continue;
 
@@ -114,8 +125,9 @@ export const applyDuePayments = createAsyncThunk(
         balance = Math.round(balance * 100) / 100;
         if (balance === loan.remainingBalance) continue;
 
+        // Record the actual date of the last applied payment
         const newLastPaymentDate = Timestamp.fromDate(
-          new Date(lastPayment.getFullYear(), lastPayment.getMonth() + monthsElapsed, 1)
+          new Date(lastPayment.getFullYear(), lastPayment.getMonth() + monthsElapsed, paymentDay)
         );
 
         await loansService.updateLoan(userId, loan.id, {
