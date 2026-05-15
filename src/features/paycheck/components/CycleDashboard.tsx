@@ -343,54 +343,54 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
 
         </div>{/* end left column */}
 
-        {/* Right column — Bills This Cycle */}
-        <div id="bills-section">
+        {/* Right column — Bills This Cycle + More Actions */}
+        <div id="bills-section" className="space-y-6">
           <CycleBillsList bills={cycle.bills} />
+
+          {/* More Actions — compact, low-prominence; collapsible on mobile */}
+          <Card padding="none">
+            <details className="group" open>
+              <summary className="flex items-center gap-2 p-4 md:p-6 list-none cursor-pointer md:cursor-default select-none">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  More Actions
+                </h3>
+                <ChevronDown className="w-4 h-4 text-gray-400 md:hidden transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-4 md:px-6 pb-4 md:pb-6 flex flex-wrap gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
+                  onClick={() => setUseBufferOpen(true)}
+                  disabled={!buffer || buffer.totalAmount <= 0}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  Use Buffer
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
+                  onClick={() => setEditCycleOpen(true)}
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Edit Cycle
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
+                  onClick={() => setEndCycleOpen(true)}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  End Cycle
+                </Button>
+              </div>
+            </details>
+          </Card>
         </div>
 
       </div>{/* end 2-col grid */}
-
-      {/* More Actions — compact, low-prominence; collapsible on mobile */}
-      <Card padding="none">
-        <details className="group" open>
-          <summary className="flex items-center gap-2 p-4 md:p-6 list-none cursor-pointer md:cursor-default select-none">
-            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">
-              More Actions
-            </h3>
-            <ChevronDown className="w-4 h-4 text-gray-400 md:hidden transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="px-4 md:px-6 pb-4 md:pb-6 flex flex-wrap gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
-              onClick={() => setUseBufferOpen(true)}
-              disabled={!buffer || buffer.totalAmount <= 0}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              Use Buffer
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
-              onClick={() => setEditCycleOpen(true)}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Edit Cycle
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
-              onClick={() => setEndCycleOpen(true)}
-            >
-              <Calendar className="w-3.5 h-3.5" />
-              End Cycle
-            </Button>
-          </div>
-        </details>
-      </Card>
 
       {/* Log Spending Modal */}
       <LogSpendingModal
