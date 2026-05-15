@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { LoanPayoffState } from '../../types/loanPayoff';
-import type { Timestamp } from 'firebase/firestore';
+import type { LoanPayoffState, Loan } from '../../types/loanPayoff';
+import { Timestamp } from 'firebase/firestore';
 import * as loansService from '../../services/firebase/loans';
 
 const initialState: LoanPayoffState = {
@@ -82,6 +82,69 @@ export const updateLoan = createAsyncThunk(
   }
 );
 
+export const applyDuePayments = createAsyncThunk(
+  'loanPayoff/applyDuePayments',
+  async ({ userId, loans }: { userId: string; loans: Loan[] }, { rejectWithValue }) => {
+    try {
+      const now = new Date();
+      const updatedLoans: { loanId: string; remainingBalance: number; lastPaymentDate: Timestamp }[] = [];
+
+      for (const loan of loans) {
+        if (loan.remainingBalance <= 0) continue;
+
+        const lastPayment = loan.lastPaymentDate
+          ? loan.lastPaymentDate.toDate()
+          : loan.createdAt.toDate();
+
+        // Payment day of month is anchored to the loan's creation date (e.g. created on the 15th → due on the 15th each month)
+        const paymentDay = loan.createdAt.toDate().getDate();
+
+        const rawMonthsElapsed =
+          (now.getFullYear() - lastPayment.getFullYear()) * 12 +
+          (now.getMonth() - lastPayment.getMonth());
+
+        // Only count a month if today has reached or passed the payment day in that month
+        const nextDueDate = new Date(
+          lastPayment.getFullYear(),
+          lastPayment.getMonth() + rawMonthsElapsed,
+          paymentDay
+        );
+        const monthsElapsed = now >= nextDueDate ? rawMonthsElapsed : rawMonthsElapsed - 1;
+
+        if (monthsElapsed <= 0) continue;
+
+        const monthlyRate = loan.interestRate / 100 / 12;
+        let balance = loan.remainingBalance;
+
+        for (let i = 0; i < monthsElapsed; i++) {
+          if (balance <= 0) break;
+          const interest = balance * monthlyRate;
+          balance = Math.max(0, balance + interest - loan.monthlyPayment);
+        }
+
+        balance = Math.round(balance * 100) / 100;
+        if (balance === loan.remainingBalance) continue;
+
+        // Record the actual date of the last applied payment
+        const newLastPaymentDate = Timestamp.fromDate(
+          new Date(lastPayment.getFullYear(), lastPayment.getMonth() + monthsElapsed, paymentDay)
+        );
+
+        await loansService.updateLoan(userId, loan.id, {
+          remainingBalance: balance,
+          lastPaymentDate: newLastPaymentDate,
+        });
+
+        updatedLoans.push({ loanId: loan.id, remainingBalance: balance, lastPaymentDate: newLastPaymentDate });
+      }
+
+      return updatedLoans;
+    } catch (error) {
+      return rejectWithValue((error as Error).message);
+    }
+  }
+);
+
 export const deleteLoan = createAsyncThunk(
   'loanPayoff/delete',
   async (
@@ -140,6 +203,14 @@ const loanPayoffSlice = createSlice({
         const loanId = action.payload;
         delete state.loans.byId[loanId];
         state.loans.allIds = state.loans.allIds.filter((id) => id !== loanId);
+      })
+      .addCase(applyDuePayments.fulfilled, (state, action) => {
+        for (const { loanId, remainingBalance, lastPaymentDate } of action.payload) {
+          if (state.loans.byId[loanId]) {
+            state.loans.byId[loanId].remainingBalance = remainingBalance;
+            state.loans.byId[loanId].lastPaymentDate = lastPaymentDate;
+          }
+        }
       });
   },
 });

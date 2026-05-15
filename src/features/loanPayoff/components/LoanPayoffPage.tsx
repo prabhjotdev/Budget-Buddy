@@ -8,6 +8,7 @@ import {
   createLoan,
   updateLoan,
   deleteLoan,
+  applyDuePayments,
 } from '../loanPayoffSlice';
 import { calculateSnowball, LoanInput } from '../snowballCalculator';
 import { LoanFormModal } from './LoanFormModal';
@@ -56,7 +57,11 @@ const LoanPayoffContent = () => {
 
   useEffect(() => {
     if (user) {
-      dispatch(fetchLoans(user.uid));
+      dispatch(fetchLoans(user.uid)).then((action) => {
+        if (fetchLoans.fulfilled.match(action)) {
+          dispatch(applyDuePayments({ userId: user.uid, loans: action.payload }));
+        }
+      });
     }
   }, [dispatch, user]);
 
