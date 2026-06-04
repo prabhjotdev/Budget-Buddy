@@ -1,0 +1,407 @@
+# Plan: Rebuild Budget Buddy as a Modular, Multi-User Household Finance App
+
+## Context
+
+The current Budget Buddy works, but its architecture makes change and testing hard, and it
+is fundamentally single-user. We want a **new app, built from scratch** (not a fork) that:
+
+1. Supports **multi-user households** — I create a household and **invite** others to join it.
+2. Is **loosely coupled, modular, and unit-testable in isolation** from Firebase.
+
+The current codebase taught us exactly what to avoid (all citations are from the *old* app):
+
+- **Infrastructure welded into the data layer.** Every service imports the Firestore `db`
+  singleton directly (`src/services/firebase/config.ts:17`, `loans.ts:13`) and hardcodes the
+  path `users/{userId}/...` in 21 of 23 service files (`loans.ts:17`, `buffer.ts:17`,
+  `paycheckCycles.ts:18`). The single-user assumption is impossible to remove without rewriting
+  everything. **No repository/port interfaces exist** (grep for `interface.*Repository` = 0).
+- **Business logic scattered across every layer.** Loan interest/payment math runs *inside* a
+  Redux thunk interleaved with Firestore writes (`loanPayoffSlice.ts:85-146`); cycle
+  spending-limit math lives in services (`paycheckCycles.ts:185-187`); rollover is pure in utils
+  (`rollover.ts` — the good pattern); paycheck counting is inside a component
+  (`SavingsGoalsPage.tsx:44-99`). Only `snowballCalculator.ts`, `rollover.ts`, `currency.ts` are
+  cleanly pure.
+- **Orchestration lives in UI components.** The worst coupling: `EndCycleModal.tsx:90-181`
+  imports and dispatches into **three other features' slices** (buffer, emergencyFund,
+  savingsGoals) to split one savings deposit, and `paycheckCyclesSlice` / `billsSlice` listen to
+  each other's actions (`paycheckCyclesSlice.ts:337-398`). Features reach into each other's
+  internals instead of going through a public API.
+- **A 21-reducer god-store** with 54 ignored non-serializable actions (`store.ts:36-62, 103-123`)
+  because raw Firestore `Timestamp`s flow into Redux.
+- **Zero tests and no test infrastructure** (`package.json` has no runner) — partly *because* the
+  entanglement above makes isolated testing impractical.
+
+### Decisions (confirmed with user)
+- **Backend:** stay on **Firebase/Firestore + Firebase Auth**, but behind repository interfaces.
+- **State:** **TanStack Query** for server state + a small **Zustand** store for UI state (replace Redux).
+- **Deliverable:** the full layered architecture **plus one end-to-end vertical slice**
+  (households + invites + loans) as the reference pattern to copy for every other domain.
+
+---
+
+## Architecture: Ports & Adapters (Hexagonal), 5 layers
+
+Dependencies point **inward only**. Domain knows nothing about React, Firebase, or TanStack Query.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ UI (React)           components, hooks, pages — per feature   │  depends on ↓
+├─────────────────────────────────────────────────────────────┤
+│ Application          use-cases (orchestration), TanStack      │  depends on ↓
+│                      Query hooks that call use-cases          │
+├─────────────────────────────────────────────────────────────┤
+│ Ports                repository INTERFACES + domain-service   │  (pure types)
+│                      interfaces — the contracts               │
+├─────────────────────────────────────────────────────────────┤
+│ Domain               entities + pure functions (zero I/O)     │  (no deps)
+└─────────────────────────────────────────────────────────────┘
+            ▲
+            │ implemented by
+┌─────────────────────────────────────────────────────────────┐
+│ Adapters             FirestoreLoanRepository, etc. +          │
+│                      InMemoryLoanRepository (test fake)       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Rule of thumb mapping each finance concept:
+- **Domain (pure):** `Loan`, `Cycle`, `Money`; functions like `applyMonthlyPayments(loan, asOf)`,
+  `computeSpendingLimit(cycle)`, `splitSavingsDeposit(amount, plan)`, `calculateSnowball(...)`.
+  Reuse the *shape* of the existing pure files: `rollover.ts`, `snowballCalculator.ts`,
+  `currency.ts` — these become the template for ALL domain logic.
+- **Ports:** `LoanRepository`, `HouseholdRepository`, `InviteRepository`, `MembershipRepository`,
+  `Clock` (so "now" is injectable — fixes the untestable `isDateInCurrentMonth` problem).
+- **Application:** use-cases like `inviteMember`, `acceptInvite`, `applyDueLoanPayments`,
+  `endCycle` (this is where the old `EndCycleModal` orchestration moves to).
+- **Adapters:** Firestore implementations of each port + in-memory fakes for tests.
+- **UI:** dumb components + TanStack Query hooks that call use-cases.
+
+---
+
+## Folder structure (feature/domain-oriented, enforced public APIs)
+
+```
+src/
+  domain/                      # PURE. No imports from infra/ui/firebase.
+    money.ts                   # Money value object (integer cents — no float bugs)
+    loan/loan.ts               # Loan entity + pure ops (amortization, payments)
+    cycle/cycle.ts             # spending-limit, savings-split pure functions
+    household/household.ts     # membership rules, invite state machine
+  ports/                       # Interfaces only (no implementations)
+    LoanRepository.ts
+    HouseholdRepository.ts
+    InviteRepository.ts
+    Clock.ts
+  application/                 # Use-cases. Depend on ports, never on adapters.
+    loans/applyDueLoanPayments.ts
+    household/inviteMember.ts
+    household/acceptInvite.ts
+    cycle/endCycle.ts
+  adapters/
+    firestore/
+      collectionRefs.ts        # THE single place household scoping lives
+      FirestoreLoanRepository.ts
+      FirestoreHouseholdRepository.ts
+      mappers/                 # Firestore <-> domain (Timestamp <-> Date) lives ONLY here
+    inmemory/                  # test fakes implementing the same ports
+      InMemoryLoanRepository.ts
+  app/
+    container.ts               # composition root: builds repos + use-cases
+    AppProviders.tsx           # React context + TanStack QueryClient
+    queryKeys.ts
+  features/                    # UI only, one folder per domain
+    loans/
+      hooks/useLoans.ts        # TanStack Query wrappers around use-cases
+      components/...
+      index.ts                 # PUBLIC API barrel — the only thing others may import
+    household/
+  shared/ui/                   # dumb presentational components (Button, etc.)
+```
+
+**Anti-coupling rule (enforced by ESLint `eslint-plugin-boundaries` + `no-restricted-imports`):**
+- `domain/**` may not import from `adapters`, `features`, `firebase`, `react`, `@tanstack/*`.
+- `application/**` may import `domain` + `ports` only — never `adapters/firestore` directly.
+- `features/<a>` may not deep-import `features/<b>/...`; only `features/<b>` (the barrel).
+- Only `adapters/firestore/**` and `app/container.ts` may import `firebase/*`.
+- **CI guard:** a grep step fails the build if `firebase` is imported outside those two locations —
+  the explicit antidote to today's 21-of-23-files leakage.
+
+This is what makes the `EndCycleModal` class of problem structurally impossible: a feature can't
+reach into another feature's internals, and orchestration is forced down into a use-case.
+
+---
+
+## Ports & adapters: the key interfaces
+
+### Centralize household scoping in ONE place
+The single worst thing in the old app was `users/${userId}/...` smeared across 21 files. Replace
+with one ref factory; no other file ever writes a collection path.
+
+```ts
+// adapters/firestore/collectionRefs.ts
+export const refs = (db: Firestore, householdId: string) => ({
+  loans:       collection(db, `households/${householdId}/loans`),
+  cycles:      collection(db, `households/${householdId}/cycles`),
+  members:     collection(db, `households/${householdId}/members`),
+  // ...one entry per domain. Change scoping model in 1 file, not 21.
+});
+// invites are top-level (looked up by code before you're a member):
+export const inviteRef = (db: Firestore, code: string) => doc(db, `invites/${code}`);
+```
+
+### Port interface (contract the domain/app depend on)
+```ts
+// ports/LoanRepository.ts
+export interface LoanRepository {
+  list(): Promise<Loan[]>;
+  get(id: string): Promise<Loan | null>;
+  create(loan: NewLoan): Promise<Loan>;
+  update(id: string, patch: Partial<Loan>): Promise<void>;
+  remove(id: string): Promise<void>;
+}
+```
+The repository is **already scoped to a household** (the householdId was bound when it was
+constructed in the container), so use-cases and UI never pass paths or scope around.
+
+### A generic Firestore base — write CRUD once, not per file
+The old app re-implemented list/get/create/update/delete in all 23 services. Write it once in a
+base class; a concrete adapter becomes ~10 lines and only supplies its collection name + mapping.
+```ts
+// adapters/firestore/FirestoreRepository.ts
+export abstract class FirestoreRepository<T extends { id: string }> implements Repository<T> {
+  constructor(protected db: Firestore, protected householdId: string,
+              private collectionName: string, protected clock: Clock) {}
+  protected col() { return refs(this.db, this.householdId)[this.collectionName]; }
+  async list() { return (await getDocs(this.col())).docs.map(d => this.fromDoc(d.id, d.data())); }
+  async create(e) { const ref = await addDoc(this.col(), this.toDoc(e, this.clock.now())); return { ...e, id: ref.id }; }
+  // get/update/delete written ONCE here
+  protected abstract toDoc(e: Partial<T>, now: number): Record<string, unknown>; // Date -> Timestamp
+  protected abstract fromDoc(id: string, data: unknown): T;                       // Timestamp -> Date
+}
+
+export class FirestoreLoanRepository extends FirestoreRepository<Loan> implements LoanRepository {
+  constructor(db, hid, clock) { super(db, hid, 'loans', clock); }
+  // only the loan-specific mapping + findActive live here
+}
+```
+Because `Timestamp` conversion happens ONLY in `toDoc`/`fromDoc`, the rest of the app uses plain
+`Date`/numbers — this kills the 54-entry "ignore non-serializable" list from the old `store.ts`,
+and removes the `Timestamp` import that currently leaks into the type layer (`paycheck-models.ts:1`).
+
+### Atomic multi-document writes: a `UnitOfWork` port
+The end-cycle savings split writes to 4 docs and must be all-or-nothing. Don't leak `writeBatch`
+into use-cases — add a `UnitOfWork` port. The Firestore adapter implements it with
+`runTransaction`/`writeBatch`; the in-memory fake applies sequentially. Use-case code is unchanged
+between prod and test.
+
+### Money as integer cents
+Store money as integer cents in the domain (`domain/money.ts`), formatting only at the UI edge
+(reuse the existing pure `currency.ts`). Avoids floating-point drift in amortization/splits.
+
+### In-memory fake for tests — same port, no Firebase
+```ts
+// adapters/inmemory/InMemoryLoanRepository.ts
+export class InMemoryLoanRepository implements LoanRepository {
+  constructor(private rows: Loan[] = []) {}
+  async list() { return [...this.rows]; }
+  async update(id, patch) { /* mutate this.rows */ }
+  // ...
+}
+```
+
+---
+
+## Dependency injection (lightweight, no framework)
+
+A **composition root** builds the concrete adapters + use-cases once, and a React context exposes
+them. Domain/UI never `import { db }`.
+
+```ts
+// app/container.ts
+export function createContainer(db: Firestore, householdId: string, clock: Clock = systemClock) {
+  const loans = new FirestoreLoanRepository(db, householdId);
+  const households = new FirestoreHouseholdRepository(db);
+  return {
+    repos: { loans, households },
+    useCases: {
+      applyDueLoanPayments: () => applyDueLoanPayments({ loans, clock }),
+      inviteMember: (input) => inviteMember({ households, clock }, input),
+      acceptInvite: (input) => acceptInvite({ households }, input),
+    },
+  };
+}
+export type Container = ReturnType<typeof createContainer>;
+```
+```tsx
+// app/AppProviders.tsx
+const ContainerCtx = createContext<Container>(null!);
+export const useContainer = () => useContext(ContainerCtx);
+// On login + active household selection, build the container and provide it.
+```
+Tests build a container from in-memory fakes + a fixed `Clock` — no provider, no mocks.
+
+---
+
+## Pure domain logic + cross-feature orchestration (the EndCycle fix)
+
+Domain functions are pure and tested with zero mocking:
+```ts
+// domain/loan/loan.ts
+export function applyMonthlyPayments(loan: Loan, asOf: Date): Loan { /* old loanPayoffSlice math, pure */ }
+// domain/cycle/cycle.ts
+export function computeSpendingLimit(c: CycleInputs): number { /* old paycheckCycles math, pure */ }
+export function splitSavingsDeposit(amount: number, plan: SavingsPlan): SavingsSplit { /* buffer/EF/goals */ }
+```
+
+The old `EndCycleModal` reached into 3 features. Now **one use-case** orchestrates by depending on
+the relevant **ports**, not on other features' UI/state:
+```ts
+// application/cycle/endCycle.ts
+export async function endCycle(deps: {
+  cycles: CycleRepository; buffer: BufferRepository;
+  emergencyFund: EmergencyFundRepository; goals: SavingsGoalRepository; clock: Clock;
+}, input: EndCycleInput) {
+  const split = splitSavingsDeposit(input.amount, input.plan);   // pure domain
+  await deps.buffer.deposit(split.buffer);
+  await deps.emergencyFund.deposit(split.emergencyFund);
+  for (const g of split.goals) await deps.goals.deposit(g.goalId, g.amount);
+  await deps.cycles.complete(input.cycleId, split);
+}
+```
+The UI calls one use-case; the split rule is unit-tested in isolation; no feature imports another
+feature. Multi-step writes that must be atomic use a Firestore `writeBatch`/transaction *inside the
+adapter*, or (optionally) a Cloud Function later — the use-case signature doesn't change.
+
+---
+
+## Multi-user household + invite model
+
+### Data model
+```
+households/{householdId}                   { name, ownerUid, createdAt }
+households/{householdId}/members/{uid}     { uid, role: 'owner'|'admin'|'member', joinedAt }
+households/{householdId}/loans/{...}       # all finance domains nest here
+households/{householdId}/invites/{id}      { email, role, token, status, expiresAt, createdBy }
+inviteTokens/{token}                       { householdId, inviteId }   # cross-household lookup for accept
+users/{uid}/memberships/{householdId}      { role }                    # reverse index: list my households + O(1) rule check
+```
+Three role tiers (`owner > admin > member`) so the partner you marry can be `admin` (full
+finances) while, say, a teen could later be `member` (limited). Invite is a small **state machine**
+in the domain: `pending -> accepted | revoked | expired`. The `inviteTokens/{token}` doc lets an
+invitee resolve a token *before* they have read access to the household; the
+`users/{uid}/memberships` mirror lets security rules check membership in one `exists()` call.
+
+**Membership writes are guarded by a Cloud Function** (server-trusted) on create-household and
+accept-invite, so a client can never forge itself into a household by writing a membership doc.
+
+### Invite/accept flow (use-cases)
+- `inviteMember`: owner/member creates `invites/{code}` (random code), status `pending`,
+  `expiresAt = now + 7d` (now from injected `Clock`).
+- `acceptInvite`: signed-in user reads `invites/{code}`, validates not expired/revoked, writes
+  `members/{uid}`, appends `householdId` to `users/{uid}.householdIds`, marks invite `accepted`.
+  Wrapped in a Firestore transaction in the adapter.
+
+### Security rules (contrast with old `request.auth.uid == userId`)
+The old rule (`firestore.rules:7`) only ever allowed a user to touch their own subtree. New rules
+check **membership**:
+```
+function isMember(hid) {
+  return exists(/databases/$(database)/documents/households/$(hid)/members/$(request.auth.uid));
+}
+match /households/{hid}/{document=**} {
+  allow read, write: if request.auth != null && isMember(hid);
+}
+match /invites/{code} {
+  allow get: if request.auth != null;                 // accept by code
+  allow create: if request.auth != null && isMember(request.resource.data.householdId);
+}
+```
+
+---
+
+## State management: TanStack Query + Zustand
+
+- **TanStack Query** owns all server state. Query/mutation functions call **use-cases / repos** (not
+  Firestore directly), so the data layer stays swappable and testable.
+  ```ts
+  // features/loans/hooks/useLoans.ts
+  export function useLoans() {
+    const { repos } = useContainer();
+    return useQuery({ queryKey: ['loans', hid], queryFn: () => repos.loans.list() });
+  }
+  export function useApplyDuePayments() {
+    const { useCases } = useContainer();
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: () => useCases.applyDueLoanPayments(),
+      onSuccess: () => qc.invalidateQueries({ queryKey: ['loans'] }),
+    });
+  }
+  ```
+- **Zustand** (or React context) for pure UI state (open modals, active household id, filters).
+  No business data — replaces the 21-reducer store and the cross-slice listeners entirely.
+- Real-time: where the old app used `onSnapshot`, expose it as a repository
+  `subscribe(cb)` method and bridge into the Query cache with `setQueryData`. Subscription stays
+  in the adapter.
+
+---
+
+## First vertical slice (the reference implementation to copy)
+
+Build these end-to-end through every layer, with tests, as the pattern for all other domains:
+1. **Household + membership + invite**: `domain/household`, `ports/HouseholdRepository` +
+   `InviteRepository`, Firestore + in-memory adapters, use-cases `inviteMember`/`acceptInvite`,
+   security rules, UI: create household, invite-by-link, accept screen, household switcher.
+2. **Loans** (simplest finance domain, has rich pure math already): `domain/loan` (port the
+   amortization/`applyMonthlyPayments` math out of the old `loanPayoffSlice.ts:85-146` and the
+   existing pure `snowballCalculator.ts`), `LoanRepository` (Firestore + in-memory), use-case
+   `applyDueLoanPayments`, `useLoans`/`useApplyDuePayments` hooks, loan list + form UI.
+
+Everything else (income, cycles, bills, variable obligations, spending, savings goals, emergency
+fund, buffer, debt) follows the **identical five-layer shape**.
+
+---
+
+## Critical files to create
+
+| Layer | Representative file(s) |
+|---|---|
+| Domain (pure) | `src/domain/money.ts`, `src/domain/loan/loan.ts`, `src/domain/household/household.ts`, `src/domain/cycle/cycle.ts` |
+| Ports | `src/ports/LoanRepository.ts`, `HouseholdRepository.ts`, `InviteRepository.ts`, `Clock.ts` |
+| Application | `src/application/loans/applyDueLoanPayments.ts`, `application/household/inviteMember.ts`, `acceptInvite.ts`, `application/cycle/endCycle.ts` |
+| Adapters | `src/adapters/firestore/collectionRefs.ts`, `FirestoreLoanRepository.ts`, `mappers/loan.ts`, `src/adapters/inmemory/InMemoryLoanRepository.ts` |
+| DI/UI | `src/app/container.ts`, `src/app/AppProviders.tsx`, `src/features/loans/hooks/useLoans.ts` |
+| Rules | `firestore.rules` (membership-based) |
+| Config | `package.json` (+ vitest, @testing-library, firebase emulator), `vitest.config.ts`, ESLint `no-restricted-imports` boundary rules |
+
+---
+
+## Testing strategy
+
+| Layer | Tooling | What / how |
+|---|---|---|
+| Domain | **vitest**, no mocks | Pure functions with fixed inputs. e.g. `applyMonthlyPayments`, `splitSavingsDeposit`, invite state machine. Fast, deterministic (inject `Clock`). |
+| Application (use-cases) | vitest + **in-memory fake repos** | Construct use-case with `InMemoryLoanRepository` + fixed clock; assert behavior with zero Firebase. |
+| Adapters | vitest + **Firebase emulator suite** | Thin integration tests: write/read round-trips + security-rule tests (member can read, non-member denied). |
+| UI | **@testing-library/react** | Render component with a test container (in-memory repos) via `AppProviders`; assert rendered state and that the right use-case ran. |
+
+Example use-case test (the payoff of the whole design — no mocking framework):
+```ts
+test('applyDueLoanPayments reduces balance by elapsed months', async () => {
+  const loans = new InMemoryLoanRepository([loanFixture({ remainingBalance: 1000, monthlyPayment: 100 })]);
+  const clock = fixedClock('2026-03-01');
+  await applyDueLoanPayments({ loans, clock });
+  expect((await loans.list())[0].remainingBalance).toBeLessThan(1000);
+});
+```
+Add `"test": "vitest"` and `"test:emulator": "firebase emulators:exec 'vitest run adapters'"` to
+`package.json` scripts.
+
+## Verification (end-to-end, once the slice is built)
+1. `npm run test` — domain + application + UI tests pass with no Firebase running.
+2. `npm run test:emulator` — adapter + rules tests pass against the emulator (member allowed,
+   non-member denied).
+3. `npm run lint` — ESLint boundary rules report **no** illegal cross-layer/cross-feature imports.
+4. Manual: log in as user A, create a household, generate an invite link; accept as user B; confirm
+   B sees A's loans and both can add/edit; confirm a third non-member user is denied by rules.
+5. Confirm a renamed savings goal / payment method updates everywhere (no denormalized name
+   staleness, because names are resolved via repositories/queries, not copied into documents).
