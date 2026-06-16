@@ -3,7 +3,7 @@ import { Plus, Trash2, Edit, DollarSign } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createIncomeSource, deleteIncomeSource, updateIncomeSource } from '../incomeSourcesSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, Input, CurrencyInput, Select, EmptyState, IconButton, Modal, Badge } from '../../../components/shared';
+import { Card, CardHeader, Button, Input, CurrencyInput, Select, EmptyState, IconButton, Modal, Badge, ConfirmDialog } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 
 export const IncomePage = () => {
@@ -18,6 +18,7 @@ export const IncomePage = () => {
   const [frequency, setFrequency] = useState<'per-period' | 'monthly' | 'variable'>('per-period');
   const [assignToPeriod, setAssignToPeriod] = useState<1 | 15 | 'both'>('both');
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleOpenModal = (sourceId?: string) => {
     if (sourceId) {
@@ -66,11 +67,10 @@ export const IncomePage = () => {
     }
   };
 
-  const handleDelete = async (sourceId: string) => {
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this income source?')) {
-      dispatch(deleteIncomeSource({ userId: user.uid, sourceId }));
-    }
+  const handleConfirmDelete = () => {
+    if (!user || !deleteId) return;
+    dispatch(deleteIncomeSource({ userId: user.uid, sourceId: deleteId }));
+    setDeleteId(null);
   };
 
   const getFrequencyLabel = (freq: string) => {
@@ -125,7 +125,7 @@ export const IncomePage = () => {
                           icon={Trash2}
                           variant="danger"
                           size="sm"
-                          onClick={() => handleDelete(sourceId)}
+                          onClick={() => setDeleteId(sourceId)}
                         />
                       </div>
                     }
@@ -200,6 +200,16 @@ export const IncomePage = () => {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Income Source"
+        message={deleteId ? `Delete "${byId[deleteId]?.name}"?` : 'Delete this income source?'}
+        description="This action cannot be undone."
+        confirmLabel="Delete Source"
+      />
     </AppLayout>
   );
 };

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
-import { Card, Button, Spinner, CurrencyInput } from '../../../components/shared';
+import { Card, Button, Spinner, CurrencyInput, ConfirmDialog } from '../../../components/shared';
 import {
   fetchLoans,
   createLoan,
@@ -54,6 +54,7 @@ const LoanPayoffContent = () => {
   const [editLoan, setEditLoan] = useState<Loan | null>(null);
   const [extraPayment, setExtraPayment] = useState(0);
   const [showSimulation, setShowSimulation] = useState(false);
+  const [deleteLoanId, setDeleteLoanId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -120,11 +121,10 @@ const LoanPayoffContent = () => {
     ).unwrap();
   };
 
-  const handleDeleteLoan = async (loanId: string) => {
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this loan?')) {
-      await dispatch(deleteLoan({ userId: user.uid, loanId })).unwrap();
-    }
+  const handleConfirmDeleteLoan = async () => {
+    if (!user || !deleteLoanId) return;
+    await dispatch(deleteLoan({ userId: user.uid, loanId: deleteLoanId })).unwrap();
+    setDeleteLoanId(null);
   };
 
   if (status === 'loading') {
@@ -212,7 +212,7 @@ const LoanPayoffContent = () => {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteLoan(loan.id)}
+                        onClick={() => setDeleteLoanId(loan.id)}
                         className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Delete loan"
                       >
@@ -479,6 +479,20 @@ const LoanPayoffContent = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleteLoanId !== null}
+        onClose={() => setDeleteLoanId(null)}
+        onConfirm={handleConfirmDeleteLoan}
+        title="Delete Loan"
+        message={
+          deleteLoanId
+            ? `Delete "${loans.byId[deleteLoanId]?.name}"?`
+            : 'Delete this loan?'
+        }
+        description="This action cannot be undone."
+        confirmLabel="Delete Loan"
+      />
     </div>
   );
 };

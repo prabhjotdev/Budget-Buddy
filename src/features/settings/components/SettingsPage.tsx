@@ -6,7 +6,7 @@ import { clearPaycheckCycles } from '../../paycheck/paycheckCyclesSlice';
 import { clearBuffer } from '../../paycheck/bufferSlice';
 import { clearEmergencyFund } from '../../emergencyFund/emergencyFundSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, Input, Select, Modal } from '../../../components/shared';
+import { Card, CardHeader, Button, Input, Select, Modal, ConfirmDialog } from '../../../components/shared';
 import { PaycheckSetup } from '../../paycheck/components';
 import { resetAllData } from '../../../services/firebase/dataReset';
 import { exportAllData, importAllData, downloadDataAsJson, readJsonFile } from '../../../services/firebase/dataExportImport';
@@ -72,6 +72,7 @@ export const SettingsPage = () => {
 
   // Export/Import state
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -165,7 +166,7 @@ export const SettingsPage = () => {
       downloadDataAsJson(data);
     } catch (error) {
       console.error('Failed to export data:', error);
-      alert('Failed to export data. Please try again.');
+      setExportError(true);
     } finally {
       setIsExporting(false);
     }
@@ -542,6 +543,18 @@ export const SettingsPage = () => {
           )}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={exportError}
+        onClose={() => setExportError(false)}
+        onConfirm={() => setExportError(false)}
+        title="Export Failed"
+        message="Failed to export data."
+        description="Please try again."
+        variant="primary"
+        confirmLabel="OK"
+        hideCancel
+      />
     </AppLayout>
   );
 };

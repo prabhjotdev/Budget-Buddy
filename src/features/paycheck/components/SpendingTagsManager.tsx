@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Tag, AlertTriangle, Sparkles } from 'lucide-react';
+import { Plus, Pencil, Trash2, Tag, Sparkles } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import {
   createSpendingTag,
@@ -7,7 +7,7 @@ import {
   deleteSpendingTag,
   createDefaultSpendingTags,
 } from '../spendingTagsSlice';
-import { Card, CardHeader, Button, Input, Modal } from '../../../components/shared';
+import { Card, CardHeader, Button, Input, Modal, ConfirmDialog } from '../../../components/shared';
 import { SpendingTag } from '../../../types';
 
 export const SpendingTagsManager = () => {
@@ -242,37 +242,16 @@ export const SpendingTagsManager = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDialog
         isOpen={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
         title="Delete Tag"
-        size="sm"
-      >
-        <div className="space-y-4">
-          {tagToDelete && (
-            <>
-              <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/30 rounded-lg">
-                <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
-                <p className="text-sm text-red-700 dark:text-red-300">
-                  Are you sure you want to delete the tag <strong>{tagToDelete.name}</strong>?
-                </p>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleConfirmDelete}
-                  isLoading={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </Modal>
+        message={tagToDelete ? `Delete the tag "${tagToDelete.name}"?` : 'Delete this tag?'}
+        description="This action cannot be undone."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
     </>
   );
 };

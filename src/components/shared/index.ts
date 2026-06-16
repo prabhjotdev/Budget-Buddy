@@ -2,6 +2,7 @@ export { Button } from './Button';
 export { Input } from './Input';
 export { Select } from './Select';
 export { Modal } from './Modal';
+export { ConfirmDialog } from './ConfirmDialog';
 export { Card, CardHeader } from './Card';
 export { ProgressBar } from './ProgressBar';
 export { Badge } from './Badge';

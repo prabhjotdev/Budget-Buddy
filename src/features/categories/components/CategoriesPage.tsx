@@ -3,7 +3,7 @@ import { Plus, Trash2, Edit, Tag } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createCategory, deleteCategory, updateCategory } from '../categoriesSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, Button, Input, EmptyState, IconButton, Modal, Select } from '../../../components/shared';
+import { Card, Button, Input, EmptyState, IconButton, Modal, Select, ConfirmDialog } from '../../../components/shared';
 import { CATEGORY_COLORS, CATEGORY_ICONS } from '../../../constants';
 
 export const CategoriesPage = () => {
@@ -17,6 +17,7 @@ export const CategoriesPage = () => {
   const [icon, setIcon] = useState<string>(CATEGORY_ICONS[0]);
   const [color, setColor] = useState<string>(CATEGORY_COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleOpenModal = (categoryId?: string) => {
     if (categoryId) {
@@ -70,11 +71,10 @@ export const CategoriesPage = () => {
     }
   };
 
-  const handleDelete = async (categoryId: string) => {
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this category?')) {
-      dispatch(deleteCategory({ userId: user.uid, categoryId }));
-    }
+  const handleConfirmDelete = () => {
+    if (!user || !deleteId) return;
+    dispatch(deleteCategory({ userId: user.uid, categoryId: deleteId }));
+    setDeleteId(null);
   };
 
   return (
@@ -124,7 +124,7 @@ export const CategoriesPage = () => {
                         icon={Trash2}
                         variant="danger"
                         size="sm"
-                        onClick={() => handleDelete(categoryId)}
+                        onClick={() => setDeleteId(categoryId)}
                       />
                     </div>
                   </div>
@@ -181,6 +181,16 @@ export const CategoriesPage = () => {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Category"
+        message={deleteId ? `Delete "${byId[deleteId]?.name}"?` : 'Delete this category?'}
+        description="This action cannot be undone."
+        confirmLabel="Delete Category"
+      />
     </AppLayout>
   );
 };
