@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Timestamp } from 'firebase/firestore';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
-import { Card, Button, Spinner } from '../../../components/shared';
+import { Card, Button, Spinner, ConfirmDialog } from '../../../components/shared';
 import {
   fetchSavingsGoals,
   createSavingsGoal,
@@ -188,6 +188,7 @@ const SavingsGoalsContent = () => {
     targetAmount?: number;
     targetDate?: Timestamp;
   } | null>(null);
+  const [deleteGoalId, setDeleteGoalId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -251,11 +252,10 @@ const SavingsGoalsContent = () => {
     ).unwrap();
   };
 
-  const handleDeleteGoal = async (goalId: string) => {
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this savings goal? This cannot be undone.')) {
-      await dispatch(deleteSavingsGoal({ userId: user.uid, goalId })).unwrap();
-    }
+  const handleConfirmDeleteGoal = async () => {
+    if (!user || !deleteGoalId) return;
+    await dispatch(deleteSavingsGoal({ userId: user.uid, goalId: deleteGoalId })).unwrap();
+    setDeleteGoalId(null);
   };
 
   const getGoalTransactions = (goalId: string) => {
@@ -432,7 +432,7 @@ const SavingsGoalsContent = () => {
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteGoal(goal.id)}
+                      onClick={() => setDeleteGoalId(goal.id)}
                       className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       title="Delete goal"
                     >
@@ -520,6 +520,20 @@ const SavingsGoalsContent = () => {
           onSubmit={transactionModal.type === 'deposit' ? handleDeposit : handleWithdraw}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleteGoalId !== null}
+        onClose={() => setDeleteGoalId(null)}
+        onConfirm={handleConfirmDeleteGoal}
+        title="Delete Savings Goal"
+        message={
+          deleteGoalId
+            ? `Delete "${goals.byId[deleteGoalId]?.name}"?`
+            : 'Delete this savings goal?'
+        }
+        description="This action cannot be undone."
+        confirmLabel="Delete Goal"
+      />
     </div>
   );
 };

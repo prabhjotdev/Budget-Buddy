@@ -35,6 +35,7 @@ import {
   Select,
   CurrencyInput,
   Badge,
+  ConfirmDialog,
 } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import {
@@ -98,6 +99,7 @@ export const WishlistPage = () => {
   // Filter state
   const [showPurchased, setShowPurchased] = useState(false);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -258,9 +260,10 @@ export const WishlistPage = () => {
   };
 
   // Handle delete
-  const handleDelete = async (itemId: string) => {
-    if (!user) return;
-    await dispatch(deleteWishlistItem({ userId: user.uid, itemId }));
+  const handleConfirmDelete = async () => {
+    if (!user || !deleteItem) return;
+    await dispatch(deleteWishlistItem({ userId: user.uid, itemId: deleteItem.id }));
+    setDeleteItem(null);
   };
 
   // Handle mark as purchased
@@ -483,7 +486,7 @@ export const WishlistPage = () => {
                                 <Edit2 className="w-4 h-4 mr-1" />
                                 Edit
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); if (confirm('Delete this item?')) { handleDelete(item.id); } }}>
+                              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteItem({ id: item.id, name: item.name }); }}>
                                 <Trash2 className="w-4 h-4 text-red-500" />
                               </Button>
                             </div>
@@ -613,7 +616,7 @@ export const WishlistPage = () => {
                                 <Edit2 className="w-4 h-4 mr-1" />
                                 Edit
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); if (confirm('Delete this item?')) { handleDelete(item.id); } }}>
+                              <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDeleteItem({ id: item.id, name: item.name }); }}>
                                 <Trash2 className="w-4 h-4 text-red-500" />
                               </Button>
                             </div>
@@ -716,6 +719,16 @@ export const WishlistPage = () => {
             </div>
           </form>
         </Modal>
+
+        <ConfirmDialog
+          isOpen={deleteItem !== null}
+          onClose={() => setDeleteItem(null)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Item"
+          message={deleteItem ? `Delete "${deleteItem.name}"?` : 'Delete this item?'}
+          description="This action cannot be undone."
+          confirmLabel="Delete Item"
+        />
       </div>
     </AppLayout>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
-import { Card, CardHeader, Button, Spinner } from '../../../components/shared';
+import { Card, CardHeader, Button, Spinner, ConfirmDialog } from '../../../components/shared';
 import {
   fetchEmergencyFund,
   fetchEmergencyFundTransactions,
@@ -43,6 +43,11 @@ const EmergencyFundContent = () => {
   const [depositModalOpen, setDepositModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [deleteTx, setDeleteTx] = useState<{
+    transactionId: string;
+    amount: number;
+    type: 'deposit' | 'withdrawal';
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -101,15 +106,10 @@ const EmergencyFundContent = () => {
     await dispatch(updateEmergencyFundGoal({ userId: user.uid, ...goal })).unwrap();
   };
 
-  const handleDeleteTransaction = async (
-    transactionId: string,
-    amount: number,
-    type: 'deposit' | 'withdrawal'
-  ) => {
-    if (!user) return;
-    if (confirm('Are you sure you want to delete this transaction?')) {
-      await dispatch(deleteTransaction({ userId: user.uid, transactionId, amount, type })).unwrap();
-    }
+  const handleConfirmDeleteTransaction = async () => {
+    if (!user || !deleteTx) return;
+    await dispatch(deleteTransaction({ userId: user.uid, ...deleteTx })).unwrap();
+    setDeleteTx(null);
   };
 
   if (status === 'loading') {
@@ -309,7 +309,11 @@ const EmergencyFundContent = () => {
                   </span>
                   <button
                     onClick={() =>
-                      handleDeleteTransaction(transaction.id, transaction.amount, transaction.type)
+                      setDeleteTx({
+                        transactionId: transaction.id,
+                        amount: transaction.amount,
+                        type: transaction.type,
+                      })
                     }
                     className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Delete transaction"
@@ -347,6 +351,16 @@ const EmergencyFundContent = () => {
         averageMonthlySpending={averageMonthlySpending}
         cycleCount={cycleIds.length}
         onSubmit={handleUpdateGoal}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteTx !== null}
+        onClose={() => setDeleteTx(null)}
+        onConfirm={handleConfirmDeleteTransaction}
+        title="Delete Transaction"
+        message="Delete this transaction?"
+        description="This will adjust your emergency fund balance accordingly."
+        confirmLabel="Delete Transaction"
       />
     </div>
   );

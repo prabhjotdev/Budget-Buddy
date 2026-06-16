@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, FileText, Edit, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, FileText, Edit } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { createTemplate, updateTemplate, deleteTemplate } from '../templatesSlice';
 import { AppLayout } from '../../../components/layout';
@@ -13,6 +13,7 @@ import {
   IconButton,
   Modal,
   CategoryIcon,
+  ConfirmDialog,
 } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { TemplateAllocation, BudgetTemplate } from '../../../types';
@@ -284,42 +285,16 @@ export const TemplatesPage = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
+      <ConfirmDialog
         isOpen={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
         title="Delete Template"
-        size="sm"
-      >
-        <div className="space-y-4">
-          {templateToDelete && (
-            <>
-              <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-red-500 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-red-800">
-                    Delete "{templateToDelete.name}"?
-                  </p>
-                  <p className="text-sm text-red-600 mt-1">
-                    This action cannot be undone. The template will be permanently removed.
-                  </p>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleConfirmDelete}
-                  isLoading={isDeleting}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete Template
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      </Modal>
+        message={templateToDelete ? `Delete "${templateToDelete.name}"?` : 'Delete this template?'}
+        description="This action cannot be undone. The template will be permanently removed."
+        confirmLabel="Delete Template"
+        isLoading={isDeleting}
+      />
     </AppLayout>
   );
 };

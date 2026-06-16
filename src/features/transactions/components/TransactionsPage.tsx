@@ -3,7 +3,7 @@ import { Trash2, Receipt, Upload } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchTransactions, deleteTransaction } from '../transactionsSlice';
 import { AppLayout } from '../../../components/layout';
-import { Card, Button, Badge, Select, EmptyState, IconButton, CategoryIcon } from '../../../components/shared';
+import { Card, Button, Badge, Select, EmptyState, IconButton, CategoryIcon, ConfirmDialog } from '../../../components/shared';
 import { ImportTransactionsModal } from '../../../components/modals';
 import { formatCurrency } from '../../../utils/currency';
 import { formatFullDate, formatShortDate, toDate } from '../../../utils/date';
@@ -21,6 +21,7 @@ export const TransactionsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState<'' | 'expense' | 'income'>('');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [deleteTxId, setDeleteTxId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -37,12 +38,13 @@ export const TransactionsPage = () => {
     }
   }, [dispatch, user, periodFilter, categoryFilter, typeFilter]);
 
-  const handleDelete = async (transactionId: string) => {
-    if (!user) return;
-    const tx = byId[transactionId];
-    if (tx && confirm('Are you sure you want to delete this transaction?')) {
+  const handleConfirmDelete = () => {
+    if (!user || !deleteTxId) return;
+    const tx = byId[deleteTxId];
+    if (tx) {
       dispatch(deleteTransaction({ userId: user.uid, transaction: tx }));
     }
+    setDeleteTxId(null);
   };
 
   return (
@@ -143,7 +145,7 @@ export const TransactionsPage = () => {
                         icon={Trash2}
                         variant="danger"
                         size="sm"
-                        onClick={() => handleDelete(txId)}
+                        onClick={() => setDeleteTxId(txId)}
                       />
                     </div>
                   </div>
@@ -158,6 +160,20 @@ export const TransactionsPage = () => {
       <ImportTransactionsModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteTxId !== null}
+        onClose={() => setDeleteTxId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Transaction"
+        message={
+          deleteTxId && byId[deleteTxId]
+            ? `Delete "${byId[deleteTxId].description}"?`
+            : 'Delete this transaction?'
+        }
+        description="This action cannot be undone."
+        confirmLabel="Delete Transaction"
       />
     </AppLayout>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { AppLayout } from '../../../components/layout';
-import { Card, Button, Spinner } from '../../../components/shared';
+import { Card, Button, Spinner, ConfirmDialog } from '../../../components/shared';
 import {
   fetchDebtEntries,
   createDebtEntry,
@@ -85,6 +85,7 @@ const DebtTrackingContent = () => {
   const [markingAllPaidFor, setMarkingAllPaidFor] = useState<string | null>(null);
   const [expandedPersons, setExpandedPersons] = useState<Set<string>>(new Set());
   const [splitBillModalOpen, setSplitBillModalOpen] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -212,11 +213,14 @@ const DebtTrackingContent = () => {
     ).unwrap();
   };
 
-  const handleDelete = async (entryId: string) => {
-    if (!user) return;
-    if (confirm('Delete this debt entry?')) {
-      await dispatch(deleteDebtEntry({ userId: user.uid, entryId })).unwrap();
-    }
+  const handleDelete = (entryId: string) => {
+    setDeleteEntryId(entryId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!user || !deleteEntryId) return;
+    await dispatch(deleteDebtEntry({ userId: user.uid, entryId: deleteEntryId })).unwrap();
+    setDeleteEntryId(null);
   };
 
   const handleTogglePaid = async (entry: DebtEntry) => {
@@ -474,6 +478,16 @@ const DebtTrackingContent = () => {
           }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={deleteEntryId !== null}
+        onClose={() => setDeleteEntryId(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Debt Entry"
+        message="Delete this debt entry?"
+        description="This action cannot be undone."
+        confirmLabel="Delete Entry"
+      />
     </div>
   );
 };

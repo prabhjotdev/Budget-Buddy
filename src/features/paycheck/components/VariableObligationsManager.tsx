@@ -6,7 +6,7 @@ import {
   updateVariableObligation,
   deleteVariableObligation,
 } from '../variableObligationsSlice';
-import { Card, CardHeader, Button, Input, Modal } from '../../../components/shared';
+import { Card, CardHeader, Button, Input, Modal, ConfirmDialog } from '../../../components/shared';
 import { VariableObligation, CycleVariableObligationEntry } from '../../../types';
 import { formatCurrency } from '../../../utils/currency';
 
@@ -362,27 +362,18 @@ export const VariableObligationsManager = ({ cycleObligations }: Props) => {
       </Modal>
 
       {/* Delete Confirm Modal */}
-      <Modal
+      <ConfirmDialog
         isOpen={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
+        onConfirm={handleDelete}
         title="Delete Obligation"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-300">
-            Are you sure you want to delete <strong>{obligationToDelete?.name}</strong>? This won't
-            affect cycles already created.
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDelete} isLoading={isDeleting}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={
+          obligationToDelete ? `Delete "${obligationToDelete.name}"?` : 'Delete this obligation?'
+        }
+        description="This won't affect cycles already created."
+        confirmLabel="Delete"
+        isLoading={isDeleting}
+      />
     </>
   );
 };

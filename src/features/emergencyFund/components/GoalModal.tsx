@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Target, Trash2, Lock } from 'lucide-react';
-import { Modal, Button, Input, Select } from '../../../components/shared';
+import { Modal, Button, Input, Select, ConfirmDialog } from '../../../components/shared';
 
 interface GoalModalProps {
   isOpen: boolean;
@@ -39,6 +39,7 @@ export const GoalModal = ({
     currentGoal?.goalMonths?.toString() || '6'
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const hasSmartMode = cycleCount >= SMART_UNLOCK_CYCLE;
   const cyclesRemaining = Math.max(0, SMART_UNLOCK_CYCLE - cycleCount);
@@ -96,16 +97,15 @@ export const GoalModal = ({
   };
 
   const handleRemoveGoal = async () => {
-    if (confirm('Remove your emergency fund goal? Your balance will remain unchanged.')) {
-      setIsSubmitting(true);
-      try {
-        await onSubmit({});
-        onClose();
-      } catch (error) {
-        console.error('Failed to remove goal:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
+    setShowRemoveConfirm(false);
+    setIsSubmitting(true);
+    try {
+      await onSubmit({});
+      onClose();
+    } catch (error) {
+      console.error('Failed to remove goal:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -260,7 +260,7 @@ export const GoalModal = ({
             {currentGoal && currentGoal.goalAmount && (
               <Button
                 variant="secondary"
-                onClick={handleRemoveGoal}
+                onClick={() => setShowRemoveConfirm(true)}
                 disabled={isSubmitting}
                 className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
               >
@@ -285,6 +285,17 @@ export const GoalModal = ({
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showRemoveConfirm}
+        onClose={() => setShowRemoveConfirm(false)}
+        onConfirm={handleRemoveGoal}
+        title="Remove Emergency Fund Goal"
+        message="Remove your emergency fund goal?"
+        description="Your balance will remain unchanged."
+        confirmLabel="Remove Goal"
+        isLoading={isSubmitting}
+      />
     </Modal>
   );
 };
