@@ -9,11 +9,13 @@ import {
   Shield,
   Pencil,
   Settings,
+  Wallet,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { fetchActiveCycle } from '../paycheckCyclesSlice';
 import { fetchSpendingTransactions } from '../spendingTransactionsSlice';
 import { fetchBuffer } from '../bufferSlice';
+import { fetchEmergencyFund } from '../../emergencyFund/emergencyFundSlice';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
@@ -26,6 +28,7 @@ import { LogSpendingModal } from './LogSpendingModal';
 import { EndCycleModal } from './EndCycleModal';
 import { MarkBillPaidModal } from './MarkBillPaidModal';
 import { BufferWithdrawModal } from './BufferWithdrawModal';
+import { AddToCycleSpendingModal } from './AddToCycleSpendingModal';
 import { EditPaycheckModal } from './EditPaycheckModal';
 import { EditCycleModal } from './EditCycleModal';
 import { PaycheckCycle } from '../../../types';
@@ -37,6 +40,7 @@ export const CycleDashboard = () => {
     (state) => state.paycheckCycles
   );
   const { buffer } = useAppSelector((state) => state.buffer);
+  const emergencyFund = useAppSelector((state) => state.emergencyFund.fund);
 
   // Track whether we've done the initial check for active cycle
   const [hasCheckedForCycle, setHasCheckedForCycle] = useState(false);
@@ -48,6 +52,7 @@ export const CycleDashboard = () => {
       Promise.all([
         dispatch(fetchActiveCycle(user.uid)),
         dispatch(fetchBuffer(user.uid)),
+        dispatch(fetchEmergencyFund(user.uid)),
         dispatch(fetchSpendingTransactions(user.uid)),
       ]).finally(() => {
         setHasCheckedForCycle(true);
@@ -77,7 +82,11 @@ export const CycleDashboard = () => {
 
   return (
     <AppLayout title="Paycheck Budget">
-      <CycleDashboardContent cycle={activeCycle} buffer={buffer} />
+      <CycleDashboardContent
+        cycle={activeCycle}
+        buffer={buffer}
+        emergencyFundBalance={emergencyFund?.currentBalance || 0}
+      />
     </AppLayout>
   );
 };
@@ -85,16 +94,24 @@ export const CycleDashboard = () => {
 interface CycleDashboardContentProps {
   cycle: PaycheckCycle;
   buffer: { totalAmount: number } | null;
+  emergencyFundBalance: number;
 }
 
-const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) => {
+const CycleDashboardContent = ({
+  cycle,
+  buffer,
+  emergencyFundBalance,
+}: CycleDashboardContentProps) => {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const [logSpendingOpen, setLogSpendingOpen] = useState(false);
   const [endCycleOpen, setEndCycleOpen] = useState(false);
   const [markBillPaidOpen, setMarkBillPaidOpen] = useState(false);
   const [useBufferOpen, setUseBufferOpen] = useState(false);
+  const [addToSpendingOpen, setAddToSpendingOpen] = useState(false);
   const [editPaycheckOpen, setEditPaycheckOpen] = useState(false);
+
+  const hasFundsToDraw = (buffer?.totalAmount || 0) > 0 || emergencyFundBalance > 0;
   const [editCycleOpen, setEditCycleOpen] = useState(false);
 
   // Fetch payment methods and tags for the spending modal
@@ -241,6 +258,15 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
                 Use Buffer
               </Button>
             </div>
+            <Button
+              variant="secondary"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={() => setAddToSpendingOpen(true)}
+              disabled={!hasFundsToDraw}
+            >
+              <Wallet className="w-4 h-4" />
+              Add to Spending
+            </Button>
           </div>
 
           {/* Mobile Compact Stats — hidden on desktop */}
@@ -371,6 +397,16 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
                   variant="ghost"
                   size="sm"
                   className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
+                  onClick={() => setAddToSpendingOpen(true)}
+                  disabled={!hasFundsToDraw}
+                >
+                  <Wallet className="w-3.5 h-3.5" />
+                  Add to Spending
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5 border border-gray-300 dark:border-gray-600"
                   onClick={() => setEditCycleOpen(true)}
                 >
                   <Settings className="w-3.5 h-3.5" />
@@ -425,6 +461,15 @@ const CycleDashboardContent = ({ cycle, buffer }: CycleDashboardContentProps) =>
         onClose={() => setUseBufferOpen(false)}
         maxAmount={buffer?.totalAmount || 0}
         cycleId={cycle.id}
+      />
+
+      {/* Add to Cycle Spending Modal */}
+      <AddToCycleSpendingModal
+        isOpen={addToSpendingOpen}
+        onClose={() => setAddToSpendingOpen(false)}
+        cycleId={cycle.id}
+        bufferBalance={buffer?.totalAmount || 0}
+        emergencyFundBalance={emergencyFundBalance}
       />
 
       {/* Edit Paycheck Modal */}

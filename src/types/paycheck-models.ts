@@ -168,6 +168,9 @@ export interface PaycheckCycle {
   // Buffer draw (amount withdrawn from buffer to cover gap)
   bufferDraw?: number;
 
+  // Emergency fund draw (amount moved from the emergency fund into this cycle's spending)
+  emergencyFundDraw?: number;
+
   // Savings allocations (where minimumSave was deposited)
   savingsAllocations?: {
     buffer: number;
