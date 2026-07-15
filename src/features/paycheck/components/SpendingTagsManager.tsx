@@ -122,7 +122,7 @@ export const SpendingTagsManager = () => {
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleEdit(tag)}
-            className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded transition-colors"
+            className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded transition-colors"
             title="Edit"
           >
             <Pencil className="w-3.5 h-3.5" />

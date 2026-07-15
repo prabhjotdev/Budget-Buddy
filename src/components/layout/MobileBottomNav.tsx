@@ -75,7 +75,7 @@ export const MobileBottomNav = () => {
               clsx(
                 'flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors',
                 {
-                  'text-indigo-600 dark:text-indigo-400': isActive,
+                  'text-teal-600 dark:text-teal-400': isActive,
                   'text-gray-500 dark:text-gray-400': !isActive,
                 }
               )
@@ -86,7 +86,7 @@ export const MobileBottomNav = () => {
                 <Icon className="w-5 h-5" />
                 <span>{label}</span>
                 {isActive && (
-                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-teal-600 dark:bg-teal-400" />
                 )}
               </>
             )}
@@ -99,7 +99,7 @@ export const MobileBottomNav = () => {
           className={clsx(
             'flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors',
             {
-              'text-indigo-600 dark:text-indigo-400': isMoreActive,
+              'text-teal-600 dark:text-teal-400': isMoreActive,
               'text-gray-500 dark:text-gray-400': !isMoreActive,
             }
           )}
@@ -107,7 +107,7 @@ export const MobileBottomNav = () => {
           <MoreHorizontal className="w-5 h-5" />
           <span>More</span>
           {isMoreActive && (
-            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+            <span className="absolute bottom-1 w-1 h-1 rounded-full bg-teal-600 dark:bg-teal-400" />
           )}
         </button>
       </nav>
@@ -146,7 +146,7 @@ export const MobileBottomNav = () => {
                     className={clsx(
                       'w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors',
                       pathname === to
-                        ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400'
+                        ? 'bg-teal-50 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                     )}
                   >

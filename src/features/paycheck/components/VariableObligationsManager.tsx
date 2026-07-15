@@ -223,7 +223,7 @@ export const VariableObligationsManager = ({ cycleObligations }: Props) => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleEdit(obligation)}
-                    className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Pencil className="w-4 h-4" />
@@ -328,7 +328,7 @@ export const VariableObligationsManager = ({ cycleObligations }: Props) => {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -341,7 +341,7 @@ export const VariableObligationsManager = ({ cycleObligations }: Props) => {
                 type="checkbox"
                 checked={formIsActive}
                 onChange={(e) => setFormIsActive(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Active (shown in cycle wizard)</span>
             </label>

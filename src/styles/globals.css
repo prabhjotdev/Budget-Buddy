@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,7 +19,7 @@
   }
 
   *:focus-visible {
-    @apply outline-2 outline-indigo-500 outline-offset-2;
+    @apply outline-2 outline-teal-500 outline-offset-2;
   }
 }
 
@@ -48,7 +46,7 @@
 @layer utilities {
   /* Selection */
   ::selection {
-    @apply bg-indigo-200 text-indigo-950 dark:bg-indigo-800 dark:text-indigo-100;
+    @apply bg-teal-200 text-teal-950 dark:bg-teal-800 dark:text-teal-100;
   }
 
   /* Date input cursor */

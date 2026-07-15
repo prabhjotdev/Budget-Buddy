@@ -191,7 +191,7 @@ export const CategoryModal = ({ isOpen, onClose, onSave, category, mode }: Categ
                 onClick={() => setIcon(iconName)}
                 className={`p-2 rounded-lg transition-colors ${
                   icon === iconName
-                    ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-500'
+                    ? 'bg-teal-100 text-teal-600 ring-2 ring-teal-500'
                     : 'bg-white text-gray-600 hover:bg-gray-100'
                 }`}
               >

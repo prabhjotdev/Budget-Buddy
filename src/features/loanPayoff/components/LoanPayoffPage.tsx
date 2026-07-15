@@ -206,7 +206,7 @@ const LoanPayoffContent = () => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setEditLoan(loan)}
-                        className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
                         title="Edit loan"
                       >
                         <Pencil className="w-4 h-4" />
@@ -325,7 +325,7 @@ const LoanPayoffContent = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <Card>
                         <div className="p-4 text-center">
-                          <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400 mx-auto mb-1" />
+                          <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400 mx-auto mb-1" />
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Debt-Free Timeline
                           </p>
@@ -334,7 +334,7 @@ const LoanPayoffContent = () => {
                               {formatMonths(snowballResult.originalTotalMonths)}
                             </span>
                             <ArrowRight className="w-3 h-3 text-gray-400" />
-                            <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                            <span className="text-lg font-bold text-teal-600 dark:text-teal-400">
                               {formatMonths(snowballResult.snowballTotalMonths)}
                             </span>
                           </div>
@@ -418,7 +418,7 @@ const LoanPayoffContent = () => {
                                   </div>
                                   <div>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">Snowball</p>
-                                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">
                                       {formatMonths(result.snowballPayoffMonths)}
                                     </p>
                                   </div>

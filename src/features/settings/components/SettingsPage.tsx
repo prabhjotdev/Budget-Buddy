@@ -266,7 +266,7 @@ export const SettingsPage = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {theme === 'dark' ? (
-                    <Moon className="w-5 h-5 text-indigo-500" />
+                    <Moon className="w-5 h-5 text-teal-500" />
                   ) : (
                     <Sun className="w-5 h-5 text-amber-500" />
                   )}
@@ -280,7 +280,7 @@ export const SettingsPage = () => {
                 <button
                   onClick={toggleTheme}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    theme === 'dark' ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+                    theme === 'dark' ? 'bg-teal-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span

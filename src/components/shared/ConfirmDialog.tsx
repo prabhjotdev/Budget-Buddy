@@ -41,20 +41,20 @@ export const ConfirmDialog = ({
         <div
           className={clsx('flex items-start gap-3 p-4 rounded-lg', {
             'bg-red-50 dark:bg-red-900/20': isDanger,
-            'bg-indigo-50 dark:bg-indigo-900/20': !isDanger,
+            'bg-teal-50 dark:bg-teal-900/20': !isDanger,
           })}
         >
           <Icon
             className={clsx('w-6 h-6 flex-shrink-0 mt-0.5', {
               'text-red-500 dark:text-red-400': isDanger,
-              'text-indigo-500 dark:text-indigo-400': !isDanger,
+              'text-teal-500 dark:text-teal-400': !isDanger,
             })}
           />
           <div>
             <p
               className={clsx('text-sm font-medium', {
                 'text-red-800 dark:text-red-300': isDanger,
-                'text-indigo-800 dark:text-indigo-300': !isDanger,
+                'text-teal-800 dark:text-teal-300': !isDanger,
               })}
             >
               {message}
@@ -63,7 +63,7 @@ export const ConfirmDialog = ({
               <p
                 className={clsx('text-sm mt-1', {
                   'text-red-600 dark:text-red-400': isDanger,
-                  'text-indigo-600 dark:text-indigo-400': !isDanger,
+                  'text-teal-600 dark:text-teal-400': !isDanger,
                 })}
               >
                 {description}

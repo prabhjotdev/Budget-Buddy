@@ -135,7 +135,7 @@ const PerPaycheckIndicator = ({
       const perPaycheck = remaining / estimated;
       return {
         text: `~${formatCurrency(perPaycheck)} per paycheck`,
-        color: 'text-indigo-600 dark:text-indigo-400',
+        color: 'text-teal-600 dark:text-teal-400',
       };
     }
 
@@ -146,7 +146,7 @@ const PerPaycheckIndicator = ({
     const perPaycheck = remaining / paychecks;
     return {
       text: `~${formatCurrency(perPaycheck)} per paycheck (${paychecks} paycheck${paychecks !== 1 ? 's' : ''} left)`,
-      color: 'text-indigo-600 dark:text-indigo-400',
+      color: 'text-teal-600 dark:text-teal-400',
     };
   }, [goal.targetAmount, goal.targetDate, goal.currentBalance, settings]);
 
@@ -275,13 +275,13 @@ const SavingsGoalsContent = () => {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 border border-teal-200 dark:border-teal-800 rounded-xl p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Target className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <Target className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <div>
-              <h3 className="font-semibold text-indigo-900 dark:text-indigo-100">Savings Goals</h3>
-              <p className="text-sm text-indigo-700 dark:text-indigo-300">
+              <h3 className="font-semibold text-teal-900 dark:text-teal-100">Savings Goals</h3>
+              <p className="text-sm text-teal-700 dark:text-teal-300">
                 {activeGoals.length} active goal{activeGoals.length !== 1 ? 's' : ''} &middot; {formatCurrency(totalSaved)} total saved
               </p>
             </div>
@@ -325,8 +325,8 @@ const SavingsGoalsContent = () => {
                   {/* Goal header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
-                        <Target className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      <div className="p-2 bg-teal-100 dark:bg-teal-900/50 rounded-lg">
+                        <Target className="w-5 h-5 text-teal-600 dark:text-teal-400" />
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-900 dark:text-gray-100">
@@ -345,7 +345,7 @@ const SavingsGoalsContent = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                      <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
                         {formatCurrency(goal.currentBalance)}
                       </p>
                       {goal.targetAmount && (
@@ -361,7 +361,7 @@ const SavingsGoalsContent = () => {
                     <div className="mb-4">
                       <div className="relative h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                         <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 rounded-full"
+                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-teal-500 to-teal-600 transition-all duration-500 rounded-full"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -413,7 +413,7 @@ const SavingsGoalsContent = () => {
                     </Button>
                     <button
                       onClick={() => setExpandedGoalId(isExpanded ? null : goal.id)}
-                      className="ml-auto text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                      className="ml-auto text-sm text-teal-600 dark:text-teal-400 hover:underline"
                     >
                       {isExpanded ? 'Hide' : 'Show'} history
                     </button>
@@ -426,7 +426,7 @@ const SavingsGoalsContent = () => {
                           targetDate: goal.targetDate,
                         })
                       }
-                      className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      className="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
                       title="Edit goal"
                     >
                       <Pencil className="w-4 h-4" />

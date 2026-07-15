@@ -916,8 +916,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="text-center mb-6 md:mb-8">
-        <div className="w-12 h-12 md:w-16 md:h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
-          <Calendar className="w-6 h-6 md:w-8 md:h-8 text-indigo-600 dark:text-indigo-400" />
+        <div className="w-12 h-12 md:w-16 md:h-16 bg-teal-100 dark:bg-teal-900/50 rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+          <Calendar className="w-6 h-6 md:w-8 md:h-8 text-teal-600 dark:text-teal-400" />
         </div>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
           {isEditMode ? 'Edit Cycle' : 'Start a New Paycheck Cycle'}
@@ -936,7 +936,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             <div
               className={`flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full ${
                 index <= currentStepIndex
-                  ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                  ? 'bg-teal-600 text-white dark:bg-teal-500'
                   : 'bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
               }`}
             >
@@ -949,7 +949,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             {index < activeSteps.length - 1 && (
               <div
                 className={`h-0.5 md:h-1 mx-1 md:mx-2 ${
-                  index < currentStepIndex ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-gray-200 dark:bg-gray-700'
+                  index < currentStepIndex ? 'bg-teal-600 dark:bg-teal-500' : 'bg-gray-200 dark:bg-gray-700'
                 }`}
                 style={{ width: '24px', minWidth: '24px' }}
               />
@@ -978,7 +978,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                     value={paycheckAmount}
                     onChange={(e) => setPaycheckAmount(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 text-2xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                    className="w-full pl-8 pr-4 py-3 text-2xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400"
                   />
                 </div>
               </div>
@@ -1025,10 +1025,10 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        method.type === 'credit' ? 'bg-purple-100' : method.type === 'debit' ? 'bg-blue-100' : 'bg-green-100'
+                        method.type === 'credit' ? 'bg-teal-100' : method.type === 'debit' ? 'bg-blue-100' : 'bg-green-100'
                       }`}>
                         <CreditCard className={`w-5 h-5 ${
-                          method.type === 'credit' ? 'text-purple-600' : method.type === 'debit' ? 'text-blue-600' : 'text-green-600'
+                          method.type === 'credit' ? 'text-teal-600' : method.type === 'debit' ? 'text-blue-600' : 'text-green-600'
                         }`} />
                       </div>
                       <div>
@@ -1037,7 +1037,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                       </div>
                     </div>
                     {method.isDefault && (
-                      <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">Default</span>
+                      <span className="text-xs bg-teal-100 text-teal-700 px-2 py-1 rounded">Default</span>
                     )}
                   </div>
                 ))}
@@ -1076,7 +1076,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                           onClick={() => setNewMethodType(type)}
                           className={`p-3 rounded-lg border-2 text-center transition-colors ${
                             newMethodType === type
-                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                              ? 'border-teal-500 bg-teal-50 text-teal-700'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300'
                           }`}
                         >
@@ -1110,7 +1110,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             {activePaymentMethods.length > 0 && !showAddPaymentMethod && (
               <button
                 onClick={() => setShowAddPaymentMethod(true)}
-                className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-2"
+                className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-teal-400 hover:text-teal-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add Another Payment Method
@@ -1141,7 +1141,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                     key={bill.id}
                     className={`p-4 rounded-lg border-2 transition-colors ${
                       selectedBills[bill.id]?.selected
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-400'
+                        ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-400'
                         : 'border-gray-200 dark:border-gray-700'
                     }`}
                   >
@@ -1151,7 +1151,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                           type="checkbox"
                           checked={selectedBills[bill.id]?.selected || false}
                           onChange={() => handleBillToggle(bill.id)}
-                          className="w-5 h-5 text-indigo-600 rounded"
+                          className="w-5 h-5 text-teal-600 rounded"
                         />
                         <div>
                           <span className="font-medium text-gray-900 dark:text-gray-100">{bill.name}</span>
@@ -1160,7 +1160,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                             {getOrdinalSuffix(getBillDueDateInCycle(bill))}
                           </span>
                           {bill.paymentMethodId && paymentMethodsById[bill.paymentMethodId] && (
-                            <span className="text-xs text-indigo-600 dark:text-indigo-400 ml-2">
+                            <span className="text-xs text-teal-600 dark:text-teal-400 ml-2">
                               via {paymentMethodsById[bill.paymentMethodId].name}
                             </span>
                           )}
@@ -1175,7 +1175,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                             handleBillAmountChange(bill.id, parseFloat(e.target.value) || 0)
                           }
                           disabled={!selectedBills[bill.id]?.selected}
-                          className="w-24 px-3 py-1 text-right border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                          className="w-24 px-3 py-1 text-right border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                         />
                       </div>
                     </div>
@@ -1230,7 +1230,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                           placeholder="0.00"
                           value={newBillAmount}
                           onChange={(e) => setNewBillAmount(e.target.value)}
-                          className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         />
                       </div>
                     </div>
@@ -1239,7 +1239,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                       <select
                         value={newBillDueDay}
                         onChange={(e) => setNewBillDueDay(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       >
                         {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                           <option key={day} value={day}>
@@ -1255,7 +1255,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                       <select
                         value={newBillFrequency}
                         onChange={(e) => setNewBillFrequency(e.target.value as BillFrequency)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       >
                         <option value="monthly">Monthly</option>
                         <option value="bi-weekly">Bi-Weekly</option>
@@ -1270,7 +1270,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                       <select
                         value={newBillPaymentMethodId || ''}
                         onChange={(e) => setNewBillPaymentMethodId(e.target.value || null)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       >
                         <option value="">None</option>
                         {activePaymentMethods.map((method) => (
@@ -1287,7 +1287,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         type="checkbox"
                         checked={newBillIsVariable}
                         onChange={(e) => setNewBillIsVariable(e.target.checked)}
-                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                        className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">Variable amount (confirm each cycle)</span>
                     </label>
@@ -1296,7 +1296,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         type="checkbox"
                         checked={newBillIsAutoPay}
                         onChange={(e) => setNewBillIsAutoPay(e.target.checked)}
-                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                        className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">Auto-pay enabled</span>
                     </label>
@@ -1321,7 +1321,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             {billsDueThisCycle.length > 0 && !showAddBill && (
               <button
                 onClick={() => setShowAddBill(true)}
-                className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition-colors flex items-center justify-center gap-2"
+                className="w-full p-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-teal-400 hover:text-teal-600 dark:hover:border-teal-500 dark:hover:text-teal-400 transition-colors flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add Another Bill
@@ -1507,7 +1507,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                   onChange={(e) => setMinimumSave(parseFloat(e.target.value) || 0)}
                   min="0"
                   step="10"
-                  className="w-full pl-8 pr-4 py-3 text-xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                  className="w-full pl-8 pr-4 py-3 text-xl font-semibold border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-teal-400"
                 />
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -1565,7 +1565,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         value={bufferAllocation || ''}
                         onChange={(e) => setBufferAllocation(parseFloat(e.target.value) || 0)}
                         min="0"
-                        className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
                     </div>
                   </div>
@@ -1592,7 +1592,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         value={emergencyFundAllocation || ''}
                         onChange={(e) => setEmergencyFundAllocation(parseFloat(e.target.value) || 0)}
                         min="0"
-                        className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
                     </div>
                   </div>
@@ -1603,8 +1603,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                   <div key={goal.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
-                          <Target className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                        <div className="p-2 bg-teal-100 dark:bg-teal-900/50 rounded-lg">
+                          <Target className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-gray-100">{goal.name}</p>
@@ -1626,7 +1626,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                             }))
                           }
                           min="0"
-                          className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          className="w-28 pl-7 pr-3 py-2 text-right border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         />
                       </div>
                     </div>
@@ -1850,8 +1850,8 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 onClick={() => setBufferDrawOption('custom')}
                 className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
                   bufferDrawOption === 'custom'
-                    ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-900/30'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
+                    ? 'border-teal-500 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -1870,11 +1870,11 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                         onChange={(e) => setCustomBufferDraw(parseFloat(e.target.value) || 0)}
                         min="0"
                         max={bufferBalance}
-                        className="w-28 pl-7 pr-3 py-2 text-right border border-purple-300 dark:border-purple-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-28 pl-7 pr-3 py-2 text-right border border-teal-300 dark:border-teal-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
                     </div>
                   ) : (
-                    <span className="text-lg font-semibold text-purple-600 dark:text-purple-400">Custom</span>
+                    <span className="text-lg font-semibold text-teal-600 dark:text-teal-400">Custom</span>
                   )}
                 </div>
               </button>
@@ -1968,7 +1968,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
                 </div>
               )}
               {selectedBufferDraw > 0 && (
-                <div className="flex justify-between items-center text-purple-600 dark:text-purple-400">
+                <div className="flex justify-between items-center text-teal-600 dark:text-teal-400">
                   <span>+ Buffer Draw</span>
                   <span>+{formatCurrency(selectedBufferDraw)}</span>
                 </div>
@@ -1986,7 +1986,7 @@ export const StartCycleWizard = ({ editingCycle, onClose }: StartCycleWizardProp
             </div>
 
             {selectedBufferDraw > 0 && (
-              <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg text-sm text-purple-700 dark:text-purple-300">
+              <div className="p-3 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-lg text-sm text-teal-700 dark:text-teal-300">
                 <strong>Note:</strong> {formatCurrency(selectedBufferDraw)} will be withdrawn from your buffer when you start this cycle.
                 Buffer balance after: {formatCurrency(bufferBalance - selectedBufferDraw)}
               </div>

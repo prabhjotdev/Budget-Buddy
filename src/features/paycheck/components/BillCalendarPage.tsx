@@ -560,15 +560,15 @@ export const BillCalendarPage = () => {
               className={clsx(
                 'min-h-[60px] sm:min-h-[80px] md:min-h-[100px] p-1 bg-white dark:bg-gray-800 relative',
                 !isCurrentMonth && 'bg-gray-50 dark:bg-gray-900',
-                activeDay && 'bg-indigo-50/70 dark:bg-indigo-900/25',
-                startDay && 'border-l-[3px] border-l-indigo-400 dark:border-l-indigo-500',
-                endDay && 'border-r-[3px] border-r-indigo-300 dark:border-r-indigo-600'
+                activeDay && 'bg-teal-50/70 dark:bg-teal-900/25',
+                startDay && 'border-l-[3px] border-l-teal-400 dark:border-l-teal-500',
+                endDay && 'border-r-[3px] border-r-teal-300 dark:border-r-teal-600'
               )}
             >
               {/* Cycle start label */}
               {startDay && (
                 <div className="absolute top-0 left-1 hidden sm:block">
-                  <span className="text-[7px] font-bold uppercase tracking-wider text-indigo-400 dark:text-indigo-500 leading-none">
+                  <span className="text-[7px] font-bold uppercase tracking-wider text-teal-400 dark:text-teal-500 leading-none">
                     cycle
                   </span>
                 </div>
@@ -579,7 +579,7 @@ export const BillCalendarPage = () => {
                 <span
                   className={clsx(
                     'text-xs sm:text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full',
-                    isTodayDate && 'bg-indigo-600 text-white',
+                    isTodayDate && 'bg-teal-600 text-white',
                     !isTodayDate && isCurrentMonth && 'text-gray-900 dark:text-gray-100',
                     !isTodayDate && !isCurrentMonth && 'text-gray-400 dark:text-gray-500'
                   )}
@@ -590,7 +590,7 @@ export const BillCalendarPage = () => {
                   <div
                     className={clsx(
                       'w-1.5 h-1.5 rounded-full hidden sm:block flex-shrink-0',
-                      cycle.isActive ? 'bg-indigo-500 dark:bg-indigo-400' : 'bg-gray-300 dark:bg-gray-600'
+                      cycle.isActive ? 'bg-teal-500 dark:bg-teal-400' : 'bg-gray-300 dark:bg-gray-600'
                     )}
                   />
                 )}
@@ -637,7 +637,7 @@ export const BillCalendarPage = () => {
           <span>Future</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-indigo-50 dark:bg-indigo-900/25 border-l-2 border-indigo-400" />
+          <div className="w-3 h-3 rounded bg-teal-50 dark:bg-teal-900/25 border-l border-teal-400" />
           <span>Active pay period</span>
         </div>
       </div>
@@ -663,9 +663,9 @@ export const BillCalendarPage = () => {
               className={clsx(
                 'rounded-xl border p-3',
                 activeDay
-                  ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/25'
+                  ? 'border-teal-300 dark:border-teal-600 bg-teal-50/60 dark:bg-teal-900/25'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
-                isTodayDate && 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-gray-900'
+                isTodayDate && 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-900'
               )}
             >
               {/* Day header row */}
@@ -675,7 +675,7 @@ export const BillCalendarPage = () => {
                     className={clsx(
                       'w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm',
                       isTodayDate
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-teal-600 text-white'
                         : 'text-gray-900 dark:text-gray-100'
                     )}
                   >
@@ -686,7 +686,7 @@ export const BillCalendarPage = () => {
                       {format(date, 'EEEE')}
                     </div>
                     {activeDay && (
-                      <div className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">
+                      <div className="text-[10px] text-teal-500 dark:text-teal-400 font-medium">
                         active cycle
                       </div>
                     )}
@@ -744,9 +744,9 @@ export const BillCalendarPage = () => {
               className={clsx(
                 'rounded-xl border p-2 min-h-[200px]',
                 activeDay
-                  ? 'border-indigo-300 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-900/25'
+                  ? 'border-teal-300 dark:border-teal-600 bg-teal-50/60 dark:bg-teal-900/25'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800',
-                isTodayDate && 'ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-gray-900'
+                isTodayDate && 'ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-gray-900'
               )}
             >
               {/* Day header */}
@@ -758,14 +758,14 @@ export const BillCalendarPage = () => {
                   className={clsx(
                     'w-8 h-8 mx-auto flex items-center justify-center rounded-full font-bold text-sm mt-0.5',
                     isTodayDate
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-teal-600 text-white'
                       : 'text-gray-900 dark:text-gray-100'
                   )}
                 >
                   {format(date, 'd')}
                 </div>
                 {activeDay && (
-                  <div className="text-[9px] text-indigo-500 dark:text-indigo-400 font-medium mt-0.5">
+                  <div className="text-[9px] text-teal-500 dark:text-teal-400 font-medium mt-0.5">
                     active cycle
                   </div>
                 )}
@@ -850,7 +850,7 @@ export const BillCalendarPage = () => {
               className={clsx(
                 'rounded-xl border overflow-hidden',
                 group.isActive
-                  ? 'border-indigo-300 dark:border-indigo-600 shadow-sm shadow-indigo-100 dark:shadow-none'
+                  ? 'border-teal-300 dark:border-teal-600 shadow-sm shadow-teal-100 dark:shadow-none'
                   : 'border-gray-200 dark:border-gray-700'
               )}
             >
@@ -859,7 +859,7 @@ export const BillCalendarPage = () => {
                 className={clsx(
                   'px-4 py-3',
                   group.isActive
-                    ? 'bg-indigo-600 dark:bg-indigo-700'
+                    ? 'bg-teal-600 dark:bg-teal-700'
                     : 'bg-gray-50 dark:bg-gray-800'
                 )}
               >
@@ -883,7 +883,7 @@ export const BillCalendarPage = () => {
                     <p
                       className={clsx(
                         'text-xs mt-0.5',
-                        group.isActive ? 'text-indigo-200' : 'text-gray-500 dark:text-gray-400'
+                        group.isActive ? 'text-teal-200' : 'text-gray-500 dark:text-gray-400'
                       )}
                     >
                       {group.bills.length} bills · {paidBills.length} paid
@@ -904,7 +904,7 @@ export const BillCalendarPage = () => {
                         className={clsx(
                           'text-xs',
                           group.isActive
-                            ? 'text-indigo-200'
+                            ? 'text-teal-200'
                             : 'text-green-600 dark:text-green-400'
                         )}
                       >
@@ -917,11 +917,11 @@ export const BillCalendarPage = () => {
                 {/* Time progress bar (active cycle only) */}
                 {group.isActive && (
                   <div className="mt-3">
-                    <div className="flex justify-between text-xs text-indigo-200 mb-1">
+                    <div className="flex justify-between text-xs text-teal-200 mb-1">
                       <span>Day {Math.min(elapsed, totalDays)} of {totalDays}</span>
                       <span>{timeProgress}% through cycle</span>
                     </div>
-                    <div className="w-full bg-indigo-500/50 rounded-full h-1.5">
+                    <div className="w-full bg-teal-500/50 rounded-full h-1.5">
                       <div
                         className="bg-white/80 h-1.5 rounded-full transition-all"
                         style={{ width: `${timeProgress}%` }}
@@ -1007,7 +1007,7 @@ export const BillCalendarPage = () => {
                         paidBills.length === group.bills.length
                           ? 'bg-green-500'
                           : group.isActive
-                            ? 'bg-indigo-500'
+                            ? 'bg-teal-500'
                             : 'bg-gray-400'
                       )}
                       style={{
@@ -1034,35 +1034,35 @@ export const BillCalendarPage = () => {
           <Card>
             {/* ── Active Cycle Banner ── */}
             {activeCycle && activeCycleStats ? (
-              <div className="mb-5 p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/30 dark:to-violet-900/30 border border-indigo-200 dark:border-indigo-700">
+              <div className="mb-5 p-4 rounded-xl bg-gradient-to-br from-teal-50 to-violet-50 dark:from-teal-900/30 dark:to-violet-900/30 border border-teal-200 dark:border-teal-700">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-0.5">
+                    <p className="text-[10px] font-bold text-teal-500 dark:text-teal-400 uppercase tracking-widest mb-0.5">
                       Current Pay Cycle
                     </p>
-                    <p className="font-bold text-indigo-900 dark:text-indigo-100 text-base">
+                    <p className="font-bold text-teal-900 dark:text-teal-100 text-base">
                       {format(activeCycleStats.cycleStart, 'MMM d')}
                       {' – '}
                       {format(activeCycleStats.cycleEnd, 'MMM d, yyyy')}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0 ml-2">
-                    <p className="text-3xl font-black text-indigo-700 dark:text-indigo-300 leading-none">
+                    <p className="text-3xl font-black text-teal-700 dark:text-teal-300 leading-none">
                       {activeCycleStats.daysRemaining}
                     </p>
-                    <p className="text-xs text-indigo-400 dark:text-indigo-500">days left</p>
+                    <p className="text-xs text-teal-400 dark:text-teal-500">days left</p>
                   </div>
                 </div>
 
                 {/* Time progress */}
                 <div className="mb-3">
-                  <div className="flex justify-between text-xs text-indigo-400 dark:text-indigo-500 mb-1">
+                  <div className="flex justify-between text-xs text-teal-400 dark:text-teal-500 mb-1">
                     <span>Day {activeCycleStats.elapsed} of {activeCycleStats.totalDays}</span>
                     <span>{Math.round(activeCycleStats.progress)}% elapsed</span>
                   </div>
-                  <div className="w-full bg-indigo-200 dark:bg-indigo-800 rounded-full h-2">
+                  <div className="w-full bg-teal-200 dark:bg-teal-800 rounded-full h-2">
                     <div
-                      className="bg-indigo-600 dark:bg-indigo-400 h-2 rounded-full transition-all duration-500"
+                      className="bg-teal-600 dark:bg-teal-400 h-2 rounded-full transition-all duration-500"
                       style={{ width: `${activeCycleStats.progress}%` }}
                     />
                   </div>
@@ -1071,24 +1071,24 @@ export const BillCalendarPage = () => {
                 {/* Bills summary */}
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                   <span>
-                    <span className="font-bold text-indigo-700 dark:text-indigo-300">
+                    <span className="font-bold text-teal-700 dark:text-teal-300">
                       {activeCycleStats.paidCount}/{activeCycleStats.totalCount}
                     </span>
-                    <span className="text-indigo-400 dark:text-indigo-500 text-xs ml-1">bills paid</span>
+                    <span className="text-teal-400 dark:text-teal-500 text-xs ml-1">bills paid</span>
                   </span>
                   {activeCycleStats.paidAmount > 0 && (
                     <span>
                       <span className="font-bold text-green-600 dark:text-green-400">
                         {formatCurrency(activeCycleStats.paidAmount)}
                       </span>
-                      <span className="text-indigo-400 dark:text-indigo-500 text-xs ml-1">paid</span>
+                      <span className="text-teal-400 dark:text-teal-500 text-xs ml-1">paid</span>
                     </span>
                   )}
                   <span className="ml-auto">
-                    <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                    <span className="font-bold text-teal-600 dark:text-teal-400">
                       {formatCurrency(activeCycleStats.totalAmount)}
                     </span>
-                    <span className="text-indigo-400 dark:text-indigo-500 text-xs ml-1">total bills</span>
+                    <span className="text-teal-400 dark:text-teal-500 text-xs ml-1">total bills</span>
                   </span>
                 </div>
               </div>
@@ -1178,14 +1178,14 @@ export const BillCalendarPage = () => {
                     className={clsx(
                       'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs',
                       range.isActive
-                        ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold'
+                        ? 'bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 font-semibold'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     )}
                   >
                     <div
                       className={clsx(
                         'w-2 h-2 rounded-full',
-                        range.isActive ? 'bg-indigo-500' : 'bg-gray-400 dark:bg-gray-500'
+                        range.isActive ? 'bg-teal-500' : 'bg-gray-400 dark:bg-gray-500'
                       )}
                     />
                     {range.isActive ? 'Active Cycle' : `Cycle ${i + 1}`}:{' '}
@@ -1241,7 +1241,7 @@ export const BillCalendarPage = () => {
                 {upcomingBills.length > 5 && (
                   <button
                     onClick={() => setShowAllUpcoming(!showAllUpcoming)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-center pt-1 w-full transition-colors"
+                    className="text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 text-center pt-1 w-full transition-colors"
                   >
                     {showAllUpcoming ? 'Show less' : `+${upcomingBills.length - 5} more`}
                   </button>
@@ -1377,7 +1377,7 @@ export const BillCalendarPage = () => {
             </div>
 
             {selectedBill.cycleId && activeCycle && selectedBill.cycleId === activeCycle.id && (
-              <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg text-sm text-indigo-700 dark:text-indigo-300">
+              <div className="p-3 bg-teal-50 dark:bg-teal-900/30 rounded-lg text-sm text-teal-700 dark:text-teal-300">
                 This bill is scheduled for your current pay cycle
                 {!selectedBill.isPaid && '. Go to the Paycheck tab to mark it as paid.'}
               </div>

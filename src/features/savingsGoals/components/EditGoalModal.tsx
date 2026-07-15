@@ -78,7 +78,7 @@ export const EditGoalModal = ({
               onChange={(e) => setTargetAmount(e.target.value)}
               placeholder="0.00"
               min="0"
-              className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -93,7 +93,7 @@ export const EditGoalModal = ({
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Set a deadline to see how much to save per paycheck.

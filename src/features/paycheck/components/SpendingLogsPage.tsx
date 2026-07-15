@@ -412,7 +412,7 @@ export const SpendingLogsPage = () => {
             title="Spending Trend"
             subtitle="Click on a month to see details"
             action={
-              <div className="flex items-center gap-1 text-indigo-600">
+              <div className="flex items-center gap-1 text-teal-600">
                 <TrendingUp className="w-4 h-4" />
               </div>
             }
@@ -617,7 +617,7 @@ export const SpendingLogsPage = () => {
               <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               <span className="font-medium text-gray-700 dark:text-gray-300">Filters</span>
               {hasActiveFilters && (
-                <span className="px-2 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-300 rounded-full">
                   Active
                 </span>
               )}
@@ -656,7 +656,7 @@ export const SpendingLogsPage = () => {
               {dateRange === 'custom' && (
                 <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center gap-2 mb-3">
-                    <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <Calendar className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Date Range</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -669,7 +669,7 @@ export const SpendingLogsPage = () => {
                         value={customStartDate}
                         onChange={(e) => setCustomStartDate(e.target.value)}
                         max={customEndDate || undefined}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
                     </div>
                     <div>
@@ -682,7 +682,7 @@ export const SpendingLogsPage = () => {
                         onChange={(e) => setCustomEndDate(e.target.value)}
                         min={customStartDate || undefined}
                         max={new Date().toISOString().split('T')[0]}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
                     </div>
                   </div>
@@ -721,7 +721,7 @@ export const SpendingLogsPage = () => {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400" />
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-600 dark:border-teal-400 border-t-transparent" />
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">

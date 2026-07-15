@@ -113,19 +113,19 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
             onClick={() => setScheduleType('semi-monthly')}
             className={`p-4 rounded-lg border-2 transition-all text-left ${
               scheduleType === 'semi-monthly'
-                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <CalendarDays
                 className={`w-5 h-5 ${
-                  scheduleType === 'semi-monthly' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'
+                  scheduleType === 'semi-monthly' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400'
                 }`}
               />
               <span
                 className={`font-medium ${
-                  scheduleType === 'semi-monthly' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
+                  scheduleType === 'semi-monthly' ? 'text-teal-900 dark:text-teal-300' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Semi-Monthly
@@ -139,19 +139,19 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
             onClick={() => setScheduleType('bi-weekly')}
             className={`p-4 rounded-lg border-2 transition-all text-left ${
               scheduleType === 'bi-weekly'
-                ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30'
+                ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                 : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <Calendar
                 className={`w-5 h-5 ${
-                  scheduleType === 'bi-weekly' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'
+                  scheduleType === 'bi-weekly' ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400'
                 }`}
               />
               <span
                 className={`font-medium ${
-                  scheduleType === 'bi-weekly' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'
+                  scheduleType === 'bi-weekly' ? 'text-teal-900 dark:text-teal-300' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Bi-Weekly
@@ -221,7 +221,7 @@ export const PaycheckSetup = ({ onSetupComplete }: PaycheckSetupProps) => {
               step="10"
               value={defaultMinimumSave}
               onChange={(e) => setDefaultMinimumSave(Number(e.target.value))}
-              className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
             <span className="text-sm text-gray-500 dark:text-gray-400">per paycheck</span>
           </div>

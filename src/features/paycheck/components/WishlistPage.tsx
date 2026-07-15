@@ -326,7 +326,7 @@ export const WishlistPage = () => {
           </Card>
           <Card padding="sm">
             <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Wants</p>
-            <p className="text-lg md:text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <p className="text-lg md:text-2xl font-bold text-teal-600 dark:text-teal-400">
               {formatCurrency(stats.totalWanted)}
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500">{stats.wantsCount} items</p>
@@ -340,7 +340,7 @@ export const WishlistPage = () => {
               type="checkbox"
               checked={showPurchased}
               onChange={(e) => setShowPurchased(e.target.checked)}
-              className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+              className="rounded border-gray-300 dark:border-gray-600 text-teal-600 focus:ring-teal-500"
             />
             Show purchased items
           </label>
@@ -352,7 +352,7 @@ export const WishlistPage = () => {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-600 border-t-transparent" />
           </div>
         ) : filteredItems.length === 0 ? (
           <Card>
@@ -404,7 +404,7 @@ export const WishlistPage = () => {
                       <div
                         key={item.id}
                         className={clsx(
-                          'border-l-4 transition-all',
+                          'border-l-2 transition-all',
                           priorityBorderColor,
                           item.isPurchased && 'opacity-50'
                         )}
@@ -504,7 +504,7 @@ export const WishlistPage = () => {
               <CardHeader
                 title={
                   <div className="flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-purple-600" />
+                    <Heart className="w-5 h-5 text-teal-600" />
                     <span>Wants</span>
                   </div>
                 }
@@ -534,7 +534,7 @@ export const WishlistPage = () => {
                       <div
                         key={item.id}
                         className={clsx(
-                          'border-l-4 transition-all',
+                          'border-l-2 transition-all',
                           priorityBorderColor,
                           item.isPurchased && 'opacity-50'
                         )}

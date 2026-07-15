@@ -31,7 +31,7 @@ export const ProgressBar = ({
         <div
           className={clsx('h-full rounded-full transition-all duration-300', {
             'bg-red-500': isOverBudget,
-            'bg-indigo-600': !isOverBudget && !color,
+            'bg-teal-600': !isOverBudget && !color,
           })}
           style={{
             width: `${percentage}%`,

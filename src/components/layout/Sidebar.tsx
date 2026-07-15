@@ -80,7 +80,7 @@ export const Sidebar = () => {
         clsx(
           'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
           {
-            'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400': isActive,
+            'bg-teal-50 text-teal-600 dark:bg-teal-900/50 dark:text-teal-400': isActive,
             'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700': !isActive,
             'md:justify-center': sidebarCollapsed,
           }
@@ -118,8 +118,8 @@ export const Sidebar = () => {
             }
           )}>
             <div className={clsx('flex items-center gap-3', { 'md:hidden': sidebarCollapsed })}>
-              <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900 rounded-lg flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               </div>
               <span className={clsx('font-semibold text-gray-900 dark:text-gray-100', { 'md:hidden': sidebarCollapsed })}>
                 Budget Buddy
@@ -151,7 +151,7 @@ export const Sidebar = () => {
                   <p className={clsx(
                     'px-3 text-xs font-semibold tracking-wider uppercase transition-colors duration-200',
                     activeGroupLabel === group.label
-                      ? 'text-indigo-500 dark:text-indigo-400'
+                      ? 'text-teal-500 dark:text-teal-400'
                       : 'text-gray-400 dark:text-gray-500'
                   )}>
                     {group.label}
