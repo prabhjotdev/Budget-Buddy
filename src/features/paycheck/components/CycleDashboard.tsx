@@ -65,7 +65,7 @@ export const CycleDashboard = () => {
     return (
       <AppLayout title="Paycheck Budget">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-600 border-t-transparent"></div>
         </div>
       </AppLayout>
     );
@@ -316,7 +316,7 @@ const CycleDashboardContent = ({
                   </span>
                   <button
                     onClick={(e) => { e.preventDefault(); setEditPaycheckOpen(true); }}
-                    className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
                     title="Edit paycheck amount"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -340,7 +340,7 @@ const CycleDashboardContent = ({
                       ? [{ label: 'Needs', pct: oblPct, amount: oblTotal, color: 'bg-orange-500', sub: oblSpent > 0 ? `${formatCurrency(oblSpent)} used` : null }]
                       : []),
                     { label: 'Save', pct: savePct, amount: cycle.minimumSave, color: 'bg-emerald-500', sub: null },
-                    { label: 'Spend', pct: spendPct, amount: cycle.spendingLimit, color: 'bg-indigo-600', sub: null },
+                    { label: 'Spend', pct: spendPct, amount: cycle.spendingLimit, color: 'bg-teal-600', sub: null },
                   ];
                   return rows.map(({ label, pct, amount, color, sub }) => (
                     <div key={label} className="flex items-center gap-3">

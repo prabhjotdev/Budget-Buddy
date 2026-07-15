@@ -273,7 +273,7 @@ export const BillsManager = () => {
                         )}
                         {bill.isSubscription && (
                           <span
-                            className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/50 px-1.5 py-0.5 rounded"
+                            className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/50 px-1.5 py-0.5 rounded"
                             title="Subscription"
                           >
                             <RefreshCw className="w-3 h-3" />
@@ -305,7 +305,7 @@ export const BillsManager = () => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEdit(bill)}
-                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                        className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Pencil className="w-4 h-4" />
@@ -374,7 +374,7 @@ export const BillsManager = () => {
                                 )}
                                 {bill.isSubscription && (
                                   <span
-                                    className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/50 px-1.5 py-0.5 rounded"
+                                    className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/50 px-1.5 py-0.5 rounded"
                                     title="Subscription"
                                   >
                                     <RefreshCw className="w-3 h-3" />
@@ -413,7 +413,7 @@ export const BillsManager = () => {
                               </button>
                               <button
                                 onClick={() => handleEdit(bill)}
-                                className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                                className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
                                 title="Edit"
                               >
                                 <Pencil className="w-4 h-4" />
@@ -528,7 +528,7 @@ export const BillsManager = () => {
                 type="checkbox"
                 checked={formIsVariable}
                 onChange={(e) => setFormIsVariable(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Variable amount (confirm each cycle)</span>
             </label>
@@ -537,7 +537,7 @@ export const BillsManager = () => {
                 type="checkbox"
                 checked={formIsAutoPay}
                 onChange={(e) => setFormIsAutoPay(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Auto-pay enabled</span>
             </label>
@@ -546,7 +546,7 @@ export const BillsManager = () => {
                 type="checkbox"
                 checked={formIsActive}
                 onChange={(e) => setFormIsActive(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
               />
               <div>
                 <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
@@ -558,7 +558,7 @@ export const BillsManager = () => {
                 type="checkbox"
                 checked={formIsSubscription}
                 onChange={(e) => setFormIsSubscription(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
               />
               <div>
                 <span className="text-sm text-gray-700 dark:text-gray-300">This is a subscription</span>

@@ -131,9 +131,9 @@ export const AddToCycleSpendingModal = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Add to Cycle Spending">
       <div className="space-y-6">
-        <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-start gap-3">
-          <Wallet className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-indigo-800 dark:text-indigo-200">
+        <div className="p-4 bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 rounded-lg flex items-start gap-3">
+          <Wallet className="w-5 h-5 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-teal-800 dark:text-teal-200">
             Move money from a savings pool into this cycle so you have a little more to spend.
             This increases your remaining spending balance—it isn&apos;t logged as an expense.
           </p>
@@ -156,13 +156,13 @@ export const AddToCycleSpendingModal = ({
                   onClick={() => handleSelectSource(id)}
                   className={`text-left p-3 rounded-lg border-2 transition-colors ${
                     selected
-                      ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30'
+                      ? 'border-teal-500 dark:border-teal-400 bg-teal-50 dark:bg-teal-900/30'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                   } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Icon
                     className={`w-5 h-5 mb-1 ${
-                      selected ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'
+                      selected ? 'text-teal-600 dark:text-teal-400' : 'text-gray-400'
                     }`}
                   />
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{name}</p>

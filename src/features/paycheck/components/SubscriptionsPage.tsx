@@ -120,7 +120,7 @@ const SubscriptionCard = ({ bill, paymentMethodName, onManage }: SubscriptionCar
       <div className="flex items-start justify-between gap-3">
         {/* Left: icon + info */}
         <div className="flex items-start gap-3 min-w-0">
-          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5">
+          <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/50 text-teal-600 dark:text-teal-400 flex-shrink-0 mt-0.5">
             <RefreshCw className="w-4 h-4" />
           </div>
           <div className="min-w-0">
@@ -194,7 +194,7 @@ const SubscriptionCard = ({ bill, paymentMethodName, onManage }: SubscriptionCar
           </span>
           <button
             onClick={onManage}
-            className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 hover:underline"
             title="Edit in Manage"
           >
             <ExternalLink className="w-3 h-3" />
@@ -327,7 +327,7 @@ export const SubscriptionsPage = () => {
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
               <Card padding="sm">
                 <div className="text-center">
-                  <p className="text-lg sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-lg sm:text-2xl font-bold text-teal-600 dark:text-teal-400">
                     {stats.count}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">

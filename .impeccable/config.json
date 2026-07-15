@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "features/paycheck/components/BillsManager.tsx",
+          "features/paycheck/components/CycleDashboard.tsx",
+          "features/paycheck/components/PaymentMethodsManager.tsx",
+          "features/paycheck/components/SpendingTagsManager.tsx",
+          "features/paycheck/components/VariableObligationsManager.tsx"
+        ],
+        "reason": "Icon-button controls: the text-gray-* is the resting color and the bg-*-50 is a hover: state, with the icon recoloring to match (hover:text-* + hover:bg-*). No gray-on-colored-background state is ever rendered, so the flag is a false positive from same-line class co-occurrence."
+      }
+    ]
+  }
+}

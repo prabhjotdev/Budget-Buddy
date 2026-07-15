@@ -216,7 +216,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
               placeholder="0.00"
               step="0.01"
               min="0"
-              className="w-full pl-10 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:placeholder:text-gray-500"
+              className="w-full pl-10 pr-4 py-3 text-2xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:placeholder:text-gray-500"
             />
           </div>
         </div>
@@ -244,7 +244,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                 onClick={() => setPaymentMethodId(method.id)}
                 className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-colors ${
                   paymentMethodId === method.id
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                    ? 'border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300'
                     : 'border-gray-200 text-gray-600 hover:border-gray-300 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500'
                 }`}
               >
@@ -266,7 +266,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                 onClick={() => handleTagToggle(tag.id)}
                 className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
                   selectedTagIds.includes(tag.id)
-                    ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-600'
+                    ? 'bg-teal-100 text-teal-700 border-2 border-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:border-teal-600'
                     : 'bg-gray-100 text-gray-600 border-2 border-transparent hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600'
                 }`}
               >
@@ -294,7 +294,7 @@ export const EditSpendingModal = ({ isOpen, onClose, transaction }: EditSpending
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value.toLowerCase())}
                 placeholder="New tag name"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:placeholder:text-gray-500"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:placeholder:text-gray-500"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();

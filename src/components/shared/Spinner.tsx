@@ -9,7 +9,7 @@ export const Spinner = ({ size = 'md', className }: SpinnerProps) => {
   return (
     <svg
       className={clsx(
-        'animate-spin text-indigo-600',
+        'animate-spin text-teal-600',
         {
           'w-4 h-4': size === 'sm',
           'w-6 h-6': size === 'md',

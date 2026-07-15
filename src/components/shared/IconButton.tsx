@@ -15,7 +15,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         className={clsx(
           'inline-flex items-center justify-center rounded-lg transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
+          'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500',
           {
             'bg-gray-100 text-gray-600 hover:bg-gray-200': variant === 'default',
             'bg-red-100 text-red-600 hover:bg-red-200': variant === 'danger',

@@ -32,7 +32,7 @@ export const ManagePage = () => {
     <AppLayout title="Manage">
       <div className="max-w-2xl space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-100 dark:border-blue-800 rounded-xl p-4">
+        <div className="bg-gradient-to-r from-blue-50 to-teal-50 dark:from-blue-900/30 dark:to-teal-900/30 border border-blue-100 dark:border-blue-800 rounded-xl p-4">
           <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Manage Your Budget Items</h3>
           <p className="text-sm text-blue-700 dark:text-blue-300">
             Set up your payment methods, recurring bills, and spending tags to streamline your budgeting.
@@ -87,7 +87,7 @@ interface QuickStatProps {
 
 const QuickStat = ({ icon: Icon, label, color }: QuickStatProps) => {
   const colorClasses = {
-    indigo: 'bg-indigo-100 text-indigo-600',
+    indigo: 'bg-teal-100 text-teal-600',
     amber: 'bg-amber-100 text-amber-600',
     orange: 'bg-orange-100 text-orange-600',
     emerald: 'bg-emerald-100 text-emerald-600',

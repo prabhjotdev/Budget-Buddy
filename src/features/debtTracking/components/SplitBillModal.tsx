@@ -237,7 +237,7 @@ export const SplitBillModal = ({
           <button
             type="button"
             onClick={addPerson}
-            className="mt-2 flex items-center gap-1.5 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+            className="mt-2 flex items-center gap-1.5 text-sm text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Person

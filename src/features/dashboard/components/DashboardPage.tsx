@@ -87,8 +87,8 @@ export const DashboardPage = () => {
                   </p>
                 )}
               </div>
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-indigo-600" />
+              <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-teal-600" />
               </div>
             </div>
           </Card>

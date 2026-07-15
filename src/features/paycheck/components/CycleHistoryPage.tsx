@@ -108,7 +108,7 @@ export const CycleHistoryPage = () => {
     return (
       <AppLayout title="Cycle History">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-600 border-t-transparent"></div>
         </div>
       </AppLayout>
     );
@@ -119,8 +119,8 @@ export const CycleHistoryPage = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <History className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <History className="w-8 h-8 text-teal-600 dark:text-teal-400" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Cycle History</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-2">
@@ -133,7 +133,7 @@ export const CycleHistoryPage = () => {
           <Card>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">
                   {summaryStats.totalCycles}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Cycles Completed</p>
@@ -217,7 +217,7 @@ const CycleCard = ({
       {/* Collapsed Header */}
       <button
         onClick={onToggle}
-        className="w-full text-left focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg"
+        className="w-full text-left focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 rounded-lg"
       >
         <div className="flex items-center justify-between">
           <div className="flex-1">
@@ -385,7 +385,7 @@ const CycleCard = ({
               </div>
               <div>
                 <p className="text-gray-500 dark:text-gray-400">Buffer Draw</p>
-                <p className="font-semibold text-purple-600 dark:text-purple-400">
+                <p className="font-semibold text-teal-600 dark:text-teal-400">
                   {formatCurrency(cycle.bufferDraw || 0)}
                 </p>
               </div>

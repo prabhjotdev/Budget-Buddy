@@ -150,7 +150,7 @@ export const LoanFormModal = ({
                   setInterestRate(val);
                 }}
                 placeholder="0.00"
-                className="w-full px-3 pr-8 py-2.5 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-gray-100"
+                className="w-full px-3 pr-8 py-2.5 md:py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 dark:bg-gray-700 dark:text-gray-100"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">
                 %

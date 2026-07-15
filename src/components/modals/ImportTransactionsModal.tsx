@@ -291,7 +291,7 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
               {/* Active Period Info */}
               {activePeriod && periodStart && periodEnd && (
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-indigo-500" />
+                  <Calendar className="w-4 h-4 text-teal-500" />
                   <span className="text-sm text-gray-700">
                     Active period: <strong>{formatPeriodRange(periodStart, periodEnd, timezone)}</strong>
                   </span>
@@ -306,7 +306,7 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                 {duplicateCount > 0 && (
                   <button
                     onClick={() => setShowDuplicates(!showDuplicates)}
-                    className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-700"
+                    className="flex items-center gap-1 text-sm text-teal-600 hover:text-teal-700"
                   >
                     <Copy className="w-4 h-4" />
                     {showDuplicates ? 'Hide' : 'Show'} {duplicateCount} duplicates
@@ -355,7 +355,7 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                   type="checkbox"
                   checked={selectedCount === visibleTransactions.length && visibleTransactions.length > 0}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
                 <span className="text-sm text-gray-600">Select All</span>
               </div>
@@ -426,11 +426,11 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                       const rowClass = tx.excluded
                         ? 'bg-gray-50 text-gray-400'
                         : tx.isDuplicate
-                          ? 'bg-purple-50 text-purple-700'
+                          ? 'bg-teal-50 text-teal-700'
                           : tx.outOfPeriod
                             ? 'bg-orange-50 text-orange-700'
                             : tx.selected
-                              ? 'bg-indigo-50'
+                              ? 'bg-teal-50'
                               : '';
                       return (
                         <tr key={index} className={rowClass}>
@@ -439,13 +439,13 @@ export const ImportTransactionsModal = ({ isOpen, onClose }: ImportTransactionsM
                               type="checkbox"
                               checked={tx.selected}
                               onChange={() => handleToggleSelect(actualIndex)}
-                              className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                             />
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             {formatShortDate(tx.date, timezone)}
                             {tx.isDuplicate && (
-                              <span className="ml-1 inline-block px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
+                              <span className="ml-1 inline-block px-1.5 py-0.5 text-xs bg-teal-100 text-teal-700 rounded">
                                 Duplicate
                               </span>
                             )}

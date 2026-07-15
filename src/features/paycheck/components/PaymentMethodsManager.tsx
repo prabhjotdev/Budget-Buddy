@@ -17,7 +17,7 @@ const PAYMENT_METHOD_ICONS: Record<PaymentMethodType, typeof CreditCard> = {
 };
 
 const PAYMENT_METHOD_COLORS: Record<PaymentMethodType, string> = {
-  credit: 'text-purple-600 bg-purple-100',
+  credit: 'text-teal-600 bg-teal-100',
   debit: 'text-blue-600 bg-blue-100',
   cash: 'text-green-600 bg-green-100',
 };
@@ -181,7 +181,7 @@ export const PaymentMethodsManager = () => {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(method)}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
                       title="Edit"
                     >
                       <Pencil className="w-4 h-4" />
@@ -232,7 +232,7 @@ export const PaymentMethodsManager = () => {
               type="checkbox"
               checked={formIsDefault}
               onChange={(e) => setFormIsDefault(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600"
+              className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">Set as default payment method</span>
           </label>

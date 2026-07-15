@@ -262,13 +262,13 @@ const DebtTrackingContent = () => {
   return (
     <div className="space-y-6">
       {/* Summary header */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl p-4">
+      <div className="bg-gradient-to-r from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 border border-teal-200 dark:border-teal-800 rounded-xl p-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <Handshake className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <Handshake className="w-6 h-6 text-teal-600 dark:text-teal-400" />
             <div>
-              <h3 className="font-semibold text-indigo-900 dark:text-indigo-100">Debt Tracker</h3>
-              <p className="text-sm text-indigo-700 dark:text-indigo-300">
+              <h3 className="font-semibold text-teal-900 dark:text-teal-100">Debt Tracker</h3>
+              <p className="text-sm text-teal-700 dark:text-teal-300">
                 Track money you owe and money owed to you
               </p>
             </div>
@@ -566,7 +566,7 @@ const PersonGroupCard = ({
             <button
               onClick={onAddDebt}
               title="Add debt for this person"
-              className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              className="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -622,7 +622,7 @@ const DebtItemRow = ({
         className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
           entry.isPaid
             ? 'bg-green-500 border-green-500 dark:bg-green-600 dark:border-green-600'
-            : 'border-gray-300 dark:border-gray-500 hover:border-indigo-400 dark:hover:border-indigo-500'
+            : 'border-gray-300 dark:border-gray-500 hover:border-teal-400 dark:hover:border-teal-500'
         } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         title={entry.isPaid ? 'Mark as unpaid' : 'Mark as paid'}
       >
@@ -664,7 +664,7 @@ const DebtItemRow = ({
         </span>
         <button
           onClick={onEdit}
-          className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          className="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
           title="Edit"
         >
           <Pencil className="w-3.5 h-3.5" />

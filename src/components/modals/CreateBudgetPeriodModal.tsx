@@ -150,8 +150,8 @@ export const CreateBudgetPeriodModal = () => {
     >
       <div className="space-y-6">
         {/* Period Info */}
-        <div className="bg-indigo-50 rounded-lg p-4">
-          <p className="text-sm text-indigo-700 font-medium">
+        <div className="bg-teal-50 rounded-lg p-4">
+          <p className="text-sm text-teal-700 font-medium">
             Period: {formatPeriodRange(nextPeriod.startDate, nextPeriod.endDate, settings?.timezone)}
           </p>
           {rolloverAmount > 0 && (

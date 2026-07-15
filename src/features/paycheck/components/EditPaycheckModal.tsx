@@ -75,7 +75,7 @@ export const EditPaycheckModal = ({
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full pl-8 pr-4 py-3 text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-8 pr-4 py-3 text-xl font-semibold border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               placeholder="0.00"
             />
           </div>
