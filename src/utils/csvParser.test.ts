@@ -111,4 +111,11 @@ describe('parseCSV — dates', () => {
       'Oldest',
     ]);
   });
+
+  it('interprets ambiguous slash dates as MM/DD/YYYY (North American convention)', () => {
+    const csv = ['Date,Description,Amount', '03/04/2025,Slash Date,10.00'].join('\n');
+    const { date } = parseCSV(csv).transactions[0];
+    expect(date.getMonth()).toBe(2); // March (0-indexed) — month-first, not day-first
+    expect(date.getDate()).toBe(4);
+  });
 });
