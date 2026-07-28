@@ -37,6 +37,12 @@ Thumbs.db
 # Testing
 /coverage
 
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+
 # Cache
 .eslintcache
 *.tsbuildinfo

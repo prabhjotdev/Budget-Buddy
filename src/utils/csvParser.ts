@@ -106,7 +106,9 @@ function parseCSVRows(content: string): string[][] {
 function parseDate(dateStr: string): Date | null {
   const cleaned = dateStr.trim().replace(/['"]/g, '');
 
-  // Try MM/DD/YYYY
+  // Try slash-separated dates. The format is ambiguous (MM/DD vs DD/MM), so
+  // we assume MM/DD/YYYY — the convention used by the North American banks
+  // this parser targets.
   let match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (match) {
     const [, month, day, year] = match;
@@ -117,14 +119,6 @@ function parseDate(dateStr: string): Date | null {
   match = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (match) {
     const [, year, month, day] = match;
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
-  }
-
-  // Try DD/MM/YYYY
-  match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (match) {
-    const [, day, month, year] = match;
-    // Ambiguous - assume MM/DD/YYYY for North American banks
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
   }
 
