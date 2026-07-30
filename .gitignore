@@ -46,3 +46,6 @@ Thumbs.db
 # Cache
 .eslintcache
 *.tsbuildinfo
+
+# Agent pipeline handoff files
+.pipeline/
