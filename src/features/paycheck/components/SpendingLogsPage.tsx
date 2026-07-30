@@ -26,15 +26,16 @@ import {
   fetchSpendingTransactions,
   fetchRecentSpendingTransactions,
 } from '../spendingTransactionsSlice';
-import { fetchActiveCycle } from '../paycheckCyclesSlice';
+import { fetchActiveCycle, fetchPaycheckCycles } from '../paycheckCyclesSlice';
 import { fetchPaymentMethods } from '../paymentMethodsSlice';
 import { fetchSpendingTags } from '../spendingTagsSlice';
 import { AppLayout } from '../../../components/layout';
 import { useTheme } from '../../../context/ThemeContext';
-import { Card, CardHeader, Button, Select } from '../../../components/shared';
+import { Card, CardHeader, Button, Select, IconButton } from '../../../components/shared';
 import { formatCurrency } from '../../../utils/currency';
 import { SpendingTransaction } from '../../../types';
 import { EditSpendingModal } from './EditSpendingModal';
+import { aggregatePaidFixedExpensesByMonth, monthKey } from '../fixedExpenses';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -95,7 +96,9 @@ export const SpendingLogsPage = () => {
   const { byId, allIds, isLoading, hasFullHistory } = useAppSelector(
     (state) => state.spendingTransactions
   );
-  const { byId: cyclesById, activeCycleId } = useAppSelector((state) => state.paycheckCycles);
+  const { byId: cyclesById, allIds: cycleIds, activeCycleId } = useAppSelector(
+    (state) => state.paycheckCycles
+  );
   const activeCycle = activeCycleId ? cyclesById[activeCycleId] : null;
   const { byId: paymentMethodsById, allIds: paymentMethodIds } = useAppSelector(
     (state) => state.paymentMethods
@@ -120,6 +123,7 @@ export const SpendingLogsPage = () => {
   const [selectedTagId, setSelectedTagId] = useState('all');
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState('all');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [spendingFixedExpanded, setSpendingFixedExpanded] = useState(false); // collapsed by default
 
   // Drill-down state
   const [selectedMonth, setSelectedMonth] = useState<MonthData | null>(null);
@@ -140,6 +144,7 @@ export const SpendingLogsPage = () => {
       if (!activeCycleId && Object.keys(cyclesById).length === 0) {
         dispatch(fetchActiveCycle(user.uid));
       }
+      dispatch(fetchPaycheckCycles(user.uid));
     }
   }, [dispatch, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -238,6 +243,20 @@ export const SpendingLogsPage = () => {
       amount: Math.round(m.amount * 100) / 100,
     }));
   }, [allTransactions]);
+
+  // Spending + actually-paid fixed expenses per month (past 12 months, reuses chartData buckets)
+  const spendingPlusFixedData = useMemo(() => {
+    const cycles = cycleIds.map((id) => cyclesById[id]).filter(Boolean);
+    const fixedByMonth = aggregatePaidFixedExpensesByMonth(cycles);
+    return chartData.map((m) => {
+      const fixed = fixedByMonth[monthKey(m.year, m.monthIndex)] ?? 0;
+      return {
+        ...m,
+        fixed: Math.round(fixed * 100) / 100,
+        total: Math.round((m.amount + fixed) * 100) / 100,
+      };
+    });
+  }, [chartData, cyclesById, cycleIds]);
 
   // Get transactions for selected month
   const selectedMonthTransactions = useMemo(() => {
@@ -603,6 +622,43 @@ export const SpendingLogsPage = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+        </Card>
+
+        {/* Spending + Fixed Expenses (collapsible) */}
+        <Card>
+          <CardHeader
+            title="Spending + Fixed Expenses"
+            subtitle="Monthly spending plus fixed expenses actually paid"
+            action={
+              <IconButton
+                icon={spendingFixedExpanded ? ChevronUp : ChevronDown}
+                variant="ghost"
+                size="sm"
+                aria-label={spendingFixedExpanded ? 'Collapse chart' : 'Expand chart'}
+                aria-expanded={spendingFixedExpanded}
+                onClick={() => setSpendingFixedExpanded((v) => !v)}
+              />
+            }
+          />
+          {spendingFixedExpanded && (
+            <div className="h-48 md:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={spendingPlusFixedData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} strokeOpacity={chartColors.gridOpacity} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: chartColors.tickText }} tickLine={false} axisLine={{ stroke: chartColors.axisLine }} />
+                  <YAxis tick={{ fontSize: 12, fill: chartColors.tickText }} tickLine={false} axisLine={{ stroke: chartColors.axisLine }} tickFormatter={(value) => `$${value}`} width={50} />
+                  <Tooltip
+                    formatter={(value: number) => [formatCurrency(value), 'Spending + Fixed']}
+                    contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '8px', boxShadow: isDarkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.1)', color: chartColors.tooltipText }}
+                    labelStyle={{ color: chartColors.tooltipText }}
+                  />
+                  <Line type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2}
+                    dot={{ r: 4, fill: '#6366f1', stroke: isDarkMode ? '#1f2937' : 'white', strokeWidth: 2 }}
+                    activeDot={{ r: 6, fill: '#4f46e5' }} />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           )}
         </Card>
