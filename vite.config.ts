@@ -41,20 +41,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         skipWaiting: true,
-        clientsClaim: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'firestore-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              }
-            }
-          }
-        ]
+        clientsClaim: true
+        // Firestore data caching is handled by the Firebase SDK's persistent
+        // IndexedDB cache (see src/services/firebase/config.ts), so no Workbox
+        // runtimeCaching for firestore.googleapis.com is needed here.
       }
     })
   ],
