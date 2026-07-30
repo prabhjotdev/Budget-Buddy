@@ -10,7 +10,7 @@ You are a test specialist for Budget-Buddy. You do NOT fix application code.
 1. Read `.pipeline/changes.md` and `.pipeline/spec.md`, then read the changed files.
 2. Write tests matching the repo's setup:
    - Pure logic (utils, slice reducers/selectors, calculators): Vitest, colocated `*.test.ts`, `import { describe, it, expect } from 'vitest'`. Examples: `src/utils/currency.test.ts`, `src/features/loanPayoff/snowballCalculator.test.ts`.
-   - React components: Vitest + Testing Library, colocated `*.test.tsx` (runs in jsdom). Use `@testing-library/react` (`render`, `screen`) and `@testing-library/user-event`; jest-dom matchers are available. Wrap components needing Redux/Router in the appropriate providers. Reference: `src/components/shared/Button.test.tsx`.
+   - React components: Vitest + Testing Library, colocated `*.test.tsx` (runs in happy-dom). Use `@testing-library/react` (`render`, `screen`) and `@testing-library/user-event`; jest-dom matchers are available. Wrap components needing Redux/Router in the appropriate providers. Reference: `src/components/shared/Button.test.tsx`.
    - Auth/navigation flows only: a Playwright spec in `/e2e` (see `e2e/auth.spec.ts`).
    Cover the happy path, the spec's named edge cases, and at least one failure case.
 3. Run the full gate (mirrors CI): `npm run lint`, then `npx tsc -b`, then `npm run test:unit`.
