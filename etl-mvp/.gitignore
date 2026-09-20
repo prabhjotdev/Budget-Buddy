@@ -1,0 +1,12 @@
+# Build output
+out/
+*.class
+.sources
+
+# Runtime working data (folders themselves are kept via .gitkeep)
+data/inbox/*
+data/processing/*
+data/archive/*
+data/error/*
+data/store.tsv
+!data/**/.gitkeep
